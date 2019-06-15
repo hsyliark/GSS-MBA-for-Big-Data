@@ -1,2 +1,2 @@
 # GSS_MBA_for_Big_Data
-
+빅데이터 MBA 진학 준비...
