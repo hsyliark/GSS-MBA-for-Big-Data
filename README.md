@@ -1,4 +1,4 @@
-# GSS_MBA_for_Big_Data
+# GSS_MBA_for_Big_Data 
 
 Ajou UNIV IT Business MBA : http://mba.ajou.ac.kr/Mba/EBusinessMBA <br>
 Sejong UNIV Big Data MBA : http://graduatebusiness.sejong.ac.kr/Major/BDMBAIntroduction <br>
