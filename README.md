@@ -4,5 +4,5 @@ Ajou UNIV Business Analytics MBA : http://mba.ajou.ac.kr/Mba/BusinessAndAnalytic
 Ajou Knowledge Information GSS : http://it.ajou.ac.kr/it/grad/grad11.jsp <br>
 Sejong UNIV Big Data MBA : http://graduatebusiness.sejong.ac.kr/Major/BDMBAIntroduction <br>
 Kookmin UNIV AI, Big Data MBA : https://mba.kookmin.ac.kr/edu_course/course_big/big_outline <br> 
-Korea UNIV GSIS : http://gss.korea.ac.kr/ime/about/information.do <br>
+
 
