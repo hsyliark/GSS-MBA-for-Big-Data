@@ -35,6 +35,9 @@ p1 <- ggMarginal(p, type="histogram")
 sapply(therapy,mean)
 var(therapy)
 cor(therapy)
+install.packages("fBasics")
+library(fBasics)
+skewness(therapy$x3)
 
 ### 1.18
 ## Reading data
