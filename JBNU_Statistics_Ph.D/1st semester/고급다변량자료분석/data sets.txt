@@ -1,1 +1,4 @@
 http://users.stat.umn.edu/~kb/classes/5401/files/data/JWData5.txt
+
+solution
+https://www.slader.com/textbook/9780131877153-applied-multivariate-statistical-analysis-6th-edition/
