@@ -1,0 +1,73 @@
+---
+title: "Chapter2 R exercises"
+author: "Hwang Seong-Yun"
+date: '2020 9 22 '
+output: html_document
+---
+
+## Loading packages
+```{r}
+library(tidyverse)
+library(gridExtra)
+library(MASS)
+library(ggplot2)
+```
+
+## Problem1
+### α=2, λ=3 인 와이블분포를 따르는 난수 100개를 발생시킨 후
+### 1) (logt,log[−log(S(t))])=(X,Y) 그림을 그리고 설명하시오.
+```{r}
+n <- 100
+alpha <- 2
+lambda <- 3
+
+data <- rweibull(n, shape=alpha, scale=1/lambda)
+exp_H <- tibble(t= sort(data), St=1-pweibull(t, shape=alpha, scale=1/lambda))
+
+ggplot(exp_H, aes(x=log(t)))+
+    geom_line(aes(y=log(-log(St))))+
+    xlab("log t")+ylab("log[-log S(t)]")+
+    labs(title="Graph of (log t,log[-log S(t)])")
+```
+
+#### 확률변수 T가 와이블분포를 따르는 경우 log[-log S(t)]를 정리해보면 αlog(λ)+αlog(t)이다. 다시 말해서 log(t)과 직선형태의 관계를 가지게 되므로 그래프도 1차함수 형태의 직선으로 나타남을 확인할 수 있다. 
+
+### 2) 얻은 데이터셋에 대해 와이블분포의 모수를 추정하시오.
+```{r}
+(wei_e <- fitdistr(data, 'weibull'))
+```
+
+#### MLE를 통해 모수를 추정한 결과 shape=2.177, scale=1/lambda=0.337 로 원하는 결과와 근접하게 추정됨을 확인할 수 있다.
+
+## Problem2
+### Gamma(α,λ)의 위험함수 그래프를 (α,λ) 값을 변화시켜가며 R을 사용하여 그리시오. 
+### α의 값이 위험함수 모양에 어떤 영향을 주는가?
+```{r}
+alpha <- c(3,7,11)
+lambda <- 1
+t <- t <- seq(0, 5, length=200) 
+gamma_d <- tibble(t, f1=dgamma(t, shape=alpha[1], scale=1/lambda), s1=1-pgamma(t, shape=alpha[1], scale=1/lambda), h1=f1/s1,
+                f2=dgamma(t, shape=alpha[2], scale=1/lambda), s2=1-pgamma(t, shape=alpha[2], scale=1/lambda), h2=f2/s2,
+                f3=dgamma(t, shape=alpha[3], scale=1/lambda), s3=1-pgamma(t, shape=alpha[3], scale=1/lambda), h3=f3/s3)
+g1 <- ggplot(gamma_d, aes(x=t))+
+  geom_line(aes(y=f1, color="alpha=3"))+
+  geom_line(aes(y=f2, color="alpha=7"))+
+  geom_line(aes(y=f3, color="alpha=11"))+
+  xlab("t")+ylab("f(t)")+
+  labs(title="Gamma probability density function", color=" ")
+g2 <-  ggplot(gamma_d, aes(x=t))+
+  geom_line(aes(y=s1, color="alpha=3"))+
+  geom_line(aes(y=s2, color="alpha=7"))+
+  geom_line(aes(y=s3, color="alpha=11"))+
+  xlab("t")+ylab("S(t)")+
+  labs(title="Gamma survival function", color=" ")
+g3 <- ggplot(gamma_d, aes(x=t))+
+  geom_line(aes(y=h1, color="alpha=3"))+
+  geom_line(aes(y=h2, color="alpha=7"))+
+  geom_line(aes(y=h3, color="alpha=11"))+
+  xlab("t")+ylab("h(t)")+
+  labs(title="Gamma hazard function", color=" ")
+grid.arrange(g1,g2,g3)
+```
+
+#### 위의 그래프를 통해 α의 값이 변함에 따라 f(t), S(t), h(t)의 그래프의 형태가 확연하게 차이가 나는 것을 확인할 수 있다. 특히 위험함수 h(t)의 경우는 α의 값이 커짐에 따라 증가의 폭이 줄어들고 있음을 확인할 수 있다.

@@ -1,0 +1,46 @@
+install.packages("ggplot2")
+library(ggplot2)
+# Survival function & Hazard function
+t <- seq(0,10,0.001)
+my_survival <- function(u) {
+  if (u >= 0 & u < 0.5) {
+    res <- return(exp(-3*u))
+    return(res)}
+  else if (u >= 0.5 & u < 5) {
+    res <- return(exp(-1.5*u-0.75))
+    return(res)}
+  else {
+    res <- return(exp(-0.5*u-5.75))
+    return(res)}
+}
+my_hazard <- function(u) {
+  if (u >= 0 & u < 0.5) {
+    res <- 3
+    return(res)}
+  else if (u >= 0.5 & u < 5) {
+    res <- 1.5
+    return(res)}
+  else {
+    res <- 0.5
+    return(res)}
+} 
+St <- c()
+ht <- c()
+for (i in 1:length(t)) {
+  St <- c(St,my_survival(t[i]))
+  ht <- c(ht,my_hazard(t[i]))
+}
+my_survival_data <- data.frame(t=t, St=St, ht=ht)
+ggplot(my_survival_data, aes(x=t))+
+  geom_line(aes(y=St))+
+  xlab("t")+ylab("S(t)")+
+  labs(title="Survival function") 
+ggplot(my_survival_data, aes(x=t))+
+  geom_line(aes(y=ht))+
+  xlab("t")+ylab("h(t)")+
+  labs(title="Hazard function")  
+
+
+
+
+
