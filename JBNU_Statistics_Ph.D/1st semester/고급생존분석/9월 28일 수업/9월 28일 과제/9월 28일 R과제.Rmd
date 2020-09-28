@@ -1,0 +1,84 @@
+---
+title: "Homework(9.28)"
+author: "Hwang Seong-Yun"
+date: '2020 9 28 '
+output: html_document
+---
+
+## Loading packages
+
+```{r}
+library(survival)
+library(tidyverse)
+library(fitdistrplus)
+library(dplyr)
+```
+
+
+## retinopathy data
+### 목적 : 당뇨병 환자의 시력 손실을 지연시키기 위한 레이저치료법의 효과를 확인하기 위해 수집
+### 총 197명의 환자에 대해서 한쪽 눈에는 레이저치료를 실시하고 다른 눈에는 치료를 실시하지 않은 상태에서 시력상실이 발생할 때까지의 시간(futime)을 관찰함.
+#### 그룹 : 변수 trt (0 = no treatment, 1 = laser)
+#### 중도절단 여부 : 변수 status (0 = censored, 1 = visual loss)
+
+```{r}
+data(retinopathy)
+head(retinopathy, 20)
+```
+
+
+## fitdistcens 함수에 입력할 자료형태로 변환
+### fitdistcens 함수는 생존자료가 변수명 left와 right 형태로 입력되어야 함
+#### 구간으로 관측된 자료도 다룰 수 있음
+#### 생존시간이 관측된 경우: left=right=관측된 생존시간 값으로 입력
+#### 우중도절단시간이 관측된 경우: left=NA, right=관측된 중도절단시간 값
+
+```{r}
+fcdata <- retinopathy %>% 
+  mutate(left=ifelse(status==1, futime, NA),
+         right=futime)%>%
+  dplyr::select(left,right)
+head(fcdata, 20)
+```
+
+
+## Weibull distribution
+### 1. Maxinum Likelihood Estimation을 통한 parameter 추정
+
+```{r}
+fcdata <- as.data.frame(fcdata)
+(fit1 <- fitdistcens(fcdata, "weibull"))
+(alphahat <- fit1$estimate[1])
+(betahat <- fit1$estimate[2])
+(lambdahat <- 1/fit1$estimate[2])
+(fit1$sd)
+```
+
+### 2. alpha, beta의 근사적 95% 신뢰구간 추정
+
+```{r}
+# alpha
+fit1$estimate[1]-qnorm(0.975)*fit1$sd[1] 
+fit1$estimate[1]+qnorm(0.975)*fit1$sd[1]
+# beta
+fit1$estimate[2]-qnorm(0.975)*fit1$sd[2] 
+fit1$estimate[2]+qnorm(0.975)*fit1$sd[2]
+```
+
+
+## Exponential distribution
+### 1. Maxinum Likelihood Estimation을 통한 parameter 추정
+
+```{r}
+(fit2 <- fitdistcens(fcdata, "exp"))
+(lambdahat <- fit2$estimate)
+(fit2$sd)
+```
+
+### 2. lambda의 근사적 95% 신뢰구간 추정
+
+```{r}
+fit2$estimate[1]-qnorm(0.975)*fit2$sd[1] 
+fit2$estimate[1]+qnorm(0.975)*fit2$sd[1]
+```
+
