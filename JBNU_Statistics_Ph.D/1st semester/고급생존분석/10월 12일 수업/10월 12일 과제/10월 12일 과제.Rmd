@@ -1,0 +1,183 @@
+---
+title: "Homework(10.12)"
+author: "Hwang Seong-Yun"
+date: '2020 10 12 '
+output: html_document
+---
+
+## 연습문제 5.5
+## 50명의 피부 흑색종(skin melanoma) 환자들에 대해 치료 후 사망시간 구간표를 얻었다. 30명의 환자가 중도절단되었다고 한다.
+
+### (1) R을 이용하여 생명표를 작성하시오.
+
+```{r}
+library(KMsurv)
+tis <- 0:6
+ninit <- 50                  # number of initial risk set
+ncen <- c(0,1,4,5,3,17)     # censored
+nevent <- c(9,6,2,1,2,0)   # observed
+a<-lifetab(tis, ninit, ncen, nevent)
+a
+```
+
+### (2) 생존함수 그래프를 그리시오.
+
+```{r}
+par(mfrow=c(1,2))
+plot(a$surv, type="b", xlab="time (year)", ylab="survival prob")
+plot(a$hazard, type="s",xlab="time (year)", ylab="hazard rate")
+par(mfrow=c(1,1))
+```
+
+### (3) 2년 생존확률과 5년 생존확률을 구하고 비교하시오.
+#### (1)의 생명표를 통해 S(2)=0.820, S(5)=0.629 임을 확인할 수 있고, 5년 이상 생존할 확률이 2년 이상 생존할 확률에 비해 약 0.191 정도 작음을 알 수 있다.
+
+
+## 연습문제 5.7
+## 다음의 pbc 데이터(survival 패키지에 내장됨)에 대해 R을 이용하여 다음과 같이 Kaplan-Meier 생존함수를 구하고 물음에 답하시오.
+
+```{r}
+library(survival)
+data(pbc)
+fit <- survfit(Surv(time,(status==2))~1, data=pbc)
+summary(fit)
+```
+
+### (1) t=51 에서의 생존함수 값과 이에 대한 95% 신뢰구간을 구하시오.
+#### S(51)=0.990, 95% CI -> (0.981,1.000)
+
+### (2) 생존시간의 중위수(median survival time)을 구하시오.
+#### 중위수를 x라 하면 S(x)=0.5 이므로 x는 근사적으로 3377이다.
+
+### (3) 생존함수 그래프를 그리시오.
+
+```{r}
+library(survminer)
+ggsurvplot(fit, conf.int=TRUE,
+    xlab = 'Time', 
+    ylab = 'Survival Probability',
+    title = 'KM Curve for pbc data')
+```
+
+
+## 연습문제 5.8
+## 42명 백혈병환자에 대한 gehan 데이터(MASS 패키지에 내장됨)에 대해 R을 이용하여 답하시오.
+
+```{r}
+library(survival)
+library(MASS)
+data(gehan)
+head(gehan,10)
+```
+
+### (1) 환자 전체에 대한 Kaplan-Meier 생존함수를 구하시오.
+
+```{r}
+fit <- survfit(Surv(time,cens)~1,data=gehan)
+summary(fit)
+```
+
+### (2) 환자 전체에 대한 Kaplan-Meier 생존함수를 그림을 그리시오. 
+
+```{r}
+ggsurvplot(fit, conf.int=TRUE,
+    xlab = 'Time', 
+    ylab = 'Survival Probability',
+    title='KM Curve for gehan data (all patients)')
+```
+
+### (3) control 그룹과 6-MP 그룹별 Kaplan-Meier 생존함수를 구하시오.
+
+```{r}
+fit1 <- survfit(Surv(time,cens)~treat,data=gehan)
+summary(fit1) 
+```
+
+### (4) control 그룹과 6-MP 그룹별 Kaplan-Meier 생존함수 그림을 한 좌표평면에 그리시오.
+
+```{r}
+ggsurvplot(fit1, conf.int=TRUE,
+    xlab = 'Time', 
+    ylab = 'Survival Probability',
+    title='KM Curve for gehan data (by group)')
+```
+
+
+## 연습문제 5.9
+## 다음은 환자 10명에 대한 골수이식 후 사망까지의 데이터이다. 여기서 +는 우중도절단(right-censored)을 의미한다. (R 이용)
+
+```{r}
+library(tidyverse)
+library(survival)
+library(survminer) 
+library(gridExtra)
+dat1 <- tibble(time=c(11,12,15,44,45,28,16,17,19,30),
+               status=c(1,1,1,0,1,0,0,0,0,0))
+Surv(dat1$time,dat1$status)
+```
+
+### (1),(2) Kaplan-Meier 생존함수와 이를 이용한 누적위험함수를 구하시오.
+#### S(t)=exp[-H(t)] -> H(t)=-log[S(t)]
+
+```{r}
+fit.K <- survfit(Surv(time,status)~1,type="kaplan",data=dat1)
+summary(fit.K)
+fit.K$surv # survival function
+-log(fit.K$surv) # cumulative hazard function
+```
+
+### (3),(4) Nelson-Aalen 누적위험함수와 이를 이용한 생존함수를 구하시오.
+
+```{r}
+fit.H <- survfit(Surv(time,status)~1,type="fleming",data=dat1)
+summary(fit.H)
+fit.H$surv # survival function
+-log(fit.H$surv) # cumulative hazard function
+```
+
+### (5) 한 좌표평면에 (1)과 (4) 그래프를 그리시오.
+
+```{r}
+plot(fit.K$time, fit.K$surv,
+      xlab="Time", ylab="Survival Function",
+     main="Compare Survival Function",
+     ylim=c(0,1), type="s")
+lines(fit.H$time, fit.H$surv, type="s", lty=2)
+legend("topright", legend=c("S.hat(K-M)","S.tilde(N-A)"),lty=c(1,2))
+```
+
+### (6) 한 좌표평면에 (2)과 (3) 그래프를 그리시오.
+
+```{r}
+plot(fit.K$time, -log(fit.K$surv),
+      xlab="Time", ylab="Cumulative Hazard Function",
+     main="Compare Cumulative Hazard Function",
+     ylim=c(0,1), type="s")
+lines(fit.H$time, -log(fit.H$surv), type="s", lty=2)
+legend("topleft", legend=c("H.hat(K-M)","H.tilde(N-A)"),lty=c(1,2))
+```
+
+### (7) 95% pointwise linear confidence interval을 구하고 confidence band와 함께 생존함수 그래프를 그리시오.
+
+#### Kaplan-Meier method
+
+```{r}
+fit.K <- survfit(Surv(time,status)~1,type="kaplan",data=dat1)
+summary(fit.K)
+ggsurvplot(fit.K, conf.int=TRUE,
+    xlab = 'Time', 
+    ylab = 'Survival Probability',
+    title='Kaplan-Meier Survival Curve')
+```
+
+#### Nelson-Aalen method
+
+```{r}
+fit.H <- survfit(Surv(time,status)~1,type="fleming",data=dat1)
+summary(fit.H)
+ggsurvplot(fit.H, conf.int=TRUE,
+    xlab = 'Time', 
+    ylab = 'Survival Probability',
+    title='Nelson-Aalen Survival Curve')
+```
+
