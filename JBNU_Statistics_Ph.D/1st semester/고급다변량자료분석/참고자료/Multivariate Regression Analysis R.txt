@@ -1,0 +1,83 @@
+mmrlh.f <- function(X,Y,G,C) {
+ n <- nrow(X)
+ X1 <- cbind(rep(1,n),X)
+ lmrts <- lm(Y~X)
+ ps1 <- lmrts$coef
+ E1 <- lmrts$resid
+ W1 <- t(E1)%*%(E1)
+ ps0 <- ps1+solve(t(X1)%*%(X1))%*%t(G)%*%solve(G%*%solve(t(X1)%*%X1)%*%t(G))%*%(C-G%*%ps1)
+ E0 <- Y-X1%*%ps0
+ S0 <- t(E0)%*%E0/n
+ W0 <- W1+t(C-G%*%ps1)%*%solve(G%*%solve(t(X1)%*%X1)%*%t(G))%*%(C-G%*%ps1)
+ D <- W0-W1
+ V <- eigen(W0)$vec
+ L <- solve(diag(sqrt(eigen(W0)$val)))
+ W0.sqi <- V%*%L%*%t(V)
+ WDW <- W0.sqi%*%D%*%W0.sqi
+ gamma <- eigen(WDW)$val
+ Wilks <- prod(1-gamma)
+ list(psi0=ps0,S0=S0,gamma=gamma,Wilks=Wilks)
+ }
+
+lambstar.f <- function(lamb,p,q,r) {
+ g <- (p*r-2)/2
+ t <- sqrt((p^2*r^2-4)/(p^2+r^2-5))
+ f <- q-(p-r+1)/2
+ n1 <- p*r
+ n2 <- f*t-g
+ lambstar <- ((1-lamb^(1/t))/lamb^(1/t))*(n2/n1)
+ list(lambstar=lambstar,n1=n1,n2=n2)
+ }
+
+mmrmult.f <- function(lambda,x,y) {
+ n <- nrow(x) ; p <- ncol(y)
+ x <- cbind(rep(1,n),x)
+ H <- x%*%solve(t(x)%*%x)%*%t(x)
+ Y <- matrix(0,n,p)
+ for(r in 1:n)
+ for(i in 1:p) {
+ if(lambda[i]==0) Y[r,i] <- log(y[r,i])
+ else Y[r,i] <- (y[r,i]^lambda[i]-1)/lambda[i]
+ }
+ Z <- matrix(0,n,p)
+ for(i in 1:p) {
+ a <- prod(y[,i])^((lambda[i]-1)/n)
+ Z[,i] <- Y[,i]/a
+ }
+ log(prod(eigen(t(Z)%*%(diag(n)-H)%*%Z)$values))
+ }
+
+mmruniv.f <- function(lambda,x,y) {
+ n <- length(y)
+ x <- cbind(rep(1,n),x)
+ H <- x%*%solve(t(x)%*%x)%*%t(x)
+ Y <- rep(0,n)
+ for(r in 1:n) {
+ if(lambda==0) Y[r] <- log(y[r])
+ else Y[r] <- (y[r]^lambda-1)/lambda
+ }
+ Y <- Y/(prod(x)^((lambda-1)/n))
+ t(Y)%*%(diag(n)-H)%*%Y
+ }
+
+mmrboxcox.f <- function(x,y) {
+ x <- as.matrix(x)
+ y <- as.matrix(y)
+ p <- ncol(y)
+ sp <- rep(1,p)
+ for(i in 1:p)
+ sp[i] <- nlminb(objective=mmruniv.f,start=sp[i],x=x,y=y[,i])$par
+ cat("Box-Cox parameters : ",nlminb(objective=mmrmult.f,start=sp,x=x,y=y)$par,"\n")
+ }
+
+y1 <- c(68,82,82,91,82,100,100,96,63,91,87,105,87,76,66,74,68,98,63,94,82,89,80,61,102,71,102,96,55,96,74,78)
+y2 <- c(15,11,13,18,13,15,13,12,10,18,10,21,14,16,14,15,13,16,15,16,18,15,19,11,20,12,16,13,16,18,15,19)
+y3 <- c(24,8,88,82,90,77,58,14,1,98,8,88,4,14,38,4,64,88,14,99,50,36,88,14,24,24,24,50,8,98,98,50)
+x1 <- c(0,7,7,6,20,4,6,5,3,16,5,2,1,11,0,5,1,1,0,4,4,1,5,4,5,0,4,5,4,4,2,5)
+x2 <- c(10,3,9,11,7,11,7,2,5,12,3,11,4,5,0,8,6,9,13,6,5,6,8,5,7,4,17,8,7,7,6,10)
+x3 <- c(8,21,17,16,21,18,17,11,14,16,17,10,14,18,3,11,10,12,13,14,16,15,14,11,17,8,21,20,19,10,14,18)
+x4 <- c(21,28,31,27,28,32,26,22,24,27,25,26,25,27,16,12,28,30,19,27,21,23,25,16,26,16,27,28,20,23,25,27)
+x5 <- c(22,21,30,25,16,29,23,23,20,30,24,22,19,22,11,15,23,18,16,19,24,28,24,22,15,14,31,26,13,19,17,26)
+rohwer.d <- cbind(y1,y2,y3,x1,x2,x3,x4,x5)
+rohwer.x <- cbind(x1,x2,x3,x4,x5)
+rohwer.y <- cbind(y1,y2,y3)

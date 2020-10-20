@@ -1,0 +1,197 @@
+/*  life expectancy data for Cluster Analysis  
+Find 5 clusters :  country names.. 
+except for the cluster with more than 3 countries
+    (1) Hierarchical Cluster Analysis with Single Linkage, Average, & Complete Linkage 
+    (2) 5-means cluster analysis using PROC FASTCLUS 
+    (3) Find 1st Canonical Variables using 5 groups */
+
+data a; 
+length country $ 15 ;
+input country $ m0 m25 m50 m75 w0 w25 w50 w75 @@ ;
+cards;
+Algeria 63 51 30 13 67 54 34 15
+Cameroon 34 29 13 5 38 32 17 6
+Madagascar 38 30 17 7 38 34 20 7
+Mauritius 59 42 20 6 64 46 25 8
+Reunion 56 38 18 7 62 46 25 10
+Seychelles 62 44 24 7 69 50 28 14
+S_Af(C) 50 39 20 7 55 43 23 8
+S_Af(W) 65 44 22 7 72 50 27 9
+Tunisia 56 46 24 11 63 54 33 19
+Canada 69 47 24 8 75 53 29 10
+Costa_Rica 65 48 26 9 68 50 27 10
+Dominican_Rep 64 50 28 11 66 51 29 11
+El_Salvador 56 44 25 10 61 48 27 12
+Greenland 60 44 22 6 65 45 25 9
+Grenada 61 45 22 8 65 49 27 10
+Guatemala 49 40 22 9 51 41 23 8
+Honduras 59 42 22 6 61 43 22 7
+Jamaica 63 44 23 8 67 48 26 9
+Mexico 59 44 24 8 63 46 25 8
+Nicaragua 65 48 28 14 68 51 29 13
+Panama 65 48 26 9 67 49 27 10
+Trin(62) 64 63 21 7 68 47 25 9
+Trin(67) 64 43 21 6 68 47 24 8
+USA(66) 67 45 23 8 74 51 28 10
+USA(NW66) 61 40 21 10 67 46 25 11
+USA(W66) 68 46 23 8 75 52 29 10
+USA(67) 67 45 23 8 74 51 28 10
+Argentina 65 46 24 9 71 51 28 10
+Chile 59 43 23 10 66 49 27 12
+Columbia 58 44 24 9 62 47 25 10
+Ecuador 57 46 28 9 60 49 28 11
+;
+run ;
+
+* Hierarchical Cluster Analysis ;
+
+ods graphics on ;
+proc cluster data=a standard method=complete outtree=outa plots=all ;
+id country ;
+var m0 m25 m50 m75 w0 w25 w50 w75 ;
+run ; quit ;
+ods graphics off ; 
+proc tree data=outa ; run ;
+
+ods graphics on ;
+proc cluster data=a standard method=average outtree=outa plots=all ;
+id country ;
+var m0 m25 m50 m75 w0 w25 w50 w75 ;
+run ; quit ;
+ods graphics off ; 
+proc tree data=outa ; run ;
+
+ods graphics on ;
+proc cluster data=a standard method=single outtree=outa plots=all ;
+id country ;
+var m0 m25 m50 m75 w0 w25 w50 w75 ;
+run ; quit ;
+ods graphics off ; 
+proc tree data=outa ; run ;
+
+* 5-means clustering ;
+
+proc standard data=a out=res1 mean=0 std=1 replace ;
+var m0 m25 m50 m75 w0 w25 w50 w75 ;
+run ; quit ;
+
+proc fastclus data=res1 out=res2 maxclusters=5 ;
+var m0 m25 m50 m75 w0 w25 w50 w75 ;
+run ; quit ;
+
+proc print data=res2 ;
+run ;
+
+proc sort data=res2 out=res2_2 ;
+by cluster ;
+run ;
+
+proc print data=res2_2 ;
+run ;
+
+* 4-means clustering ;
+
+proc standard data=a out=res1 mean=0 std=1 replace ;
+var m0 m25 m50 m75 w0 w25 w50 w75 ;
+run ; quit ;
+
+proc fastclus data=res1 out=res2 maxclusters=4 ;
+var m0 m25 m50 m75 w0 w25 w50 w75 ;
+run ; quit ;
+
+proc candisc data=res2 out=res3 ;
+class cluster ;
+var m0 m25 m50 m75 w0 w25 w50 w75 ;
+run ; quit ;
+
+proc gplot data=res3 ;
+plot can2*can1=cluster ;
+run ; quit ;
+
+proc sgplot data=res3 ;
+scatter x=can1 y=can2 / group=cluster ;
+run ; quit ;
+
+proc sgplot data=res3 ;
+scatter x=can1 y=can2 / datalabel=cluster ;
+run ; quit ;
+
+proc sgplot data=res3 ;
+scatter x=can1 y=can2 / datalabel=country ;
+run ; quit ;
+
+proc sgplot data=res3 ;
+scatter x=can1 y=can2 / group=cluster datalabel=country ;
+run ; quit ;
+
+* K-means clustering and finding optimal number ;
+
+proc standard data=a out=outa mean=0 std=1 replace ;
+var m0 m25 m50 m75 w0 w25 w50 w75 ;
+run ; quit ;
+
+proc fastclus data=outa outstat=out1 maxclusters=1 ;
+var m0 m25 m50 m75 w0 w25 w50 w75 ;
+run ; quit ;
+proc fastclus data=outa outstat=out2 maxclusters=2 ;
+var m0 m25 m50 m75 w0 w25 w50 w75 ;
+run ; quit ;
+proc fastclus data=outa outstat=out3 maxclusters=3 ;
+var m0 m25 m50 m75 w0 w25 w50 w75 ;
+run ; quit ;
+proc fastclus data=outa outstat=out4 maxclusters=4 ;
+var m0 m25 m50 m75 w0 w25 w50 w75 ;
+run ; quit ;
+proc fastclus data=outa outstat=out5 maxclusters=5 ;
+var m0 m25 m50 m75 w0 w25 w50 w75 ;
+run ; quit ;
+proc fastclus data=outa outstat=out6 maxclusters=6 ;
+var m0 m25 m50 m75 w0 w25 w50 w75 ;
+run ; quit ;
+
+* R-square ;
+
+data RSQ_out ;
+set out1 out2 out3 out4 out5 out6 ;
+if _type_="RSQ" then output ;
+run ;
+
+data RSQ_out2 ;
+set RSQ_out ;
+if _N_=1 then delete ;
+nocluster=_N_ ;
+RSQ=OVER_ALL ;
+keep nocluster RSQ ;
+run ;
+
+proc print data=RSQ_out2 ;
+run ;
+
+proc sgplot data=RSQ_out2 ;
+series x=nocluster y=RSQ ;
+run ; quit ;
+
+* Pseudo F ;
+
+data PSEUDO_F_out ;
+set out1 out2 out3 out4 out5 out6 ;
+if _type_="PSEUDO_F" then output ;
+run ;
+
+data PSEUDO_F_out2 ;
+set PSEUDO_F_out ;
+if _N_=1 then delete ;
+nocluster=_N_ ;
+PSEUDO_F=OVER_ALL ;
+keep nocluster PSEUDO_F ;
+run ;
+
+proc print data=PSEUDO_F_out2 ;
+run ;
+
+proc sgplot data=PSEUDO_F_out2 ;
+series x=nocluster y=PSEUDO_F ;
+run ; quit ;
+
+
+

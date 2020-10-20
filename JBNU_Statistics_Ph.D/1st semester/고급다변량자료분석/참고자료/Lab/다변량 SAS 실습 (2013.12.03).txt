@@ -1,0 +1,104 @@
+/*  1st son's  Head :  width1(머리폭),  length1(머리길이)
+     2nd son's Head :  width2(머리폭),  length2(머리길이)
+  
+>>  Canonical Correlation Analysis
+
+*/
+
+data a;
+input length1 breadth1 length2 breadth2 ; cards;
+191 155 179 145
+195 149 201 152
+181 148 185 149
+183 153 188 149
+176 144 171 142
+208 157 192 152
+189 150 192 149
+197 159 189 152
+188 152 197 159
+192 150 187 151
+179 158 186 148
+183 147 174 147
+174 150 185 152
+190 159 195 157
+188 151 187 158
+163 137 161 130
+195 155 183 158
+186 153 173 148
+181 145 182 146
+175 140 165 137
+192 154 185 152
+174 143 178 147
+176 139 176 143
+197 167 200 158
+190 163 187 150
+;
+run ;
+
+proc print data=a ;
+run ;
+
+/* 첫번째 아들 */
+ods graphics on ;
+proc sgplot data=a ;
+scatter x=breadth1 y=length1 ;
+run ; quit ;
+ods graphics off ;
+
+/* 두번째 아들 */
+ods graphics on ;
+proc sgplot data=a ;
+scatter x=breadth2 y=length2 ;
+run ; quit ;
+ods graphics off ;
+
+/*구분 없음 */
+data together ;
+set a ;
+length=length1 ; breadth=breadth1 ; output ;
+length=length2 ; breadth=breadth2 ; output ;
+run ;
+proc print data=together ;
+run ;
+ods graphics on ;
+proc sgplot data=together ;
+scatter x=breadth y=length ;
+run ; quit ;
+ods graphics off ;
+
+/* 전체적인 상관관계 */
+proc corr data=a ;
+var breadth1 length1 breadth2 length2 ;
+run ; quit ;
+
+/* canonical correlation analysis */
+proc cancorr data=a 
+vprefix=First wprefix=Second
+vname='First son' wname='Second son' out=outcorr ;
+var length1 breadth1 ;
+with length2 breadth2 ;
+run ; quit ;
+/* 단위가 서로 같은 경우 : Raw version, 다른 경우 : Standardized version */ 
+
+data outcorr ; set outcorr ;
+ID=_N_ ;
+run ;
+
+proc print data=outcorr ;
+run ;
+
+ods graphics on ;
+proc sgplot data=outcorr ;
+scatter x=First1 y=Second1 / datalabel=id ;
+run ; quit ;
+ods graphics off ;
+
+ods graphics on ;
+proc sgplot data=outcorr ;
+scatter x=First2 y=Second2 / datalabel=id ;
+run ; quit ;
+ods graphics off ;
+
+
+
+

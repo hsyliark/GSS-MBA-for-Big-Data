@@ -1,0 +1,64 @@
+cork <- source("C:/Users/student/Desktop/Sung-yoon/cork.data")
+cork <- cork$value
+cork
+
+faces(cork)
+
+install.packages("aplpack")
+
+
+library(aplpack)
+
+faces(cork)
+
+stars(cork)
+cork.m <- apply(cork,2,mean)
+cork.s <- cov(cork)
+cork.maha <- mahalanobis(cork,cork.m,cork.s)
+cork.maha
+
+# for chi-plot (m_normality)
+chisplot <- function(x) {
+     if (!is.matrix(x)) stop("x is not a matrix")
+     
+     ### determine dimensions
+     n <- nrow(x)
+     p <- ncol(x)
+     #
+      xbar <- apply(x, 2, mean)
+     S <- var(x)
+     S <- solve(S)
+     index <- (1:n)/(n+1)
+     #
+     xcent <- t(t(x) - xbar)
+     di <- apply(xcent, 1, function(x,S) x %*% S %*% x,S)
+     #
+     quant <- qchisq(index,p)
+     plot(quant, sort(di), ylab = "Ordered distances",
+          xlab = "Chi-square quantile", lwd=2,pch=1, main="Q-Q plot for multivariate normality")
+     
+ }
+ 
+ corkmat <- as.matrix(cork)
+ chisplot(corkmat)
+ is.matrix(corkmat)
+
+
+ crime <- read.csv("C:/Users/student/Desktop/Sung-yoon/crime.csv",sep=",",header=T)
+ head(crime)
+
+
+ stars(crime[,-1])
+ faces(crime[,-1])
+
+
+ faces(crime[,-1])
+ crime.m <- apply(crime[,-1],2,mean)
+ crime.s <- cov(crime[,-1])
+
+ crime.maha <- mahalanobis(crime[,-1],crime.m,crime.s)
+ crime.maha
+ 
+ crime.hawa <- as.numeric(crime[3,-1])
+ crime.maha2 <- mahalanobis(crime[,-1],crime.hawa,crime.s)
+ crime.maha2

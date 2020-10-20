@@ -1,0 +1,98 @@
+/* 데이터 불러오기 */
+proc import out=sw_1
+datafile="C:\Users\student\Desktop\다변량\sw.csv"
+dbms=csv replace ;
+run ;
+proc print data=sw_1 ;
+run ;
+
+/* glm에서는 H0=0 을 검정하므로 데이터 변형 필요 */
+data sw_2 ;
+set sw_1 ;
+mu1=y1-4 ; mu2=y2-50 ; mu3=y3-10 ;
+run ;
+
+/* Hotelling's T^2 통계량 계산 */
+proc glm data=sw_2 ;
+model mu1 mu2 mu3 = / nouni ;
+manova h=INTERCEPT ;
+run ; quit ;
+
+/* 일반 선형 가정 */
+data sw_3 ;
+set sw_1 ;
+v1=12*y1-y2+2 ; v2=y2-5*y3 ;
+run ;
+
+/* Hotelling's T^2 통계량 계산 */
+proc glm data=sw_3 ;
+model v1 v2 = / nouni ;
+manova h=INTERCEPT ;
+run ; quit ;
+
+
+
+# Checking results using R
+
+sweat.d<-read.table('I:\다변량실습\sw.csv',header=T,sep=',')
+hotelling1.f<-function(x,mu0,alpha=0.05) {
+ n<-nrow(x)
+ p<-ncol(x)
+ m<-colMeans(x)
+ s<-var(x)
+ si<-solve(s)
+ t2<-(n-p)/(p*(n-1))*n*t(m-mu0)%*%si%*%(m-mu0)
+ p.val<-1-pf(t2,p,n-p)
+ cat("The test statistic is ",t2,
+      "and P-value is ",p.val,".")
+ 
+ if (p.val < alpha)
+       cat("Reject the null hypothesis.")
+ else
+       cat("Don't reject the null hypothesis.")
+}
+hotelling1.f(sweat.d, c(4,50,10)) 
+
+linhypo.f<-function(x,A,b,alpha=0.05) {
+n<-nrow(x)
+q<-nrow(A)
+m<-colMeans(x)
+iv<-solve(A%*%var(x)%*%t(A))
+t2<-(n-q)/(q*(n-1))*n*t(A%*%m-b)%*%iv%*%(A%*%m-b)
+p.val<-1-pf(t2,q,n-q)
+cat("The test statistic is ",t2,"and P-value is ",p.val,".")
+if(p.val < alpha)
+  cat("Reject the null hypothesis.")
+else
+  cat("Don't reject the null hypothesis.")
+}
+A<-matrix(c(12,-1,0,0,1,-5),2,3,byrow=T)
+b<-c(-2,0)
+linhypo.f(sweat.d,A,b) 
+
+
+/* 데이터 불러오기 */
+proc import out=nutri
+datafile="C:\Users\student\Desktop\다변량\nutri.csv"
+dbms=csv replace ;
+run ;
+proc print data=nutri ;
+run ;
+
+/* 단변량 회귀분석 */
+proc reg data=nutri ;
+model Iron Protein Calcium = x1 x2 x3 ;
+run ; quit ;
+
+/* 다변량 회귀분석 */
+proc reg data=nutri ;
+model Iron Protein Calcium = x1 x2 x3 ;
+mtest x1 ;
+mtest x2 ;
+mtest x3 ;
+mtest x1, x2, x3 ;
+mtest Iron-Protein, Protein-Calcium ;
+mtest x1, x2 ;
+mtest Iron-Protein, Protein-Calcium, x1 ;
+mtest Iron-Protein ;
+run ; quit ;
