@@ -1,0 +1,206 @@
+---
+title: "Midterm (Linear Models)"
+author: "Hwang Seong-Yun"
+date: '2020 10 23 '
+output: html_document
+---
+
+# Boston dataset in MASS package. There are 14 variables and 506 observations at total.
+
+### Loading data
+```{r}
+library(MASS)
+data(Boston)
+head(Boston, 20)
+```
+
+#### Variables in Boston data
+#### crim : per capita crime rate by town. -> continuous
+#### zn : proportion of residential land zoned for lots over 25,000 sq.ft. -> continuous
+#### indus : proportion of non-retail business acres per town. -> continuous
+#### chas : Charles River dummy variable (= 1 if tract bounds river; 0 otherwise). -> discrete
+#### nox : nitrogen oxides concentration (parts per 10 million). -> continuous
+#### rm : average number of rooms per dwelling.
+#### age : proportion of owner-occupied units built prior to 1940. -> continuous
+#### dis : weighted mean of distances to five Boston employment centres. -> continuous
+#### rad : index of accessibility to radial highways. -> continuous
+#### tax : full-value property-tax rate per \$10,000. -> continuous
+#### ptratio : pupil-teacher ratio by town. -> continuous
+#### black : 1000(Bk - 0.63)^2 where Bk is the proportion of blacks by town. -> continuous
+#### lstat : lower status of the population (percent). -> continuous
+#### medv : median value of owner-occupied homes in \$1000s. -> continuous 
+
+## 1. Give some summary on the data to identify its characteristics. 
+
+```{r}
+Boston$chas <- as.character(Boston$chas)
+summary(Boston)
+```
+
+#### In Boston data, variable 'CHAS' is discrete. And other variables are continuous. Let's see some graph for checking characteristics this data.
+
+```{r}
+library(ggplot2)
+library(gridExtra)
+p1 <- ggplot(Boston, aes(x=crim)) +
+  geom_histogram(color="black", fill="white") +
+  geom_vline(aes(xintercept=mean(crim)),
+            color="blue", linetype="dashed", size=1)
+p2 <- ggplot(Boston, aes(x=zn)) +
+  geom_histogram(color="black", fill="white") +
+  geom_vline(aes(xintercept=mean(zn)),
+            color="blue", linetype="dashed", size=1)
+p3 <- ggplot(Boston, aes(x=indus)) +
+  geom_histogram(color="black", fill="white") +
+  geom_vline(aes(xintercept=mean(indus)),
+            color="blue", linetype="dashed", size=1)
+p4 <- ggplot(Boston, aes(x=nox)) +
+  geom_histogram(color="black", fill="white") +
+  geom_vline(aes(xintercept=mean(nox)),
+            color="blue", linetype="dashed", size=1)
+p5 <- ggplot(Boston, aes(x=rm)) +
+  geom_histogram(color="black", fill="white") +
+  geom_vline(aes(xintercept=mean(rm)),
+            color="blue", linetype="dashed", size=1)
+p6 <- ggplot(Boston, aes(x=age)) +
+  geom_histogram(color="black", fill="white") +
+  geom_vline(aes(xintercept=mean(age)),
+            color="blue", linetype="dashed", size=1)
+p7 <- ggplot(Boston, aes(x=dis)) +
+  geom_histogram(color="black", fill="white") +
+  geom_vline(aes(xintercept=mean(dis)),
+            color="blue", linetype="dashed", size=1)
+p8 <- ggplot(Boston, aes(x=rad)) +
+  geom_histogram(color="black", fill="white") +
+  geom_vline(aes(xintercept=mean(rad)),
+            color="blue", linetype="dashed", size=1)
+p9 <- ggplot(Boston, aes(x=tax)) +
+  geom_histogram(color="black", fill="white") +
+  geom_vline(aes(xintercept=mean(tax)),
+            color="blue", linetype="dashed", size=1)
+p10 <- ggplot(Boston, aes(x=ptratio)) +
+  geom_histogram(color="black", fill="white") +
+  geom_vline(aes(xintercept=mean(ptratio)),
+            color="blue", linetype="dashed", size=1)
+p11 <- ggplot(Boston, aes(x=black)) +
+  geom_histogram(color="black", fill="white") +
+  geom_vline(aes(xintercept=mean(black)),
+            color="blue", linetype="dashed", size=1)
+p12 <- ggplot(Boston, aes(x=lstat)) +
+  geom_histogram(color="black", fill="white") +
+  geom_vline(aes(xintercept=mean(lstat)),
+            color="blue", linetype="dashed", size=1)
+p13 <- ggplot(Boston, aes(x=medv)) +
+  geom_histogram(color="black", fill="white") +
+  geom_vline(aes(xintercept=mean(medv)),
+            color="blue", linetype="dashed", size=1)
+grid.arrange(p1,p2,p3,p4,p5,p6,p7,p8,p9,p10,p11,p12,p13, nrow=5, ncol=3)
+```
+
+#### Refer to the histograms, distribution of some variables are skewed to the right (e.g : crim, zn, dis, lstat) or skewed to the left (e.g : indus, age, tax, black). So, I think we have to check assumptions before fitting multiple linear regression model. And, we have to see histograms by 'chas' variable. 
+
+```{r}
+g1 <- ggplot(Boston, aes(x=crim, color=chas)) + 
+  geom_histogram(fill="white", position="dodge")
+g2 <- ggplot(Boston, aes(x=zn, color=chas)) + 
+  geom_histogram(fill="white", position="dodge")
+g3 <- ggplot(Boston, aes(x=indus, color=chas)) + 
+  geom_histogram(fill="white", position="dodge")
+g4 <- ggplot(Boston, aes(x=nox, color=chas)) + 
+  geom_histogram(fill="white", position="dodge")
+g5 <- ggplot(Boston, aes(x=rm, color=chas)) + 
+  geom_histogram(fill="white", position="dodge")
+g6 <- ggplot(Boston, aes(x=age, color=chas)) + 
+  geom_histogram(fill="white", position="dodge")
+g7 <- ggplot(Boston, aes(x=dis, color=chas)) + 
+  geom_histogram(fill="white", position="dodge")
+g8 <- ggplot(Boston, aes(x=rad, color=chas)) + 
+  geom_histogram(fill="white", position="dodge")
+g9 <- ggplot(Boston, aes(x=tax, color=chas)) + 
+  geom_histogram(fill="white", position="dodge")
+g10 <- ggplot(Boston, aes(x=ptratio, color=chas)) + 
+  geom_histogram(fill="white", position="dodge")
+g11 <- ggplot(Boston, aes(x=black, color=chas)) + 
+  geom_histogram(fill="white", position="dodge")
+g12 <- ggplot(Boston, aes(x=lstat, color=chas)) + 
+  geom_histogram(fill="white", position="dodge")
+g13 <- ggplot(Boston, aes(x=medv, color=chas)) + 
+  geom_histogram(fill="white", position="dodge")
+grid.arrange(g1,g2,g3,g4,g5,g6,g7,g8,g9,g10,g11,g12,g13, nrow=5, ncol=3)
+```
+
+#### Refer to the histograms, if tract bounds river, all continuous variables are lower than otherwise situation. Therefore, it seems that variable 'chas' has strong effect about owner-occupied homes, crime rate etc.
+
+## 2. Fit a linear regression model with the response variable, MEDV.
+## 3. Which variables are relevant to explain MEDV? Give an answer.
+
+```{r}
+fit1 <- lm(medv ~ . , data = Boston)
+summary(fit1)
+```
+
+#### Refer to the fitted multiple linear regression model, variable 'indus' and 'age' are not significant with 'medv'. Other variables are relevant to explain 'medv'.
+
+## 4. Verify if the assumptions on the error are satisfied.
+#### For multiple regression model, we have to check normality, constant variance, linearity and independence of residuals.
+
+```{r}
+par(mfrow=c(2,2))
+plot(fit1)
+par(mfrow=c(1,1))
+```
+
+#### In these plots, some outliers(365, 372, 373, 369) are detected. And it seems that normality, linearity and constant variance are violated. Let's test about normality and independence.
+
+```{r}
+par(mfrow=c(1,2))
+qqnorm(residuals(fit1),ylab="Residuals")
+qqline(residuals(fit1))
+hist(residuals(fit1),xlab="Residuals")
+par(mfrow=c(1,1))
+shapiro.test(residuals(fit1))
+```
+
+#### Refer to the Shapiro-Wilk normality test, p-value is lower than 2.2*10^(-16). So residuals are statistically not normality.
+
+```{r}
+n <- length(residuals(fit1))
+plot(tail(residuals(fit1),n-1) ~ head(residuals(fit1),n-1), xlab= expression(hat(epsilon)[i]),ylab=expression(hat(epsilon)[i+1]))
+abline(h=0,v=0,col=grey(0.75))
+library(lmtest)
+dwtest(medv ~ . , data=Boston)
+```
+
+#### Refer to the Durbin-Watson test, p-value is lower than 2.2*10^(-16). So residuals have statistically positive autocorrelation. 
+
+## 5. If some assumptions are violated, how can you remedy them?
+#### To remedy them, we can do transformation(log, square, cubic etc.) about some variables or fit polynomial regression model.
+
+## 6. Check if there exists multicollinearity.
+#### For checking multicollinearity, calculate variance inflation factor(VIF).
+
+```{r}
+library(car)
+vif(fit1)
+```
+
+#### Refer to the result, all variables has VIF which is lower than 10. Hence it seems that multicollinearity is not exist.
+
+## 7. Fit an additive model which can reflect some non-linear association between the response and the predictors. Describe and interpret the results.
+#### I think variables 'chas' and 'rad' are not non-linearity relationship with 'medv'. So I fitted GAM model as shown below.
+
+```{r}
+library(ggGam)
+library(mgcv)
+Boston$chas <- as.numeric(Boston$chas)
+fit2 <- gam(medv ~ s(crim)+s(zn)+s(indus)+chas+s(nox)+s(rm)+s(age)+s(dis)+rad+s(tax)+s(ptratio)+s(black)+s(lstat),data=Boston)
+ggGam(fit2)
+```
+
+#### Refer to the plots, variables 'crim', 'nox', 'rm', dis', 'lstat' have non-linearity relationship with 'medv'.
+
+```{r}
+summary(fit2)
+```
+
+#### Refer to the result, variables 'zn', 'age', 'black' are not significant effect. But this GAM model has adjusted R-square 0.886. So compare with multiple linear regression model (adjusted R-square 0.734), GAM model has good explainable power than multiple linear regression model. 
