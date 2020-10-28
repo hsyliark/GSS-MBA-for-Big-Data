@@ -607,20 +607,20 @@ ex2</code></pre>
 ##  9    188    152 first
 ## 10    192    150 first
 ## # ... with 40 more rows</code></pre>
-<div id="첫째와-둘째-아들의-머리-길이와-너비에-대한-모평균-벡터가-mut-182182t-인지를-검정하시오." class="section level3">
-<h3>(1) 첫째와 둘째 아들의 머리 길이와 너비에 대한 모평균 벡터가 mu^T = [182,182]^T 인지를 검정하시오.</h3>
+<div id="첫째와-둘째-아들의-머리-길이에-대한-모평균-벡터가-mut-182182t-인지를-검정하시오." class="section level3">
+<h3>(1) 첫째와 둘째 아들의 머리 길이에 대한 모평균 벡터가 mu^T = [182,182]^T 인지를 검정하시오.</h3>
 <pre class="r"><code>library(ICSNP)</code></pre>
 <pre><code>## Loading required package: mvtnorm</code></pre>
 <pre><code>## Loading required package: ICS</code></pre>
-<pre class="r"><code>HotellingsT2(cbind(ex2$length,ex2$breath) ~ ex2$group, mu=c(182,182))</code></pre>
+<pre class="r"><code>HotellingsT2(cbind(ex2$length[ex2$group==&quot;first&quot;],ex2$length[ex2$group==&quot;second&quot;]), mu=c(182,182))</code></pre>
 <pre><code>## 
-##  Hotelling&#39;s two sample T2-test
+##  Hotelling&#39;s one sample T2-test
 ## 
-## data:  cbind(ex2$length, ex2$breath) by ex2$group
-## T.2 = 4049, df1 = 2, df2 = 47, p-value &lt; 2.2e-16
-## alternative hypothesis: true location difference is not equal to c(182,182)</code></pre>
-<div id="검정결과-p-value의-값이-거의-0에-가깝게-산출되었다.-따라서-h0를-기각하게-되고-첫째와-둘째-아들의-머리-길이와-너비에-대한-모평균-벡터가-mut-182182t-가-아니라고-결론내린다." class="section level4">
-<h4>검정결과 p-value의 값이 거의 0에 가깝게 산출되었다. 따라서 H0를 기각하게 되고, 첫째와 둘째 아들의 머리 길이와 너비에 대한 모평균 벡터가 mu^T = [182,182]^T 가 아니라고 결론내린다.</h4>
+## data:  cbind(ex2$length[ex2$group == &quot;first&quot;], ex2$length[ex2$group ==     &quot;second&quot;])
+## T.2 = 1.9253, df1 = 2, df2 = 23, p-value = 0.1686
+## alternative hypothesis: true location is not equal to c(182,182)</code></pre>
+<div id="검정결과-p-value의-값이-0.1686으로-유의수준-0.05보다-매우-크게-산출되었다.-따라서-h0를-기각하지-못하게-되고-첫째와-둘째-아들의-머리-길이와-너비에-대한-모평균-벡터는-mut-182182t-라고-결론내린다." class="section level4">
+<h4>검정결과 p-value의 값이 0.1686으로 유의수준 0.05보다 매우 크게 산출되었다. 따라서 H0를 기각하지 못하게 되고, 첫째와 둘째 아들의 머리 길이와 너비에 대한 모평균 벡터는 mu^T = [182,182]^T 라고 결론내린다.</h4>
 </div>
 </div>
 <div id="첫째-아들과-둘째-아들의-머리의-길이와-너비의-모평균-벡터가-동일한지를-검정하시오." class="section level3">
