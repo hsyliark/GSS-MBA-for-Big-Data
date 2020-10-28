@@ -157,8 +157,11 @@ boxM(cbind(iris$Sepal.Length, iris$Sepal.Width, iris$Petal.Length, iris$Petal.Wi
 #### Species에 따른 3종류의 공분산행렬이 동일하다고 가정하고 검정을 실시하면 다음과 같다.
 
 ```{r}
-fit1 <- hotelling.test(.~Species, data=iris)
-fit1
+fit1 <- manova(cbind(iris$Sepal.Length,iris$Sepal.Width,iris$Petal.Length,iris$Petal.Width)~iris$Species)
+summary(fit1, test="Wilks") # ANOVA table of Wilk's lambda
+summary(fit1, test="Pillai") # ANOVA table of Pillai's Trace
+summary(fit1, test="Hotelling-Lawley") # ANOVA table of Hotelling-Lawley Trace
+summary(fit1, test="Roy") # ANOVA table of Roy's Greatest Root
 ```
 
 #### 검정결과, p-value의 값이 거의 0에 가깝게 산출되었다. 따라서 3가지 붓꽃 종류에 대한 평균벡터가 동일하지 않다고 결론내린다. 

@@ -831,12 +831,31 @@ force(iris)</code></pre>
 <h3>(2) 3가지 붓꽃 종류에 대해 평균벡터가 동일한지를 검정하시오.</h3>
 <div id="species에-따른-3종류의-공분산행렬이-동일하다고-가정하고-검정을-실시하면-다음과-같다." class="section level4">
 <h4>Species에 따른 3종류의 공분산행렬이 동일하다고 가정하고 검정을 실시하면 다음과 같다.</h4>
-<pre class="r"><code>fit1 &lt;- hotelling.test(.~Species, data=iris)
-fit1</code></pre>
-<pre><code>## Test stat:  625.46 
-## Numerator df:  4 
-## Denominator df:  95 
-## P-value:  0</code></pre>
+<pre class="r"><code>fit1 &lt;- manova(cbind(iris$Sepal.Length,iris$Sepal.Width,iris$Petal.Length,iris$Petal.Width)~iris$Species)
+summary(fit1, test=&quot;Wilks&quot;) # ANOVA table of Wilk&#39;s lambda</code></pre>
+<pre><code>##               Df    Wilks approx F num Df den Df    Pr(&gt;F)    
+## iris$Species   2 0.023439   199.15      8    288 &lt; 2.2e-16 ***
+## Residuals    147                                              
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
+<pre class="r"><code>summary(fit1, test=&quot;Pillai&quot;) # ANOVA table of Pillai&#39;s Trace</code></pre>
+<pre><code>##               Df Pillai approx F num Df den Df    Pr(&gt;F)    
+## iris$Species   2 1.1919   53.466      8    290 &lt; 2.2e-16 ***
+## Residuals    147                                            
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
+<pre class="r"><code>summary(fit1, test=&quot;Hotelling-Lawley&quot;) # ANOVA table of Hotelling-Lawley Trace</code></pre>
+<pre><code>##               Df Hotelling-Lawley approx F num Df den Df    Pr(&gt;F)    
+## iris$Species   2           32.477   580.53      8    286 &lt; 2.2e-16 ***
+## Residuals    147                                                      
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
+<pre class="r"><code>summary(fit1, test=&quot;Roy&quot;) # ANOVA table of Roy&#39;s Greatest Root</code></pre>
+<pre><code>##               Df    Roy approx F num Df den Df    Pr(&gt;F)    
+## iris$Species   2 32.192     1167      4    145 &lt; 2.2e-16 ***
+## Residuals    147                                            
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
 </div>
 <div id="검정결과-p-value의-값이-거의-0에-가깝게-산출되었다.-따라서-3가지-붓꽃-종류에-대한-평균벡터가-동일하지-않다고-결론내린다." class="section level4">
 <h4>검정결과, p-value의 값이 거의 0에 가깝게 산출되었다. 따라서 3가지 붓꽃 종류에 대한 평균벡터가 동일하지 않다고 결론내린다.</h4>
