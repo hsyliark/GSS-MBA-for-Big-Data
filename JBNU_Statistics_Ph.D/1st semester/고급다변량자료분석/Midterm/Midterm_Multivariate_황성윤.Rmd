@@ -1,0 +1,164 @@
+---
+title: "Midterm_Multivariate"
+author: "Hwang Seong-Yun"
+date: '2020 10 28 '
+output: html_document
+---
+
+## I. 다음 자료는 암모니아의 산화공정에 관한 세 변수에 대한 자료로 21개의 관측치가 있으며 변수 x1은 공정률, 변수 x2는 온도, 변수 x3는 산농축정도를 나타내는 퇴비자료이다(Rousseeuw and Leroy, 1987, p.76). 다음 물음에 답하시오. 
+
+```{r}
+library(tidyverse)
+ex1 <- tibble(x1=c(80,80,75,62,62,62,62,62,58,58,58,58,58,58,50,50,50,50,50,56,70),x2=c(27,27,25,24,22,23,24,24,23,18,18,17,18,19,18,18,19,19,20,20,20),x3=c(89,88,90,87,87,87,93,93,87,80,89,88,82,93,89,86,72,79,80,82,91))
+ex1
+```
+
+### (1) 표본평균벡터, 표본공분산행렬을 구하시오.
+```{r}
+colMeans(ex1) # sample mean vector
+cov(ex1) # sample covariance matrix
+```
+
+### (2) (1)에서 구한 표본공분산행렬을 대응하는 표본상관행렬로 변환하시오.
+
+```{r}
+cor(ex1) # sample correlation matrix
+```
+
+### (3) 각 변수의 정규확률그림과 카이제곱그림을 검토하시오.
+### (4) 다변량정규분포를 따르는가?
+
+```{r}
+# variable x1
+qqnorm(ex1$x1) ; qqline(ex1$x1)
+shapiro.test(ex1$x1)
+```
+
+#### 변수 x1은 정규성이 의심됨. (p-value = 0.0067 < 0.05)
+
+```{r}
+# variable x2
+qqnorm(ex1$x2) ; qqline(ex1$x2)
+shapiro.test(ex1$x2)
+```
+
+#### 변수 x2는 정규성이 의심됨. (p-value = 0.0281 < 0.05)
+
+```{r}
+# variable x3
+qqnorm(ex1$x3) ; qqline(ex1$x3)
+shapiro.test(ex1$x3)
+```
+
+#### 변수 x3는 정규성이 의심됨. (p-value = 0.0481 < 0.05)
+
+```{r}
+library(mvoutlier)
+chisq.plot(ex1)
+```
+
+#### 카이제곱그림을 확인한 결과, 다변량 정규분포를 따르지 않는 것으로 판단됨.
+
+### (5) 다변량 정규분포로 변환을 하여 정규성이 향상되었는지 확인하시오.
+
+```{r}
+library(MASS)
+library(rcompanion)
+library(car)
+## 변수 x1에 대한 변환
+Box <- boxcox(ex1$x1~1, lambda=seq(-6,6,0.001))
+Cox <- data.frame(Box$x, Box$y) # x : lambda의 값, y : log-likelihood의 값    
+Cox2 <- Cox[with(Cox, order(-Cox$Box.y)),] # minus log-likelihood의 크기순으로 정렬
+Cox2[1,] # minus log-likelihood의 값이 최대가 되는 경우
+(lambda <- Cox2[1, "Box.x"]) # minus log-likelihood의 값이 최대가 되는 경우의 lambda 값 
+x1_trans <- (ex1$x1^lambda - 1)/lambda # power transformation  
+plotNormalHistogram(x1_trans)
+qqnorm(x1_trans) ; qqline(x1_trans)
+shapiro.test(x1_trans)
+## 변수 x2에 대한 변환
+Box <- boxcox(ex1$x2~1, lambda=seq(-6,6,0.001))
+Cox <- data.frame(Box$x, Box$y) # x : lambda의 값, y : log-likelihood의 값    
+Cox2 <- Cox[with(Cox, order(-Cox$Box.y)),] # minus log-likelihood의 크기순으로 정렬
+Cox2[1,] # minus log-likelihood의 값이 최대가 되는 경우
+(lambda <- Cox2[1, "Box.x"]) # minus log-likelihood의 값이 최대가 되는 경우의 lambda 값 
+x2_trans <- (ex1$x2^lambda - 1)/lambda # power transformation  
+plotNormalHistogram(x2_trans)
+qqnorm(x2_trans) ; qqline(x2_trans)
+shapiro.test(x2_trans)
+## 변수 x3에 대한 변환
+Box <- boxcox(ex1$x3~1, lambda=seq(-6,6,0.001))
+Cox <- data.frame(Box$x, Box$y) # x : lambda의 값, y : log-likelihood의 값    
+Cox2 <- Cox[with(Cox, order(-Cox$Box.y)),] # minus log-likelihood의 크기순으로 정렬
+Cox2[1,] # minus log-likelihood의 값이 최대가 되는 경우
+(lambda <- Cox2[1, "Box.x"]) # minus log-likelihood의 값이 최대가 되는 경우의 lambda 값 
+x3_trans <- (ex1$x3^lambda - 1)/lambda # power transformation  
+plotNormalHistogram(x3_trans)
+qqnorm(x3_trans) ; qqline(x3_trans)
+shapiro.test(x3_trans)
+```
+
+#### 변환결과, 변수 x1을 제외하고는 어느정도 정규성을 만족하는 것으로 판단됨.
+
+```{r}
+(a <- powerTransform(cbind(ex1$x1,ex1$x2,ex1$x3)~1))
+summary(powerTransform(cbind(ex1$x1,ex1$x2,ex1$x3)~1))
+x1_trans1 <- (ex1$x1^(-1.3855052) - 1)/(-1.3855052)
+x2_trans1 <- (ex1$x2^(0.0969406) - 1)/(0.0969406)
+x3_trans1 <- (ex1$x3^(5.8175407) - 1)/(5.8175407)
+```
+
+
+
+## II. 다음 자료는 n=25 인 가족의 표본으로부터 성인인 첫째 아들과 둘째 아들의 머리의 길이(length)와 너비(breath)를 측정한 자료이다.
+
+```{r}
+ex2 <- tibble(length=c(191,195,181,183,176,208,189,197,188,192,179,183,174,190,188,163,195,186,181,175,192,174,176,197,190,179,201,185,188,171,192,190,189,197,187,186,174,185,195,187,161,183,173,182,165,185,178,176,200,187),breath=c(155,149,148,153,144,157,150,159,152,150,158,147,150,159,151,137,155,153,145,140,154,143,139,167,163,145,152,149,149,142,152,149,152,159,151,148,147,152,157,158,130,158,148,146,137,152,147,143,158,150),group=c(rep("first",25),rep("second",25)))
+ex2
+```
+
+### (1) 첫째와 둘째 아들의 머리 길이와 너비에 대한 모평균 벡터가 mu^T = [182,182]^T 인지를 검정하시오.
+
+```{r}
+library(ICSNP)
+HotellingsT2(cbind(ex2$length,ex2$breath) ~ ex2$group, mu=c(182,182))
+```
+
+#### 검정결과 p-value의 값이 거의 0에 가깝게 산출되었다. 따라서 H0를 기각하게 되고, 첫째와 둘째 아들의 머리 길이와 너비에 대한 모평균 벡터가 mu^T = [182,182]^T 가 아니라고 결론내린다.
+
+### (2) 첫째 아들과 둘째 아들의 머리의 길이와 너비의 모평균 벡터가 동일한지를 검정하시오. 
+
+#### 첫째 아들과 둘째 아들은 독립된 집단으로 보는 것이 바람직하므로 다음과 같이 검정을 실시한다.
+
+```{r}
+library(Hotelling)
+fit <- hotelling.test(.~group, data=ex2)
+fit
+```
+
+#### 검정결과, p-value의 값이 0.646으로 유의수준 0.05보다 매우 큰 값이다. 따라서 H0를 받아들이게 되고, 첫째 아들과 둘째 아들의 머리의 길이와 너비의 모평균 벡터가 동일하다고 결론내린다.
+
+
+
+## III. iris 붓꽃 자료에서 두 변수(Sepal.length와 Petal.Length)의 평균벡터가 Species의 3개 붓꽃 종류에 따라 동일한지를 검정하고자 한다.
+
+### (1) 세 종류의 공분산 행렬이 동일한지를 검정하시오.
+
+```{r}
+data(iris)
+force(iris)
+library(biotools)
+boxM(cbind(iris$Sepal.Length, iris$Sepal.Width, iris$Petal.Length, iris$Petal.Width) , iris$Species)
+```
+
+#### 검정결과, p-value의 값이 거의 0에 가깝게 산출되었다. 따라서 Species에 따른 3종류의 공분산행렬은 동일하지 않다고 결론내린다.
+
+### (2) 3가지 붓꽃 종류에 대해 평균벡터가 동일한지를 검정하시오.
+
+#### Species에 따른 3종류의 공분산행렬이 동일하다고 가정하고 검정을 실시하면 다음과 같다.
+
+```{r}
+fit1 <- hotelling.test(.~Species, data=iris)
+fit1
+```
+
+#### 검정결과, p-value의 값이 거의 0에 가깝게 산출되었다. 따라서 3가지 붓꽃 종류에 대한 평균벡터가 동일하지 않다고 결론내린다. 
