@@ -1,0 +1,142 @@
+---
+title: "Homework(9,10 weekend)"
+author: "Hwang Seong-Yun"
+date: '2020 11 3 '
+output: html_document
+---
+
+## 8.7) Convert the covariance matrix S in Exercise 8.6 to a sample correlation matrix R. 
+
+```{r}
+library(tidyverse)
+ex1 <- tibble(x1=c(108.28,152.36,95.04,65.45,62.97,263.99,265.19,285.06,92.01,165.68),x2=c(17.05,16.59,10.91,14.14,9.52,25.33,18.54,15.73,8.10,11.13))
+```
+
+### (a) Find the sample principal components y1_hat, y2_hat and their variances.
+
+```{r}
+(x_bar <- colMeans(ex1))
+(S <- var(ex1))
+(R <- cor(ex1))
+lambda_R <- eigen(R)
+lambda_R
+(z1 <- (ex1$x1-mean(ex1$x1))/sd(ex1$x1))
+(z2 <- (ex1$x2-mean(ex1$x2))/sd(ex1$x2))
+y1_hat <- 0.7071068*z1+0.7071068*z2
+y2_hat <- -0.7071068*z1+0.7071068*z2
+var(y1_hat)
+var(y2_hat)
+```
+
+#### y1_hat = 0.707 * z1 + 0.707 * z2, y2_hat = -0.707 * z1 + 0.707 * z2 
+#### var(y1_hat)=1.686, var(y2_hat)=0.314
+
+### (b) Compute the proportion of the total sample variance explained by y1_hat.
+
+```{r}
+lambda_R$values[[1]]/(lambda_R$values[[1]]+lambda_R$values[[2]])
+```
+
+#### 84.309 %
+
+### (c) Compute the correlation coefficients r(y1_hat,zk) (k=1,2). 
+
+```{r}
+cor(y1_hat,z1)
+cor(y1_hat,z2)
+```
+
+### (d) Compare the components obtained in Part a with those obtained in Exercise 8.6.
+
+```{r}
+lambda_S <- eigen(S)
+lambda_S
+y1_hat_S <- -0.99917338*ex1$x1-0.04065165*ex1$x2
+y2_hat_S <- -0.04065165*ex1$x1-0.99917338*ex1$x2
+var(y1_hat_S)
+var(y2_hat_S)
+```
+
+#### Variable x1 and x2 has same unit. I think both methods are useful, but I want to take using sample covariance matrix S. Because, compared with R, it is better for explain characteristics of original data.
+
+## 8.22) Consider the data on bulls in Table 1.10. Utilizing the seven variables SalePr, YrHgt, FtFrBody, PrctFFB, BkFat, SaleHt, SaleWt a principal component analysis using the covariance matrix S and the correlation matrix R.
+
+```{r}
+ex2 <- read.csv("C:/Users/HSY/Desktop/problem8_22.csv",sep=",",header=T)
+head(ex2,10)
+(S <- var(ex2))
+(R <- cor(ex2))
+```
+
+### Using the covariance matrix S
+
+```{r}
+library(psych)
+lambda_S <- eigen(S)
+lambda_S
+m_ex2 <- as.matrix(ex2)
+X <- m_ex2%*%lambda_S$vectors
+colnames(X) <- c("PC1","PC2","PC3","PC4","PC5","PC6","PC7")
+library(ggplot2)
+x <- as.data.frame(lambda_S$values)
+x$PC <- 1:7
+ggplot(data=x, aes(x=PC,y=lambda_S$values)) + 
+  geom_line() + 
+  geom_point(size=3) +
+  ggtitle("Scree plot using the covariance matrix S")
+```
+
+#### Refer to the scree plot, appropriate number of components is 2.
+
+```{r}
+X <- as.data.frame(X)
+ggplot(X, aes(x=PC1, y=PC2))+
+  geom_point()+
+  stat_ellipse() +
+  ggtitle("PC1 versus PC2 using the covariance matrix S")
+```
+
+#### Refer to the scatter plot, some outliers are detected.
+
+```{r}
+qqnorm(X$PC1) ; qqline(X$PC1)
+shapiro.test(X$PC1)
+```
+
+#### It seems that PC1 is not normality.
+
+### Using the covariance matrix R
+
+```{r}
+lambda_R <- eigen(R)
+lambda_R
+m_ex2 <- as.matrix(ex2)
+X1 <- m_ex2%*%lambda_R$vectors
+colnames(X1) <- c("PC1","PC2","PC3","PC4","PC5","PC6","PC7")
+x1 <- as.data.frame(lambda_R$values)
+x1$PC <- 1:7
+ggplot(data=x1, aes(x=PC,y=lambda_R$values)) + 
+  geom_line() + 
+  geom_point(size=3) +
+  ggtitle("Scree plot using the covariance matrix R")
+```
+
+#### Refer to the scree plot, appropriate number of components is 4.
+
+```{r}
+X1 <- as.data.frame(X1)
+ggplot(X1, aes(x=PC1, y=PC2))+
+  geom_point()+
+  stat_ellipse() +
+  ggtitle("PC1 versus PC2 using the covariance matrix R")
+```
+
+#### Refer to the scatter plot, some outliers are detected.
+
+```{r}
+qqnorm(X1$PC1) ; qqline(X1$PC1)
+shapiro.test(X1$PC1)
+```
+
+#### It seems that PC1 is not normality.
+
