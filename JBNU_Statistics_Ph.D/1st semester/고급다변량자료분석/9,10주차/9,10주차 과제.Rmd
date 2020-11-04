@@ -62,7 +62,7 @@ var(y2_hat_S)
 ## 8.22) Consider the data on bulls in Table 1.10. Utilizing the seven variables SalePr, YrHgt, FtFrBody, PrctFFB, BkFat, SaleHt, SaleWt a principal component analysis using the covariance matrix S and the correlation matrix R.
 
 ```{r}
-ex2 <- read.csv("C:/Users/HSY/Desktop/problem8_22.csv",sep=",",header=T)
+ex2 <- read.csv("C:/Users/stat/Desktop/problem8_22.csv",sep=",",header=T)
 head(ex2,10)
 (S <- var(ex2))
 (R <- cor(ex2))
@@ -121,7 +121,7 @@ ggplot(data=x1, aes(x=PC,y=lambda_R$values)) +
   ggtitle("Scree plot using the covariance matrix R")
 ```
 
-#### Refer to the scree plot, appropriate number of components is 4.
+#### Refer to the scree plot, appropriate number of components is 2.
 
 ```{r}
 X1 <- as.data.frame(X1)
