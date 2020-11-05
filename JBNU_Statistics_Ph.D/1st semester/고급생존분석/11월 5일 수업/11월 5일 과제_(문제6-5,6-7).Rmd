@@ -1,0 +1,122 @@
+---
+title: "Homework(6-5,6-7)"
+author: "Hwang Seong-Yun"
+date: '2020 11 5 '
+output: html_document
+---
+
+
+
+### packages
+
+```{r}
+library(survival)
+library(KMsurv)
+library(tidyverse)
+library(survminer)
+```
+
+
+
+
+## 연습문제 6-5) 다음은 F98 glioma(신경교종 : 중추신경의 신경교조직에서 발생하는 종양) 치료에 boron neutron capture therapy(BNCT : 붕소 중성자 치료)의 효과를 알아보기 위한 연구 결과이다. 실험쥐를 세 그룹으로 랜덤하게 배정한 후 각 실험쥐의 뇌에 F98 glioma cell을 이식한 후 사망까지의 시간 데이터이다. 처리하지 않은 대조 그룹, 방사선을 쪼인 그룹, 방사선요법과 boronophenylanine(BPA)를 같이 처리한 그룹에 대해 실험한 결과는 다음과 같다.
+
+```{r}
+BPA <- tibble(time=c(20,21,23,24,24,26,26,27,28,30,26,28,29,30,30,31,31,32,29,35,31,32,34,35,36,38,38,42,39,42),censor=c(rep(1,10),rep(1,9),0,rep(1,7),0,rep(1,2)),method=c(rep("untreated",10),rep("radiated",10),rep("radiated+BPA",10)))
+BPA
+```
+
+### (1) 그룹별 Kaplan-Meier 생존함수 그림을 한 평면에 그리시오.
+
+```{r}
+attach(BPA)
+Surv(time, censor)
+fit <- survfit(Surv(time, censor) ~ method, data=BPA)
+summary(fit)
+ggsurvplot(fit,
+          conf.int = TRUE,
+          risk.table.col = "strata", # Change risk table color by groups
+          ggtheme = theme_bw()
+)
+ggsurvplot(
+   fit,                     # survfit object with calculated statistics.
+   pval = TRUE,             # show p-value of log-rank test.
+   conf.int = TRUE,         # show confidence intervals for 
+                            # point estimaes of survival curves.
+   xlab = "Time until death",   # customize X axis label.
+   break.time.by = 5,     # break X axis in time intervals by 200.
+   ggtheme = theme_light(), # customize plot and risk table with a theme.
+   risk.table = "abs_pct",  # absolute number and percentage at risk.
+  risk.table.y.text.col = T,# colour risk table text annotations.
+  risk.table.y.text = FALSE,# show bars instead of names in text annotations
+                            # in legend of risk table.
+  ncensor.plot = TRUE,      # plot the number of censored subjects at time t
+  surv.median.line = "hv",  # add the median survival pointer.
+  legend.labs = 
+    c("radiated", "radiated+BPA", "untreated"),    # change legend labels.
+)
+```
+
+### (2) 그룹별 생존함수가 같다고 할 수 있는지 유의수준 alpha=0.05 에서 log-rank test를 수행하시오.
+
+#### H0 : 그룹별 생존함수가 같다. / H1 : not H0
+
+```{r}
+survdiff(Surv(time, censor) ~ method, data=BPA, rho=0)
+```
+
+#### Chi-square test statistic = 33.4 / p-value = 6*10^(-8) < alpha=0.05
+
+#### Reject H0 -> 그룹별 생존함수가 같다고 할 수 없다.
+
+
+
+
+## 연습문제 6-7) 90마리의 실험쥐(종 나이, 신체조건이 비슷)에 대해 식이요법과 종양과의 관계를 알아보고자 한다. 다음은 종양세포(tumor cell) 주입 후 저지방(low-fat), 포화지방(saturated), 불포화지방(unsaturated) 식이요법을 한 후 200일 실험기간동안 조사한 데이터이다. 식이요법에 따라 생존시간이 다르다고 할 수 있는지 검정하시오.
+
+### data
+
+```{r}
+tumor <- tibble(time=c(140,177,50,65,86,153,181,191,77,84,87,56,66,73,119,140,200,201,202,203,204,205,206,207,208,209,210,211,212,213,124,58,56,68,79,89,107,86,142,110,96,142,86,75,117,98,105,126,43,46,81,133,165,170,200,201,202,203,204,205,112,68,84,109,153,143,60,70,98,164,63,63,77,91,91,66,70,77,63,66,66,94,101,105,108,112,115,126,181,178),censor=c(rep(1,15),rep(0,15),rep(1,23),rep(0,7),rep(1,30)),method=c(rep("low-fat",30),rep("saturated",30),rep("unsaturated",30)))
+tumor
+```
+
+### Graph of Kaplan-Meier Survival function
+
+```{r}
+attach(tumor)
+Surv(time, censor)
+fit <- survfit(Surv(time, censor) ~ method, data=tumor)
+summary(fit)
+ggsurvplot(fit,
+          conf.int = TRUE,
+          risk.table.col = "strata", # Change risk table color by groups
+          ggtheme = theme_bw()
+)
+ggsurvplot(
+   fit,                     # survfit object with calculated statistics.
+   pval = TRUE,             # show p-value of log-rank test.
+   conf.int = TRUE,         # show confidence intervals for 
+                            # point estimaes of survival curves.
+   xlab = "Time until death",   # customize X axis label.
+   ggtheme = theme_light(), # customize plot and risk table with a theme.
+   risk.table = "abs_pct",  # absolute number and percentage at risk.
+  risk.table.y.text.col = T,# colour risk table text annotations.
+  risk.table.y.text = FALSE,# show bars instead of names in text annotations
+                            # in legend of risk table.
+  ncensor.plot = TRUE,      # plot the number of censored subjects at time t
+  surv.median.line = "hv",  # add the median survival pointer.
+  legend.labs = 
+    c("low-fat", "saturated", "unsaturated"),    # change legend labels.
+)
+```
+
+#### H0 : 식이요법에 관계없이 생존함수는 동일하다. / H1 : not H0
+
+```{r}
+survdiff(Surv(time, censor) ~ method, data=tumor, rho=0)
+```
+
+#### Chi-square test statistic = 20.3 / p-value = 4*10^(-5) < alpha=0.05
+
+#### Reject H0 -> 식이요법에 따라 생존함수는 달라진다.
