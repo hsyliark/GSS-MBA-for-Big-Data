@@ -1,0 +1,825 @@
+---
+title: "Homework (Chapter 8)"
+author: "Hwang Seong-Yun"
+date: '2020 11 27 '
+output: html_document
+---
+
+## packages
+
+```{r}
+library(tidyverse)
+library(survival)
+library(KMsurv)
+library(survminer)
+```
+
+## 연습문제 8-1) 일차성 담즙성 간경화증(Primary Biliary Cirrhoris: PBC) 데이터에 대해 Cox 비례위험모형을 적합하고 잔차분석을 하고자 한다. PBC 데이터는 survival 패키지에 내장되어 있다. 일차성 담즙성 간경화증은 자가면역질환에 해당하며 담즙정체에 의해서 간에 경화가 오는 것으로 고간질환이다. 담관(Bile duct)이 폐쇄되어 부드러운 간 조직이 단단하게 되어 피부색이 노랗게 변하는 황달이 함께 나타나는 질환이다. 데이터는 1974년부터 1984년까지 미국 Mayo clinic에서 치료받은 418명 환자들로 구성된다. 고정 공변량으로는 환자의 나이, bilirubin(담즙구성 성분), albumin(수용성 혈장성분), prothrombin(피 응고까지 걸리는 시간), edema(상태, 0, 0.5, 1=심각), time(환자의 사망까지의 시간)이다. bilirubin과 prothrombin 변수는 비대칭 정도가 심각하여 로그변환을 적용한다. 환자상태를 나타내는 중도절단변수는 status이며 사망(status=2), 간 이식(liver transplant=1)을 의미한다. ascites는 ascties(복수, 복막강에 액체가 고인 상태)에 대한 존재여부(0=no, 1=yes)이다.
+
+```{r}
+library(survival)
+data(pbc)
+head(pbc)
+pbc$logbili <- log(pbc$bili) ; pbc$logprotime <- log(pbc$protime)
+pbc$censor <- as.numeric((pbc$status==2))
+```
+
+#### 사용 공변량 : age, log(bili), albumin, log(protime), edema
+
+### (1) 공변량이 없는 모형에서 마팅게일 잔차를 그리고 잔차그림을 그리시오.
+
+```{r}
+attach(pbc)
+Surv(time,censor)
+fit0 <- coxph(Surv(time,censor)~1,data=pbc)
+summary(fit0)
+r1 <- resid(fit0,data=pbc,type="martingale")
+plot(age,r1,xlab="age",ylab="martingale residual")
+lines(lowess(age,r1,iter=0),lty=2)
+plot(log(bili),r1,xlab="log(bili)",ylab="martingale residual")
+lines(lowess(log(bili),r1,iter=0),lty=2)
+plot(albumin,r1,xlab="albumin",ylab="martingale residual")
+lines(lowess(albumin,r1,iter=0),lty=2)
+plot(log(protime)[is.na(log(protime))!=TRUE],r1[is.na(log(protime))!=TRUE],xlab="log(protime)",ylab="martingale residual")
+lines(lowess(log(protime)[is.na(log(protime))!=TRUE],r1[is.na(log(protime))!=TRUE],iter=0),lty=2)
+plot(edema,r1,xlab="edema",ylab="martingale residual")
+lines(lowess(edema,r1,iter=0),lty=2)
+```
+
+### (2) 각각 한 개의 공변량만을 포함한 비례위험모형을 적합한 후 마팅게일 잔차를 구해 잔차그림을 그려보고 공변량이 없는 모형에서의 잔차와 비교해 보시오. 또한 각 모형에 대해 마팅게일 잔차제곱합을 구하시오.
+
+```{r}
+# age
+fit1 <- coxph(Surv(time,censor)~age,data=pbc)
+summary(fit1)
+r11 <- resid(fit1,data=pbc,type="martingale")
+par(mfrow=c(1,2))
+plot(age,r11,xlab="age",ylab="martingale residual")
+lines(lowess(age,r11,iter=0),lty=2)
+plot(age,r1,xlab="age",ylab="martingale residual")
+lines(lowess(age,r1,iter=0),lty=2)
+par(mfrow=c(1,1))
+sum(r11^2) # 160.4154
+```
+
+#### 변수 age를 포함한 Cox 모형 적합 후 패턴변화가 줄어듬. 
+
+```{r}
+# log(bili)
+fit2 <- coxph(Surv(time,censor)~log(bili),data=pbc)
+summary(fit2)
+r12 <- resid(fit2,data=pbc,type="martingale")
+par(mfrow=c(1,2))
+plot(log(bili),r12,xlab="log(bili)",ylab="martingale residual")
+lines(lowess(log(bili),r12,iter=0),lty=2)
+plot(log(bili),r1,xlab="log(bili)",ylab="martingale residual")
+lines(lowess(log(bili),r1,iter=0),lty=2)
+par(mfrow=c(1,1))
+sum(r12^2) # 167.0783 
+```
+
+#### 변수 log(bili)를 포함한 Cox 모형 적합 후 패턴변화가 줄어듬.
+
+```{r}
+# albumin
+fit3<- coxph(Surv(time,censor)~albumin,data=pbc)
+summary(fit3)
+r13 <- resid(fit3,data=pbc,type="martingale")
+par(mfrow=c(1,2))
+plot(albumin,r13,xlab="albumin",ylab="martingale residual")
+lines(lowess(albumin,r13,iter=0),lty=2)
+plot(albumin,r1,xlab="albumin",ylab="martingale residual")
+lines(lowess(albumin,r1,iter=0),lty=2)
+par(mfrow=c(1,1))
+sum(r13^2) # 167.2901 
+```
+
+#### 변수 albumin을 포함한 Cox 모형 적합 후 패턴변화가 줄어듬.
+
+```{r}
+# log(protime)
+fit4<- coxph(Surv(time,censor)~log(protime),data=pbc)
+summary(fit4)
+r14 <- resid(fit4,data=pbc,type="martingale")
+par(mfrow=c(1,2))
+plot(log(protime)[is.na(log(protime))!=TRUE],r14,xlab="log(protime)",ylab="martingale residual")
+lines(lowess(log(protime)[is.na(log(protime))!=TRUE],r14,iter=0),lty=2)
+plot(log(protime)[is.na(log(protime))!=TRUE],r1[is.na(log(protime))!=TRUE],xlab="log(protime)",ylab="martingale residual")
+lines(lowess(log(protime)[is.na(log(protime))!=TRUE],r1[is.na(log(protime))!=TRUE],iter=0),lty=2)
+par(mfrow=c(1,1))
+sum(r14^2) # 201.6861  
+```
+
+#### 변수 log(protime)을 포함한 Cox 모형 적합 후 패턴변화가 줄어듬.
+
+```{r}
+# edema
+fit5<- coxph(Surv(time,censor)~edema,data=pbc)
+summary(fit5)
+r15 <- resid(fit5,data=pbc,type="martingale")
+par(mfrow=c(1,2))
+plot(edema,r15,xlab="edema",ylab="martingale residual")
+lines(lowess(edema,r15,iter=0),lty=2)
+plot(edema,r1,xlab="edema",ylab="martingale residual")
+lines(lowess(edema,r1,iter=0),lty=2)
+par(mfrow=c(1,1))
+sum(r15^2) # 178.5449 
+```
+
+#### 변수 edema를 포함한 Cox 모형 적합 후 패턴변화가 줄어듬.
+
+### (3) 공변량이 2개인 비례위험모형을 적합하고 마팅게일 잔차를 구해 잔차그림을 비교해 보시오.
+
+```{r}
+# age, log(bili)
+fit <- coxph(Surv(time,censor)~age+log(bili),data=pbc)
+summary(fit)
+r <- resid(fit,data=pbc,type="martingale")
+par(mfrow=c(2,2))
+plot(age,r,xlab="age",ylab="martingale residual")
+lines(lowess(age,r,iter=0),lty=2)
+plot(log(bili),r,xlab="log(bili)",ylab="martingale residual")
+lines(lowess(log(bili),r,iter=0),lty=2)
+plot(age,r1,xlab="age",ylab="martingale residual")
+lines(lowess(age,r1,iter=0),lty=2)
+plot(log(bili),r1,xlab="log(bili)",ylab="martingale residual")
+lines(lowess(log(bili),r1,iter=0),lty=2)
+par(mfrow=c(1,1))
+```
+
+#### 변수 age, log(bili)를 포함한 Cox 모형 적합 후 패턴변화가 줄어듬.
+
+```{r}
+# age, albumin
+fit <- coxph(Surv(time,censor)~age+albumin,data=pbc)
+summary(fit)
+r <- resid(fit,data=pbc,type="martingale")
+par(mfrow=c(2,2))
+plot(age,r,xlab="age",ylab="martingale residual")
+lines(lowess(age,r,iter=0),lty=2)
+plot(albumin,r,xlab="albumin",ylab="martingale residual")
+lines(lowess(albumin,r,iter=0),lty=2)
+plot(age,r1,xlab="age",ylab="martingale residual")
+lines(lowess(age,r1,iter=0),lty=2)
+plot(albumin,r1,xlab="albumin",ylab="martingale residual")
+lines(lowess(albumin,r1,iter=0),lty=2)
+par(mfrow=c(1,1))
+```
+
+#### 변수 age, albumin을 포함한 Cox 모형 적합 후 패턴변화가 줄어듬.
+
+```{r}
+# age, log(protime)
+fit <- coxph(Surv(time,censor)~age+log(protime),data=pbc)
+summary(fit)
+r <- resid(fit,data=pbc,type="martingale")
+par(mfrow=c(2,2))
+plot(age[is.na(log(protime))!=TRUE],r,xlab="age",ylab="martingale residual")
+lines(lowess(age[is.na(log(protime))!=TRUE],r,iter=0),lty=2)
+plot(log(protime)[is.na(log(protime))!=TRUE],r,xlab="log(protime)",ylab="martingale residual")
+lines(lowess(log(protime)[is.na(log(protime))!=TRUE],r,iter=0),lty=2)
+plot(age[is.na(log(protime))!=TRUE],r1[is.na(log(protime))!=TRUE],xlab="age",ylab="martingale residual")
+lines(lowess(age[is.na(log(protime))!=TRUE],r1[is.na(log(protime))!=TRUE],iter=0),lty=2)
+plot(log(protime)[is.na(log(protime))!=TRUE],r1[is.na(log(protime))!=TRUE],xlab="log(protime)",ylab="martingale residual")
+lines(lowess(log(protime)[is.na(log(protime))!=TRUE],r1[is.na(log(protime))!=TRUE],iter=0),lty=2)
+par(mfrow=c(1,1))
+```
+
+#### 변수 age, log(protime)을 포함한 Cox 모형 적합 후 패턴변화가 줄어듬.
+
+```{r}
+# age, edema
+fit <- coxph(Surv(time,censor)~age+edema,data=pbc)
+summary(fit)
+r <- resid(fit,data=pbc,type="martingale")
+par(mfrow=c(2,2))
+plot(age,r,xlab="age",ylab="martingale residual")
+lines(lowess(age,r,iter=0),lty=2)
+plot(edema,r,xlab="edema",ylab="martingale residual")
+lines(lowess(edema,r,iter=0),lty=2)
+plot(age,r1,xlab="age",ylab="martingale residual")
+lines(lowess(age,r1,iter=0),lty=2)
+plot(edema,r1,xlab="edema",ylab="martingale residual")
+lines(lowess(edema,r1,iter=0),lty=2)
+par(mfrow=c(1,1))
+```
+
+#### 변수 age, edema를 포함한 Cox 모형 적합 후 패턴변화가 줄어듬.
+
+```{r}
+# log(bili), albumin
+fit <- coxph(Surv(time,censor)~log(bili)+albumin,data=pbc)
+summary(fit)
+r <- resid(fit,data=pbc,type="martingale")
+par(mfrow=c(2,2))
+plot(log(bili),r,xlab="log(bili)",ylab="martingale residual")
+lines(lowess(log(bili),r,iter=0),lty=2)
+plot(albumin,r,xlab="albumin",ylab="martingale residual")
+lines(lowess(albumin,r,iter=0),lty=2)
+plot(log(bili),r1,xlab="log(bili)",ylab="martingale residual")
+lines(lowess(log(bili),r1,iter=0),lty=2)
+plot(albumin,r1,xlab="albumin",ylab="martingale residual")
+lines(lowess(albumin,r1,iter=0),lty=2)
+par(mfrow=c(1,1))
+```
+
+#### 변수 log(bili), albumin을 포함한 Cox 모형 적합 후 패턴변화가 줄어듬.
+
+```{r}
+# log(bili), log(protime)
+fit <- coxph(Surv(time,censor)~log(bili)+log(protime),data=pbc)
+summary(fit)
+r <- resid(fit,data=pbc,type="martingale")
+par(mfrow=c(2,2))
+plot(log(bili)[is.na(log(protime))!=TRUE],r,xlab="log(bili)",ylab="martingale residual")
+lines(lowess(log(bili)[is.na(log(protime))!=TRUE],r,iter=0),lty=2)
+plot(log(protime)[is.na(log(protime))!=TRUE],r,xlab="log(protime)",ylab="martingale residual")
+lines(lowess(log(protime)[is.na(log(protime))!=TRUE],r,iter=0),lty=2)
+plot(log(bili)[is.na(log(protime))!=TRUE],r1[is.na(log(protime))!=TRUE],xlab="log(bili)",ylab="martingale residual")
+lines(lowess(log(bili)[is.na(log(protime))!=TRUE],r1[is.na(log(protime))!=TRUE],iter=0),lty=2)
+plot(log(protime)[is.na(log(protime))!=TRUE],r1[is.na(log(protime))!=TRUE],xlab="log(protime)",ylab="martingale residual")
+lines(lowess(log(protime)[is.na(log(protime))!=TRUE],r1[is.na(log(protime))!=TRUE],iter=0),lty=2)
+par(mfrow=c(1,1))
+```
+
+#### 변수 log(bili), log(protime)을 포함한 Cox 모형 적합 후 패턴변화가 줄어듬.
+
+```{r}
+# log(bili), edema
+fit <- coxph(Surv(time,censor)~log(bili)+edema,data=pbc)
+summary(fit)
+r <- resid(fit,data=pbc,type="martingale")
+par(mfrow=c(2,2))
+plot(log(bili),r,xlab="log(bili)",ylab="martingale residual")
+lines(lowess(log(bili),r,iter=0),lty=2)
+plot(edema,r,xlab="edema",ylab="martingale residual")
+lines(lowess(edema,r,iter=0),lty=2)
+plot(log(bili),r1,xlab="log(bili)",ylab="martingale residual")
+lines(lowess(log(bili),r1,iter=0),lty=2)
+plot(edema,r1,xlab="edema",ylab="martingale residual")
+lines(lowess(edema,r1,iter=0),lty=2)
+par(mfrow=c(1,1))
+```
+
+#### 변수 log(bili), edema를 포함한 Cox 모형 적합 후 패턴변화가 줄어듬.
+
+```{r}
+# albumin, log(protime)
+fit <- coxph(Surv(time,censor)~albumin+log(protime),data=pbc)
+summary(fit)
+r <- resid(fit,data=pbc,type="martingale")
+par(mfrow=c(2,2))
+plot(albumin[is.na(log(protime))!=TRUE],r,xlab="albumin",ylab="martingale residual")
+lines(lowess(albumin[is.na(log(protime))!=TRUE],r,iter=0),lty=2)
+plot(log(protime)[is.na(log(protime))!=TRUE],r,xlab="log(protime)",ylab="martingale residual")
+lines(lowess(log(protime)[is.na(log(protime))!=TRUE],r,iter=0),lty=2)
+plot(albumin[is.na(log(protime))!=TRUE],r1[is.na(log(protime))!=TRUE],xlab="albumin",ylab="martingale residual")
+lines(lowess(albumin[is.na(log(protime))!=TRUE],r1[is.na(log(protime))!=TRUE],iter=0),lty=2)
+plot(log(protime)[is.na(log(protime))!=TRUE],r1[is.na(log(protime))!=TRUE],xlab="log(protime)",ylab="martingale residual")
+lines(lowess(log(protime)[is.na(log(protime))!=TRUE],r1[is.na(log(protime))!=TRUE],iter=0),lty=2)
+par(mfrow=c(1,1))
+```
+
+#### 변수 albumin, log(protime)을 포함한 Cox 모형 적합 후 패턴변화가 줄어듬.
+
+```{r}
+# albumin, edema
+fit <- coxph(Surv(time,censor)~albumin+edema,data=pbc)
+summary(fit)
+r <- resid(fit,data=pbc,type="martingale")
+par(mfrow=c(2,2))
+plot(albumin,r,xlab="albumin",ylab="martingale residual")
+lines(lowess(albumin,r,iter=0),lty=2)
+plot(edema,r,xlab="edema",ylab="martingale residual")
+lines(lowess(edema,r,iter=0),lty=2)
+plot(albumin,r1,xlab="albumin",ylab="martingale residual")
+lines(lowess(albumin,r1,iter=0),lty=2)
+plot(edema,r1,xlab="edema",ylab="martingale residual")
+lines(lowess(edema,r1,iter=0),lty=2)
+par(mfrow=c(1,1))
+```
+
+#### 변수 albumin, edema를 포함한 Cox 모형 적합 후 패턴변화가 줄어듬.
+
+```{r}
+# log(protime), edema
+fit <- coxph(Surv(time,censor)~log(protime)+edema,data=pbc)
+summary(fit)
+r <- resid(fit,data=pbc,type="martingale")
+par(mfrow=c(2,2))
+plot(log(protime)[is.na(log(protime))!=TRUE],r,xlab="log(protime)",ylab="martingale residual")
+lines(lowess(log(protime)[is.na(log(protime))!=TRUE],r,iter=0),lty=2)
+plot(edema[is.na(log(protime))!=TRUE],r,xlab="edema",ylab="martingale residual")
+lines(lowess(edema[is.na(log(protime))!=TRUE],r,iter=0),lty=2)
+plot(log(protime)[is.na(log(protime))!=TRUE],r1[is.na(log(protime))!=TRUE],xlab="log(protime)",ylab="martingale residual")
+lines(lowess(log(protime)[is.na(log(protime))!=TRUE],r1[is.na(log(protime))!=TRUE],iter=0),lty=2)
+plot(edema[is.na(log(protime))!=TRUE],r1[is.na(log(protime))!=TRUE],xlab="edema",ylab="martingale residual")
+lines(lowess(edema[is.na(log(protime))!=TRUE],r1[is.na(log(protime))!=TRUE],iter=0),lty=2)
+par(mfrow=c(1,1))
+```
+
+#### 변수 log(protime), edema를 포함한 Cox 모형 적합 후 패턴변화가 줄어듬.
+
+### (4) 공변량이 없는 모형에서 편차 잔차를 그리고 잔차그림을 그리시오.
+
+```{r}
+attach(pbc)
+Surv(time,censor)
+fit0 <- coxph(Surv(time,censor)~1,data=pbc)
+summary(fit0)
+r1 <- resid(fit0,data=pbc,type="deviance")
+plot(age,r1,xlab="age",ylab="deviance residual")
+lines(lowess(age,r1,iter=0),lty=2)
+plot(log(bili),r1,xlab="log(bili)",ylab="deviance residual")
+lines(lowess(log(bili),r1,iter=0),lty=2)
+plot(albumin,r1,xlab="albumin",ylab="deviance residual")
+lines(lowess(albumin,r1,iter=0),lty=2)
+plot(log(protime)[is.na(log(protime))!=TRUE],r1[is.na(log(protime))!=TRUE],xlab="log(protime)",ylab="deviance residual")
+lines(lowess(log(protime)[is.na(log(protime))!=TRUE],r1[is.na(log(protime))!=TRUE],iter=0),lty=2)
+plot(edema,r1,xlab="edema",ylab="deviance residual")
+lines(lowess(edema,r1,iter=0),lty=2)
+``` 
+
+### (5) 각각 한 개의 공변량만을 포함한 비례위험모형을 적합한 후 편차 잔차를 구해 잔차그림을 그려보고 공변량이 없는 모형에서의 잔차와 비교해 보시오. 또한 각 모형에 대해 편차 잔차제곱합을 구하시오.
+
+```{r}
+# age
+fit1 <- coxph(Surv(time,censor)~age,data=pbc)
+summary(fit1)
+r11 <- resid(fit1,data=pbc,type="deviance")
+par(mfrow=c(1,2))
+plot(age,r11,xlab="age",ylab="deviance residual")
+lines(lowess(age,r11,iter=0),lty=2)
+plot(age,r1,xlab="age",ylab="deviance residual")
+lines(lowess(age,r1,iter=0),lty=2)
+par(mfrow=c(1,1))
+sum(r11^2) # 536.5112 
+```
+
+#### 변수 age를 포함한 Cox 모형 적합 후 패턴변화가 줄어듬. 
+
+```{r}
+# log(bili)
+fit2 <- coxph(Surv(time,censor)~log(bili),data=pbc)
+summary(fit2)
+r12 <- resid(fit2,data=pbc,type="deviance")
+par(mfrow=c(1,2))
+plot(log(bili),r12,xlab="log(bili)",ylab="deviance residual")
+lines(lowess(log(bili),r12,iter=0),lty=2)
+plot(log(bili),r1,xlab="log(bili)",ylab="deviance residual")
+lines(lowess(log(bili),r1,iter=0),lty=2)
+par(mfrow=c(1,1))
+sum(r12^2) # 463.6309  
+```
+
+#### 변수 log(bili)를 포함한 Cox 모형 적합 후 패턴변화가 줄어듬.
+
+```{r}
+# albumin
+fit3<- coxph(Surv(time,censor)~albumin,data=pbc)
+summary(fit3)
+r13 <- resid(fit3,data=pbc,type="deviance")
+par(mfrow=c(1,2))
+plot(albumin,r13,xlab="albumin",ylab="deviance residual")
+lines(lowess(albumin,r13,iter=0),lty=2)
+plot(albumin,r1,xlab="albumin",ylab="deviance residual")
+lines(lowess(albumin,r1,iter=0),lty=2)
+par(mfrow=c(1,1))
+sum(r13^2) # 523.1606  
+```
+
+#### 변수 albumin을 포함한 Cox 모형 적합 후 패턴변화가 줄어듬.
+
+```{r}
+# log(protime)
+fit4<- coxph(Surv(time,censor)~log(protime),data=pbc)
+summary(fit4)
+r14 <- resid(fit4,data=pbc,type="deviance")
+par(mfrow=c(1,2))
+plot(log(protime)[is.na(log(protime))!=TRUE],r14,xlab="log(protime)",ylab="deviance residual")
+lines(lowess(log(protime)[is.na(log(protime))!=TRUE],r14,iter=0),lty=2)
+plot(log(protime)[is.na(log(protime))!=TRUE],r1[is.na(log(protime))!=TRUE],xlab="log(protime)",ylab="deviance residual")
+lines(lowess(log(protime)[is.na(log(protime))!=TRUE],r1[is.na(log(protime))!=TRUE],iter=0),lty=2)
+par(mfrow=c(1,1))
+sum(r14^2) # 514.5766   
+```
+
+#### 변수 log(protime)을 포함한 Cox 모형 적합 후 패턴변화가 줄어듬.
+
+```{r}
+# edema
+fit5<- coxph(Surv(time,censor)~edema,data=pbc)
+summary(fit5)
+r15 <- resid(fit5,data=pbc,type="deviance")
+par(mfrow=c(1,2))
+plot(edema,r15,xlab="edema",ylab="deviance residual")
+lines(lowess(edema,r15,iter=0),lty=2)
+plot(edema,r1,xlab="edema",ylab="deviance residual")
+lines(lowess(edema,r1,iter=0),lty=2)
+par(mfrow=c(1,1))
+sum(r15^2) # 516.1889  
+```
+
+#### 변수 edema를 포함한 Cox 모형 적합 후 패턴변화가 줄어듬.
+
+### (6) 공변량이 2개인 비례위험모형을 적합하고 편차 잔차를 구해 잔차그림을 비교해 보시오.
+
+```{r}
+# age, log(bili)
+fit <- coxph(Surv(time,censor)~age+log(bili),data=pbc)
+summary(fit)
+r <- resid(fit,data=pbc,type="deviance")
+par(mfrow=c(2,2))
+plot(age,r,xlab="age",ylab="deviance residual")
+lines(lowess(age,r,iter=0),lty=2)
+plot(log(bili),r,xlab="log(bili)",ylab="deviance residual")
+lines(lowess(log(bili),r,iter=0),lty=2)
+plot(age,r1,xlab="age",ylab="deviance residual")
+lines(lowess(age,r1,iter=0),lty=2)
+plot(log(bili),r1,xlab="log(bili)",ylab="deviance residual")
+lines(lowess(log(bili),r1,iter=0),lty=2)
+par(mfrow=c(1,1))
+```
+
+#### 변수 age, log(bili)를 포함한 Cox 모형 적합 후 패턴변화가 줄어듬.
+
+```{r}
+# age, albumin
+fit <- coxph(Surv(time,censor)~age+albumin,data=pbc)
+summary(fit)
+r <- resid(fit,data=pbc,type="deviance")
+par(mfrow=c(2,2))
+plot(age,r,xlab="age",ylab="deviance residual")
+lines(lowess(age,r,iter=0),lty=2)
+plot(albumin,r,xlab="albumin",ylab="deviance residual")
+lines(lowess(albumin,r,iter=0),lty=2)
+plot(age,r1,xlab="age",ylab="deviance residual")
+lines(lowess(age,r1,iter=0),lty=2)
+plot(albumin,r1,xlab="albumin",ylab="deviance residual")
+lines(lowess(albumin,r1,iter=0),lty=2)
+par(mfrow=c(1,1))
+```
+
+#### 변수 age, albumin을 포함한 Cox 모형 적합 후 패턴변화가 줄어듬.
+
+```{r}
+# age, log(protime)
+fit <- coxph(Surv(time,censor)~age+log(protime),data=pbc)
+summary(fit)
+r <- resid(fit,data=pbc,type="deviance")
+par(mfrow=c(2,2))
+plot(age[is.na(log(protime))!=TRUE],r,xlab="age",ylab="deviance residual")
+lines(lowess(age[is.na(log(protime))!=TRUE],r,iter=0),lty=2)
+plot(log(protime)[is.na(log(protime))!=TRUE],r,xlab="log(protime)",ylab="deviance residual")
+lines(lowess(log(protime)[is.na(log(protime))!=TRUE],r,iter=0),lty=2)
+plot(age[is.na(log(protime))!=TRUE],r1[is.na(log(protime))!=TRUE],xlab="age",ylab="deviance residual")
+lines(lowess(age[is.na(log(protime))!=TRUE],r1[is.na(log(protime))!=TRUE],iter=0),lty=2)
+plot(log(protime)[is.na(log(protime))!=TRUE],r1[is.na(log(protime))!=TRUE],xlab="log(protime)",ylab="deviance residual")
+lines(lowess(log(protime)[is.na(log(protime))!=TRUE],r1[is.na(log(protime))!=TRUE],iter=0),lty=2)
+par(mfrow=c(1,1))
+```
+
+#### 변수 age, log(protime)을 포함한 Cox 모형 적합 후 패턴변화가 줄어듬.
+
+```{r}
+# age, edema
+fit <- coxph(Surv(time,censor)~age+edema,data=pbc)
+summary(fit)
+r <- resid(fit,data=pbc,type="deviance")
+par(mfrow=c(2,2))
+plot(age,r,xlab="age",ylab="deviance residual")
+lines(lowess(age,r,iter=0),lty=2)
+plot(edema,r,xlab="edema",ylab="deviance residual")
+lines(lowess(edema,r,iter=0),lty=2)
+plot(age,r1,xlab="age",ylab="deviance residual")
+lines(lowess(age,r1,iter=0),lty=2)
+plot(edema,r1,xlab="edema",ylab="deviance residual")
+lines(lowess(edema,r1,iter=0),lty=2)
+par(mfrow=c(1,1))
+```
+
+#### 변수 age, edema를 포함한 Cox 모형 적합 후 패턴변화가 줄어듬.
+
+```{r}
+# log(bili), albumin
+fit <- coxph(Surv(time,censor)~log(bili)+albumin,data=pbc)
+summary(fit)
+r <- resid(fit,data=pbc,type="deviance")
+par(mfrow=c(2,2))
+plot(log(bili),r,xlab="log(bili)",ylab="deviance residual")
+lines(lowess(log(bili),r,iter=0),lty=2)
+plot(albumin,r,xlab="albumin",ylab="deviance residual")
+lines(lowess(albumin,r,iter=0),lty=2)
+plot(log(bili),r1,xlab="log(bili)",ylab="deviance residual")
+lines(lowess(log(bili),r1,iter=0),lty=2)
+plot(albumin,r1,xlab="albumin",ylab="deviance residual")
+lines(lowess(albumin,r1,iter=0),lty=2)
+par(mfrow=c(1,1))
+```
+
+#### 변수 log(bili), albumin을 포함한 Cox 모형 적합 후 패턴변화가 줄어듬.
+
+```{r}
+# log(bili), log(protime)
+fit <- coxph(Surv(time,censor)~log(bili)+log(protime),data=pbc)
+summary(fit)
+r <- resid(fit,data=pbc,type="deviance")
+par(mfrow=c(2,2))
+plot(log(bili)[is.na(log(protime))!=TRUE],r,xlab="log(bili)",ylab="deviance residual")
+lines(lowess(log(bili)[is.na(log(protime))!=TRUE],r,iter=0),lty=2)
+plot(log(protime)[is.na(log(protime))!=TRUE],r,xlab="log(protime)",ylab="deviance residual")
+lines(lowess(log(protime)[is.na(log(protime))!=TRUE],r,iter=0),lty=2)
+plot(log(bili)[is.na(log(protime))!=TRUE],r1[is.na(log(protime))!=TRUE],xlab="log(bili)",ylab="deviance residual")
+lines(lowess(log(bili)[is.na(log(protime))!=TRUE],r1[is.na(log(protime))!=TRUE],iter=0),lty=2)
+plot(log(protime)[is.na(log(protime))!=TRUE],r1[is.na(log(protime))!=TRUE],xlab="log(protime)",ylab="deviance residual")
+lines(lowess(log(protime)[is.na(log(protime))!=TRUE],r1[is.na(log(protime))!=TRUE],iter=0),lty=2)
+par(mfrow=c(1,1))
+```
+
+#### 변수 log(bili), log(protime)을 포함한 Cox 모형 적합 후 패턴변화가 줄어듬.
+
+```{r}
+# log(bili), edema
+fit <- coxph(Surv(time,censor)~log(bili)+edema,data=pbc)
+summary(fit)
+r <- resid(fit,data=pbc,type="deviance")
+par(mfrow=c(2,2))
+plot(log(bili),r,xlab="log(bili)",ylab="deviance residual")
+lines(lowess(log(bili),r,iter=0),lty=2)
+plot(edema,r,xlab="edema",ylab="deviance residual")
+lines(lowess(edema,r,iter=0),lty=2)
+plot(log(bili),r1,xlab="log(bili)",ylab="deviance residual")
+lines(lowess(log(bili),r1,iter=0),lty=2)
+plot(edema,r1,xlab="edema",ylab="deviance residual")
+lines(lowess(edema,r1,iter=0),lty=2)
+par(mfrow=c(1,1))
+```
+
+#### 변수 log(bili), edema를 포함한 Cox 모형 적합 후 패턴변화가 줄어듬.
+
+```{r}
+# albumin, log(protime)
+fit <- coxph(Surv(time,censor)~albumin+log(protime),data=pbc)
+summary(fit)
+r <- resid(fit,data=pbc,type="deviance")
+par(mfrow=c(2,2))
+plot(albumin[is.na(log(protime))!=TRUE],r,xlab="albumin",ylab="deviance residual")
+lines(lowess(albumin[is.na(log(protime))!=TRUE],r,iter=0),lty=2)
+plot(log(protime)[is.na(log(protime))!=TRUE],r,xlab="log(protime)",ylab="deviance residual")
+lines(lowess(log(protime)[is.na(log(protime))!=TRUE],r,iter=0),lty=2)
+plot(albumin[is.na(log(protime))!=TRUE],r1[is.na(log(protime))!=TRUE],xlab="albumin",ylab="deviance residual")
+lines(lowess(albumin[is.na(log(protime))!=TRUE],r1[is.na(log(protime))!=TRUE],iter=0),lty=2)
+plot(log(protime)[is.na(log(protime))!=TRUE],r1[is.na(log(protime))!=TRUE],xlab="log(protime)",ylab="deviance residual")
+lines(lowess(log(protime)[is.na(log(protime))!=TRUE],r1[is.na(log(protime))!=TRUE],iter=0),lty=2)
+par(mfrow=c(1,1))
+```
+
+#### 변수 albumin, log(protime)을 포함한 Cox 모형 적합 후 패턴변화가 줄어듬.
+
+```{r}
+# albumin, edema
+fit <- coxph(Surv(time,censor)~albumin+edema,data=pbc)
+summary(fit)
+r <- resid(fit,data=pbc,type="deviance")
+par(mfrow=c(2,2))
+plot(albumin,r,xlab="albumin",ylab="deviance residual")
+lines(lowess(albumin,r,iter=0),lty=2)
+plot(edema,r,xlab="edema",ylab="deviance residual")
+lines(lowess(edema,r,iter=0),lty=2)
+plot(albumin,r1,xlab="albumin",ylab="deviance residual")
+lines(lowess(albumin,r1,iter=0),lty=2)
+plot(edema,r1,xlab="edema",ylab="deviance residual")
+lines(lowess(edema,r1,iter=0),lty=2)
+par(mfrow=c(1,1))
+```
+
+#### 변수 albumin, edema를 포함한 Cox 모형 적합 후 패턴변화가 줄어듬.
+
+```{r}
+# log(protime), edema
+fit <- coxph(Surv(time,censor)~log(protime)+edema,data=pbc)
+summary(fit)
+r <- resid(fit,data=pbc,type="deviance")
+par(mfrow=c(2,2))
+plot(log(protime)[is.na(log(protime))!=TRUE],r,xlab="log(protime)",ylab="deviance residual")
+lines(lowess(log(protime)[is.na(log(protime))!=TRUE],r,iter=0),lty=2)
+plot(edema[is.na(log(protime))!=TRUE],r,xlab="edema",ylab="deviance residual")
+lines(lowess(edema[is.na(log(protime))!=TRUE],r,iter=0),lty=2)
+plot(log(protime)[is.na(log(protime))!=TRUE],r1[is.na(log(protime))!=TRUE],xlab="log(protime)",ylab="deviance residual")
+lines(lowess(log(protime)[is.na(log(protime))!=TRUE],r1[is.na(log(protime))!=TRUE],iter=0),lty=2)
+plot(edema[is.na(log(protime))!=TRUE],r1[is.na(log(protime))!=TRUE],xlab="edema",ylab="deviance residual")
+lines(lowess(edema[is.na(log(protime))!=TRUE],r1[is.na(log(protime))!=TRUE],iter=0),lty=2)
+par(mfrow=c(1,1))
+```
+
+#### 변수 log(protime), edema를 포함한 Cox 모형 적합 후 패턴변화가 줄어듬.
+
+### (7) 이산 공변량에 대해 비례성 검토를 해 보시오.
+
+#### 사용 공변량 중 edema가 이산 공변량이므로 이에 대해 비례성 검토를 진행한다.
+
+```{r}
+library(KMsurv)
+library(survminer)
+fit <- survfit(coxph(Surv(time,censor)~strata(factor(edema)),data=pbc,method='breslow'))
+summary(fit)
+ggsurvplot(fit,data=pbc,conf.int=TRUE,risk.table.col="strata",ggtheme=theme_bw())
+plot(fit,fun='cumhaz',col=c('red','green','blue'),lty=c(1,2,3),xlab='Time',ylab='log Cumulative Hazard Rate')
+legend(-170,3.3,legend=c('edema=0','edema=0.5','edema=1'),lty=c(1,2,3),col=c('red','green','blue'))
+```
+
+#### 검토결과 생존함수와 로그 누적기저위험함수 모두 선이 교차하지 않으므로 비례성 관계를 만족하고 있다고 판단된다.
+
+### (8) 적절한 비례위험모형을 제안하고 잔차분석을 하시오.
+
+#### (1) ~ (7) 의 결과를 통해 사용 공변량을 비례위험모형에 포함시켰을 때 패턴변화가 줄어들고 있고 이산 공변량인 edema의 경우 비례성 관계를 만족하고 있다고 판단된다. 이에 따라 5가지 공변량을 모두 포함한 모형을 적합해보고 잔차분석을 실시하도록 한다.
+
+```{r}
+fit0 <- coxph(Surv(time,censor)~1,data=pbc)
+summary(fit0)
+r01 <- resid(fit0,data=pbc,type="martingale")
+r02 <- resid(fit0,data=pbc,type="deviance")
+fit <- coxph(Surv(time,censor)~age+log(bili)+albumin+log(protime)+edema,data=pbc)
+summary(fit)
+r1 <- resid(fit,data=pbc,type="martingale")
+r2 <- resid(fit,data=pbc,type="deviance")
+par(mfrow=c(2,2))
+# age 
+plot(age,r01,xlab="age",ylab="martingale residual")
+lines(lowess(age,r01,iter=0),lty=2)
+plot(age[is.na(log(protime))!=TRUE],r1,xlab="age",ylab="martingale residual")
+lines(lowess(age[is.na(log(protime))!=TRUE],r1,iter=0),lty=2)
+plot(age,r02,xlab="age",ylab="deviance residual")
+lines(lowess(age,r02,iter=0),lty=2)
+plot(age[is.na(log(protime))!=TRUE],r2,xlab="age",ylab="deviance residual")
+lines(lowess(age[is.na(log(protime))!=TRUE],r2,iter=0),lty=2)
+# log(bili) 
+plot(log(bili),r01,xlab="log(bili)",ylab="martingale residual")
+lines(lowess(log(bili),r01,iter=0),lty=2)
+plot(log(bili)[is.na(log(protime))!=TRUE],r1,xlab="log(bili)",ylab="martingale residual")
+lines(lowess(log(bili)[is.na(log(protime))!=TRUE],r1,iter=0),lty=2)
+plot(log(bili),r02,xlab="log(bili)",ylab="deviance residual")
+lines(lowess(log(bili),r02,iter=0),lty=2)
+plot(log(bili)[is.na(log(protime))!=TRUE],r2,xlab="log(bili)",ylab="deviance residual")
+lines(lowess(log(bili)[is.na(log(protime))!=TRUE],r2,iter=0),lty=2)
+# albumin
+plot(albumin,r01,xlab="albumin",ylab="martingale residual")
+lines(lowess(albumin,r01,iter=0),lty=2)
+plot(albumin[is.na(log(protime))!=TRUE],r1,xlab="albumin",ylab="martingale residual")
+lines(lowess(albumin[is.na(log(protime))!=TRUE],r1,iter=0),lty=2)
+plot(albumin,r02,xlab="albumin",ylab="deviance residual")
+lines(lowess(albumin,r02,iter=0),lty=2)
+plot(albumin[is.na(log(protime))!=TRUE],r2,xlab="albumin",ylab="deviance residual")
+lines(lowess(albumin[is.na(log(protime))!=TRUE],r2,iter=0),lty=2)
+# log(protime)
+plot(log(protime)[is.na(log(protime))!=TRUE],r01[is.na(log(protime))!=TRUE],xlab="log(protime)",ylab="martingale residual")
+lines(lowess(log(protime)[is.na(log(protime))!=TRUE],r01[is.na(log(protime))!=TRUE],iter=0),lty=2)
+plot(log(protime)[is.na(log(protime))!=TRUE],r1,xlab="log(protime)",ylab="martingale residual")
+lines(lowess(log(protime)[is.na(log(protime))!=TRUE],r1,iter=0),lty=2)
+plot(log(protime)[is.na(log(protime))!=TRUE],r02[is.na(log(protime))!=TRUE],xlab="log(protime)",ylab="deviance residual")
+lines(lowess(log(protime)[is.na(log(protime))!=TRUE],r02[is.na(log(protime))!=TRUE],iter=0),lty=2)
+plot(log(protime)[is.na(log(protime))!=TRUE],r2,xlab="log(protime)",ylab="deviance residual")
+lines(lowess(log(protime)[is.na(log(protime))!=TRUE],r2,iter=0),lty=2)
+# edema
+plot(edema,r01,xlab="edema",ylab="martingale residual")
+lines(lowess(edema,r01,iter=0),lty=2)
+plot(edema[is.na(log(protime))!=TRUE],r1,xlab="edema",ylab="martingale residual")
+lines(lowess(edema[is.na(log(protime))!=TRUE],r1,iter=0),lty=2)
+plot(edema,r02,xlab="edema",ylab="deviance residual")
+lines(lowess(edema,r02,iter=0),lty=2)
+plot(edema[is.na(log(protime))!=TRUE],r2,xlab="edema",ylab="deviance residual")
+lines(lowess(edema[is.na(log(protime))!=TRUE],r2,iter=0),lty=2)
+par(mfrow=c(1,1))
+```
+
+#### 모형적합 결과 모든 공변량이 유의하며, 5가지 공변량을 모두 포함했을 때 잔차의 패턴변화가 줄어듬을 확인할 수 있다.
+
+```{r}
+detach(pbc)
+```
+
+
+### 연습문제 8-2) 다음은 Hodgkin's와 Non Hodgkin's 림프종(lymphoma) 환자에 대한 데이터로 미국 오하이오 주에 있는 병원에서 골수이식을 한 환자 데이터이다.
+
+```{r}
+library(KMsurv)
+data(hodg)
+head(hodg)
+attach(hodg)
+```
+
+## 포함된 변수는 다음과 같다.
+### gtype : Graft type (1=allogenic, 2=autologous)
+### dtype : Disease type (1=Non Hodgkin lymphoma, 2=Hodgkins disease)
+### time : Time to death or relapse, days
+### dalta : Death/relapse indicator (0=alive, 1=dead)
+### score : Karnofsky score
+### wtime : Waiting time to transplant in months
+
+### (1) 공변량 gtype에 대해 비례성을 검토하시오.
+
+```{r}
+library(KMsurv)
+library(survminer)
+fit <- survfit(coxph(Surv(time,delta)~strata(factor(gtype)),data=hodg,method='breslow'))
+summary(fit)
+ggsurvplot(fit,data=pbc,conf.int=TRUE,risk.table.col="strata",ggtheme=theme_bw())
+plot(fit,fun='cumhaz',col=c('red','green'),lty=c(1,2),xlab='Time',ylab='log Cumulative Hazard Rate')
+legend(1500,0.6,legend=c('gtype=1','gtype=2'),lty=c(1,2),col=c('red','green'))
+```
+
+#### 검토결과 생존함수와 로그 누적기저위험함수 모두 선이 교차하고 있으므로 비례성 관계를 만족하지 않아 보인다.
+
+### (2) 공변량 dtype에 대해 비례성을 검토하시오.
+
+```{r}
+fit <- survfit(coxph(Surv(time,delta)~strata(factor(dtype)),data=hodg,method='breslow'))
+summary(fit)
+ggsurvplot(fit,data=pbc,conf.int=TRUE,risk.table.col="strata",ggtheme=theme_bw())
+plot(fit,fun='cumhaz',col=c('red','green'),lty=c(1,2),xlab='Time',ylab='log Cumulative Hazard Rate')
+legend(1500,0.6,legend=c('dtype=1','dtype=2'),lty=c(1,2),col=c('red','green'))
+```
+
+#### 검토결과 생존함수와 로그 누적기저위험함수 모두 선이 교차하고 있으므로 비례성 관계를 만족하지 않아 보인다.
+
+### (3) 공변량이 없는 모형에서 마팅게일 잔차를 구하고 잔차그림을 그리시오.
+
+```{r}
+attach(hodg)
+Surv(time,delta)
+fit0 <- coxph(Surv(time,delta)~1,data=hodg)
+summary(fit0)
+r1 <- resid(fit0,data=hodg,type="martingale")
+plot(gtype,r1,xlab="age",ylab="martingale residual")
+lines(lowess(gtype,r1,iter=0),lty=2)
+plot(dtype,r1,xlab="age",ylab="martingale residual")
+lines(lowess(dtype,r1,iter=0),lty=2)
+plot(score,r1,xlab="age",ylab="martingale residual")
+lines(lowess(score,r1,iter=0),lty=2)
+plot(wtime,r1,xlab="age",ylab="martingale residual")
+lines(lowess(wtime,r1,iter=0),lty=2)
+```
+
+### (4) 공변량 gtype이 있는 비례위험모형을 적합하고 마팅게일 잔차그림을 그리고 해석하시오.
+
+```{r}
+fit1 <- coxph(Surv(time,delta)~gtype,data=hodg)
+summary(fit1)
+r11 <- resid(fit1,data=hodg,type="martingale")
+par(mfrow=c(1,2))
+plot(gtype,r11,xlab="gtype",ylab="martingale residual")
+lines(lowess(gtype,r11,iter=0),lty=2)
+plot(gtype,r1,xlab="gtype",ylab="martingale residual")
+lines(lowess(gtype,r1,iter=0),lty=2)
+par(mfrow=c(1,1))
+```
+
+#### 변수 gtype을 추가하여 비례위험모형을 적합하면 잔차의 선형성이 제거됨을 확인할 수 있다.
+
+### (5) 공변량 dtype이 있는 비례위험모형을 적합하고 마팅게일 잔차그림을 그리고 해석하시오.
+
+```{r}
+fit2 <- coxph(Surv(time,delta)~dtype,data=hodg)
+summary(fit2)
+r21 <- resid(fit2,data=hodg,type="martingale")
+par(mfrow=c(1,2))
+plot(dtype,r21,xlab="dtype",ylab="martingale residual")
+lines(lowess(dtype,r21,iter=0),lty=2)
+plot(dtype,r1,xlab="dtype",ylab="martingale residual")
+lines(lowess(dtype,r1,iter=0),lty=2)
+par(mfrow=c(1,1))
+```
+
+#### 변수 dtype을 추가하여 비례위험모형을 적합하면 잔차의 선형성이 제거됨을을 확인할 수 있다.
+
+### (6) 공변량들을 이용하여 적절한 비례위험모형을 적합하고 잔차분석을 하시오.
+
+#### AIC(Akaike's Information Criterion) 기준 stepwise variable selection을 통해 다음과 같이 변수를 선택해볼 수 있다.
+
+```{r}
+library(MASS)
+fit <- coxph(Surv(time,delta)~gtype+dtype+score+wtime,data=hodg)
+fit.step <- stepAIC(fit,trace=TRUE)    
+summary(fit.step)
+extractAIC(fit.step)
+```
+
+#### AIC 기준에 의해 선택된 변수는 dtype, score이며 이때의 AIC 값은 153.0314이다. 이 모형에 대해 잔차분석을 실시하면 다음과 같다.
+
+```{r}
+fit3 <- coxph(Surv(time,delta)~dtype+score,data=hodg)
+summary(fit3)
+r31 <- resid(fit3,data=hodg,type="martingale")
+par(mfrow=c(2,2))
+plot(dtype,r31,xlab="dtype",ylab="martingale residual")
+lines(lowess(dtype,r31,iter=0),lty=2)
+plot(dtype,r1,xlab="dtype",ylab="martingale residual")
+lines(lowess(dtype,r1,iter=0),lty=2)
+plot(score,r31,xlab="score",ylab="martingale residual")
+lines(lowess(score,r31,iter=0),lty=2)
+plot(score,r1,xlab="score",ylab="martingale residual")
+lines(lowess(score,r1,iter=0),lty=2)
+par(mfrow=c(1,1))
+```
+
+#### 분석결과 공변량이 없는 모형과 비교하였을 때 잔차의 선형성이 제거됨을을 확인할 수 있다.
