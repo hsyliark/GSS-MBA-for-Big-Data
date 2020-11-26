@@ -44,6 +44,7 @@ plot(log(protime)[is.na(log(protime))!=TRUE],r1[is.na(log(protime))!=TRUE],xlab=
 lines(lowess(log(protime)[is.na(log(protime))!=TRUE],r1[is.na(log(protime))!=TRUE],iter=0),lty=2)
 plot(edema,r1,xlab="edema",ylab="martingale residual")
 lines(lowess(edema,r1,iter=0),lty=2)
+ggcoxfunctional(Surv(time,censor)~age+log(bili)+albumin+log(protime)+edema, data=pbc[is.na(log(protime))!=TRUE,])
 ```
 
 ### (2) 각각 한 개의 공변량만을 포함한 비례위험모형을 적합한 후 마팅게일 잔차를 구해 잔차그림을 그려보고 공변량이 없는 모형에서의 잔차와 비교해 보시오. 또한 각 모형에 대해 마팅게일 잔차제곱합을 구하시오.
@@ -59,10 +60,12 @@ lines(lowess(age,r11,iter=0),lty=2)
 plot(age,r1,xlab="age",ylab="martingale residual")
 lines(lowess(age,r1,iter=0),lty=2)
 par(mfrow=c(1,1))
+ggcoxfunctional(Surv(time,censor)~age,data=pbc)
+ggcoxdiagnostics(fit1,type="martingale",linear.prediction=FALSE,ggtheme=theme_bw())
 sum(r11^2) # 160.4154
 ```
 
-#### 변수 age를 포함한 Cox 모형 적합 후 패턴변화가 줄어듬. 
+#### 변수 age를 포함한 Cox 모형 적합 후 선형성이 제거됨. 
 
 ```{r}
 # log(bili)
@@ -75,10 +78,12 @@ lines(lowess(log(bili),r12,iter=0),lty=2)
 plot(log(bili),r1,xlab="log(bili)",ylab="martingale residual")
 lines(lowess(log(bili),r1,iter=0),lty=2)
 par(mfrow=c(1,1))
+ggcoxfunctional(Surv(time,censor)~log(bili),data=pbc)
+ggcoxdiagnostics(fit2,type="martingale",linear.prediction=FALSE,ggtheme=theme_bw())
 sum(r12^2) # 167.0783 
 ```
 
-#### 변수 log(bili)를 포함한 Cox 모형 적합 후 패턴변화가 줄어듬.
+#### 변수 log(bili)를 포함한 Cox 모형 적합 후 선형성이 제거됨.
 
 ```{r}
 # albumin
@@ -91,10 +96,12 @@ lines(lowess(albumin,r13,iter=0),lty=2)
 plot(albumin,r1,xlab="albumin",ylab="martingale residual")
 lines(lowess(albumin,r1,iter=0),lty=2)
 par(mfrow=c(1,1))
+ggcoxfunctional(Surv(time,censor)~albumin,data=pbc)
+ggcoxdiagnostics(fit3,type="martingale",linear.prediction=FALSE,ggtheme=theme_bw())
 sum(r13^2) # 167.2901 
 ```
 
-#### 변수 albumin을 포함한 Cox 모형 적합 후 패턴변화가 줄어듬.
+#### 변수 albumin을 포함한 Cox 모형 적합 후 선형성이 제거됨.
 
 ```{r}
 # log(protime)
@@ -107,10 +114,12 @@ lines(lowess(log(protime)[is.na(log(protime))!=TRUE],r14,iter=0),lty=2)
 plot(log(protime)[is.na(log(protime))!=TRUE],r1[is.na(log(protime))!=TRUE],xlab="log(protime)",ylab="martingale residual")
 lines(lowess(log(protime)[is.na(log(protime))!=TRUE],r1[is.na(log(protime))!=TRUE],iter=0),lty=2)
 par(mfrow=c(1,1))
+ggcoxfunctional(Surv(time,censor)~log(protime),data=pbc[is.na(log(protime))!=TRUE,])
+ggcoxdiagnostics(fit4,type="martingale",linear.prediction=FALSE,ggtheme=theme_bw())
 sum(r14^2) # 201.6861  
 ```
 
-#### 변수 log(protime)을 포함한 Cox 모형 적합 후 패턴변화가 줄어듬.
+#### 변수 log(protime)을 포함한 Cox 모형을 적합 후 패턴변화가 줄어들었다고 보기는 어려움. 비례성 가정이 의심됨.
 
 ```{r}
 # edema
@@ -123,10 +132,12 @@ lines(lowess(edema,r15,iter=0),lty=2)
 plot(edema,r1,xlab="edema",ylab="martingale residual")
 lines(lowess(edema,r1,iter=0),lty=2)
 par(mfrow=c(1,1))
+ggcoxfunctional(Surv(time,censor)~edema,data=pbc)
+ggcoxdiagnostics(fit5,type="martingale",linear.prediction=FALSE,ggtheme=theme_bw())
 sum(r15^2) # 178.5449 
 ```
 
-#### 변수 edema를 포함한 Cox 모형 적합 후 패턴변화가 줄어듬.
+#### 변수 edema를 포함한 Cox 모형 적합 후 선형성이 제거됨.
 
 ### (3) 공변량이 2개인 비례위험모형을 적합하고 마팅게일 잔차를 구해 잔차그림을 비교해 보시오.
 
@@ -145,6 +156,8 @@ lines(lowess(age,r1,iter=0),lty=2)
 plot(log(bili),r1,xlab="log(bili)",ylab="martingale residual")
 lines(lowess(log(bili),r1,iter=0),lty=2)
 par(mfrow=c(1,1))
+ggcoxfunctional(Surv(time,censor)~age+log(bili),data=pbc)
+ggcoxdiagnostics(fit,type="martingale",linear.prediction=FALSE,ggtheme=theme_bw())
 ```
 
 #### 변수 age, log(bili)를 포함한 Cox 모형 적합 후 패턴변화가 줄어듬.
@@ -164,6 +177,8 @@ lines(lowess(age,r1,iter=0),lty=2)
 plot(albumin,r1,xlab="albumin",ylab="martingale residual")
 lines(lowess(albumin,r1,iter=0),lty=2)
 par(mfrow=c(1,1))
+ggcoxfunctional(Surv(time,censor)~age+albumin,data=pbc)
+ggcoxdiagnostics(fit,type="martingale",linear.prediction=FALSE,ggtheme=theme_bw())
 ```
 
 #### 변수 age, albumin을 포함한 Cox 모형 적합 후 패턴변화가 줄어듬.
@@ -183,9 +198,11 @@ lines(lowess(age[is.na(log(protime))!=TRUE],r1[is.na(log(protime))!=TRUE],iter=0
 plot(log(protime)[is.na(log(protime))!=TRUE],r1[is.na(log(protime))!=TRUE],xlab="log(protime)",ylab="martingale residual")
 lines(lowess(log(protime)[is.na(log(protime))!=TRUE],r1[is.na(log(protime))!=TRUE],iter=0),lty=2)
 par(mfrow=c(1,1))
+ggcoxfunctional(Surv(time,censor)~age+log(protime),data=pbc[is.na(log(protime))!=TRUE,])
+ggcoxdiagnostics(fit,type="martingale",linear.prediction=FALSE,ggtheme=theme_bw())
 ```
 
-#### 변수 age, log(protime)을 포함한 Cox 모형 적합 후 패턴변화가 줄어듬.
+#### 변수 age, log(protime)을 포함한 Cox 모형 적합 후 패턴변화가 줄어들었다고 보기는 어려움. 비례성이 의심됨.
 
 ```{r}
 # age, edema
@@ -202,6 +219,8 @@ lines(lowess(age,r1,iter=0),lty=2)
 plot(edema,r1,xlab="edema",ylab="martingale residual")
 lines(lowess(edema,r1,iter=0),lty=2)
 par(mfrow=c(1,1))
+ggcoxfunctional(Surv(time,censor)~age+edema,data=pbc)
+ggcoxdiagnostics(fit,type="martingale",linear.prediction=FALSE,ggtheme=theme_bw())
 ```
 
 #### 변수 age, edema를 포함한 Cox 모형 적합 후 패턴변화가 줄어듬.
@@ -221,6 +240,8 @@ lines(lowess(log(bili),r1,iter=0),lty=2)
 plot(albumin,r1,xlab="albumin",ylab="martingale residual")
 lines(lowess(albumin,r1,iter=0),lty=2)
 par(mfrow=c(1,1))
+ggcoxfunctional(Surv(time,censor)~log(bili)+albumin,data=pbc)
+ggcoxdiagnostics(fit,type="martingale",linear.prediction=FALSE,ggtheme=theme_bw())
 ```
 
 #### 변수 log(bili), albumin을 포함한 Cox 모형 적합 후 패턴변화가 줄어듬.
@@ -240,9 +261,11 @@ lines(lowess(log(bili)[is.na(log(protime))!=TRUE],r1[is.na(log(protime))!=TRUE],
 plot(log(protime)[is.na(log(protime))!=TRUE],r1[is.na(log(protime))!=TRUE],xlab="log(protime)",ylab="martingale residual")
 lines(lowess(log(protime)[is.na(log(protime))!=TRUE],r1[is.na(log(protime))!=TRUE],iter=0),lty=2)
 par(mfrow=c(1,1))
+ggcoxfunctional(Surv(time,censor)~log(bili)+log(protime),data=pbc[is.na(log(protime))!=TRUE,])
+ggcoxdiagnostics(fit,type="martingale",linear.prediction=FALSE,ggtheme=theme_bw())
 ```
 
-#### 변수 log(bili), log(protime)을 포함한 Cox 모형 적합 후 패턴변화가 줄어듬.
+#### 변수 log(bili), log(protime)을 포함한 Cox 모형 적합 후 패턴변화가 줄어들었다고 보기는 어려움. 비례성 가정이 의심됨.
 
 ```{r}
 # log(bili), edema
@@ -259,6 +282,8 @@ lines(lowess(log(bili),r1,iter=0),lty=2)
 plot(edema,r1,xlab="edema",ylab="martingale residual")
 lines(lowess(edema,r1,iter=0),lty=2)
 par(mfrow=c(1,1))
+ggcoxfunctional(Surv(time,censor)~log(bili)+edema,data=pbc)
+ggcoxdiagnostics(fit,type="martingale",linear.prediction=FALSE,ggtheme=theme_bw())
 ```
 
 #### 변수 log(bili), edema를 포함한 Cox 모형 적합 후 패턴변화가 줄어듬.
@@ -278,9 +303,11 @@ lines(lowess(albumin[is.na(log(protime))!=TRUE],r1[is.na(log(protime))!=TRUE],it
 plot(log(protime)[is.na(log(protime))!=TRUE],r1[is.na(log(protime))!=TRUE],xlab="log(protime)",ylab="martingale residual")
 lines(lowess(log(protime)[is.na(log(protime))!=TRUE],r1[is.na(log(protime))!=TRUE],iter=0),lty=2)
 par(mfrow=c(1,1))
+ggcoxfunctional(Surv(time,censor)~albumin+log(protime),data=pbc[is.na(log(protime))!=TRUE,])
+ggcoxdiagnostics(fit,type="martingale",linear.prediction=FALSE,ggtheme=theme_bw())
 ```
 
-#### 변수 albumin, log(protime)을 포함한 Cox 모형 적합 후 패턴변화가 줄어듬.
+#### 변수 albumin, log(protime)을 포함한 Cox 모형 적합 후 패턴변화가 줄어들었다고 보기는 어려움. 비례성 가정이 의심됨.
 
 ```{r}
 # albumin, edema
@@ -297,6 +324,8 @@ lines(lowess(albumin,r1,iter=0),lty=2)
 plot(edema,r1,xlab="edema",ylab="martingale residual")
 lines(lowess(edema,r1,iter=0),lty=2)
 par(mfrow=c(1,1))
+ggcoxfunctional(Surv(time,censor)~albumin+edema,data=pbc)
+ggcoxdiagnostics(fit,type="martingale",linear.prediction=FALSE,ggtheme=theme_bw())
 ```
 
 #### 변수 albumin, edema를 포함한 Cox 모형 적합 후 패턴변화가 줄어듬.
@@ -316,9 +345,11 @@ lines(lowess(log(protime)[is.na(log(protime))!=TRUE],r1[is.na(log(protime))!=TRU
 plot(edema[is.na(log(protime))!=TRUE],r1[is.na(log(protime))!=TRUE],xlab="edema",ylab="martingale residual")
 lines(lowess(edema[is.na(log(protime))!=TRUE],r1[is.na(log(protime))!=TRUE],iter=0),lty=2)
 par(mfrow=c(1,1))
+ggcoxfunctional(Surv(time,censor)~log(protime)+edema,data=pbc[is.na(log(protime))!=TRUE,])
+ggcoxdiagnostics(fit,type="martingale",linear.prediction=FALSE,ggtheme=theme_bw())
 ```
 
-#### 변수 log(protime), edema를 포함한 Cox 모형 적합 후 패턴변화가 줄어듬.
+#### 변수 log(protime), edema를 포함한 Cox 모형 적합 후 패턴변화가 줄어들었다고 보기는 어려움. 비례성 가정이 의심됨.
 
 ### (4) 공변량이 없는 모형에서 편차 잔차를 그리고 잔차그림을 그리시오.
 
@@ -353,6 +384,7 @@ lines(lowess(age,r11,iter=0),lty=2)
 plot(age,r1,xlab="age",ylab="deviance residual")
 lines(lowess(age,r1,iter=0),lty=2)
 par(mfrow=c(1,1))
+ggcoxdiagnostics(fit1,type="deviance",linear.prediction=FALSE,ggtheme=theme_bw())
 sum(r11^2) # 536.5112 
 ```
 
@@ -369,6 +401,7 @@ lines(lowess(log(bili),r12,iter=0),lty=2)
 plot(log(bili),r1,xlab="log(bili)",ylab="deviance residual")
 lines(lowess(log(bili),r1,iter=0),lty=2)
 par(mfrow=c(1,1))
+ggcoxdiagnostics(fit2,type="deviance",linear.prediction=FALSE,ggtheme=theme_bw())
 sum(r12^2) # 463.6309  
 ```
 
@@ -385,6 +418,7 @@ lines(lowess(albumin,r13,iter=0),lty=2)
 plot(albumin,r1,xlab="albumin",ylab="deviance residual")
 lines(lowess(albumin,r1,iter=0),lty=2)
 par(mfrow=c(1,1))
+ggcoxdiagnostics(fit3,type="deviance",linear.prediction=FALSE,ggtheme=theme_bw())
 sum(r13^2) # 523.1606  
 ```
 
@@ -401,10 +435,11 @@ lines(lowess(log(protime)[is.na(log(protime))!=TRUE],r14,iter=0),lty=2)
 plot(log(protime)[is.na(log(protime))!=TRUE],r1[is.na(log(protime))!=TRUE],xlab="log(protime)",ylab="deviance residual")
 lines(lowess(log(protime)[is.na(log(protime))!=TRUE],r1[is.na(log(protime))!=TRUE],iter=0),lty=2)
 par(mfrow=c(1,1))
+ggcoxdiagnostics(fit4,type="deviance",linear.prediction=FALSE,ggtheme=theme_bw())
 sum(r14^2) # 514.5766   
 ```
 
-#### 변수 log(protime)을 포함한 Cox 모형 적합 후 패턴변화가 줄어듬.
+#### 변수 log(protime)을 포함한 Cox 모형 적합 후 패턴변화가 줄어들었다고 보기는 어려움. 비례성이 의심됨.
 
 ```{r}
 # edema
@@ -417,6 +452,7 @@ lines(lowess(edema,r15,iter=0),lty=2)
 plot(edema,r1,xlab="edema",ylab="deviance residual")
 lines(lowess(edema,r1,iter=0),lty=2)
 par(mfrow=c(1,1))
+ggcoxdiagnostics(fit5,type="deviance",linear.prediction=FALSE,ggtheme=theme_bw())
 sum(r15^2) # 516.1889  
 ```
 
@@ -439,6 +475,7 @@ lines(lowess(age,r1,iter=0),lty=2)
 plot(log(bili),r1,xlab="log(bili)",ylab="deviance residual")
 lines(lowess(log(bili),r1,iter=0),lty=2)
 par(mfrow=c(1,1))
+ggcoxdiagnostics(fit,type="deviance",linear.prediction=FALSE,ggtheme=theme_bw())
 ```
 
 #### 변수 age, log(bili)를 포함한 Cox 모형 적합 후 패턴변화가 줄어듬.
@@ -458,6 +495,7 @@ lines(lowess(age,r1,iter=0),lty=2)
 plot(albumin,r1,xlab="albumin",ylab="deviance residual")
 lines(lowess(albumin,r1,iter=0),lty=2)
 par(mfrow=c(1,1))
+ggcoxdiagnostics(fit,type="deviance",linear.prediction=FALSE,ggtheme=theme_bw())
 ```
 
 #### 변수 age, albumin을 포함한 Cox 모형 적합 후 패턴변화가 줄어듬.
@@ -477,9 +515,10 @@ lines(lowess(age[is.na(log(protime))!=TRUE],r1[is.na(log(protime))!=TRUE],iter=0
 plot(log(protime)[is.na(log(protime))!=TRUE],r1[is.na(log(protime))!=TRUE],xlab="log(protime)",ylab="deviance residual")
 lines(lowess(log(protime)[is.na(log(protime))!=TRUE],r1[is.na(log(protime))!=TRUE],iter=0),lty=2)
 par(mfrow=c(1,1))
+ggcoxdiagnostics(fit,type="deviance",linear.prediction=FALSE,ggtheme=theme_bw())
 ```
 
-#### 변수 age, log(protime)을 포함한 Cox 모형 적합 후 패턴변화가 줄어듬.
+#### 변수 age, log(protime)을 포함한 Cox 모형 적합 후 패턴변화가 줄어들었다고 보기는 어려움. 비례성이 의심됨.
 
 ```{r}
 # age, edema
@@ -496,6 +535,7 @@ lines(lowess(age,r1,iter=0),lty=2)
 plot(edema,r1,xlab="edema",ylab="deviance residual")
 lines(lowess(edema,r1,iter=0),lty=2)
 par(mfrow=c(1,1))
+ggcoxdiagnostics(fit,type="deviance",linear.prediction=FALSE,ggtheme=theme_bw())
 ```
 
 #### 변수 age, edema를 포함한 Cox 모형 적합 후 패턴변화가 줄어듬.
@@ -515,6 +555,7 @@ lines(lowess(log(bili),r1,iter=0),lty=2)
 plot(albumin,r1,xlab="albumin",ylab="deviance residual")
 lines(lowess(albumin,r1,iter=0),lty=2)
 par(mfrow=c(1,1))
+ggcoxdiagnostics(fit,type="deviance",linear.prediction=FALSE,ggtheme=theme_bw())
 ```
 
 #### 변수 log(bili), albumin을 포함한 Cox 모형 적합 후 패턴변화가 줄어듬.
@@ -534,9 +575,10 @@ lines(lowess(log(bili)[is.na(log(protime))!=TRUE],r1[is.na(log(protime))!=TRUE],
 plot(log(protime)[is.na(log(protime))!=TRUE],r1[is.na(log(protime))!=TRUE],xlab="log(protime)",ylab="deviance residual")
 lines(lowess(log(protime)[is.na(log(protime))!=TRUE],r1[is.na(log(protime))!=TRUE],iter=0),lty=2)
 par(mfrow=c(1,1))
+ggcoxdiagnostics(fit,type="deviance",linear.prediction=FALSE,ggtheme=theme_bw())
 ```
 
-#### 변수 log(bili), log(protime)을 포함한 Cox 모형 적합 후 패턴변화가 줄어듬.
+#### 변수 log(bili), log(protime)을 포함한 Cox 모형 적합 후 패턴변화가 줄어들었다고 보기는 어려움. 비례성이 의심됨.
 
 ```{r}
 # log(bili), edema
@@ -553,6 +595,7 @@ lines(lowess(log(bili),r1,iter=0),lty=2)
 plot(edema,r1,xlab="edema",ylab="deviance residual")
 lines(lowess(edema,r1,iter=0),lty=2)
 par(mfrow=c(1,1))
+ggcoxdiagnostics(fit,type="deviance",linear.prediction=FALSE,ggtheme=theme_bw())
 ```
 
 #### 변수 log(bili), edema를 포함한 Cox 모형 적합 후 패턴변화가 줄어듬.
@@ -572,9 +615,10 @@ lines(lowess(albumin[is.na(log(protime))!=TRUE],r1[is.na(log(protime))!=TRUE],it
 plot(log(protime)[is.na(log(protime))!=TRUE],r1[is.na(log(protime))!=TRUE],xlab="log(protime)",ylab="deviance residual")
 lines(lowess(log(protime)[is.na(log(protime))!=TRUE],r1[is.na(log(protime))!=TRUE],iter=0),lty=2)
 par(mfrow=c(1,1))
+ggcoxdiagnostics(fit,type="deviance",linear.prediction=FALSE,ggtheme=theme_bw())
 ```
 
-#### 변수 albumin, log(protime)을 포함한 Cox 모형 적합 후 패턴변화가 줄어듬.
+#### 변수 albumin, log(protime)을 포함한 Cox 모형 적합 후 패턴변화가 줄어들었다고 보기는 어려움. 비례성이 의심됨.
 
 ```{r}
 # albumin, edema
@@ -591,6 +635,7 @@ lines(lowess(albumin,r1,iter=0),lty=2)
 plot(edema,r1,xlab="edema",ylab="deviance residual")
 lines(lowess(edema,r1,iter=0),lty=2)
 par(mfrow=c(1,1))
+ggcoxdiagnostics(fit,type="deviance",linear.prediction=FALSE,ggtheme=theme_bw())
 ```
 
 #### 변수 albumin, edema를 포함한 Cox 모형 적합 후 패턴변화가 줄어듬.
@@ -610,9 +655,10 @@ lines(lowess(log(protime)[is.na(log(protime))!=TRUE],r1[is.na(log(protime))!=TRU
 plot(edema[is.na(log(protime))!=TRUE],r1[is.na(log(protime))!=TRUE],xlab="edema",ylab="deviance residual")
 lines(lowess(edema[is.na(log(protime))!=TRUE],r1[is.na(log(protime))!=TRUE],iter=0),lty=2)
 par(mfrow=c(1,1))
+ggcoxdiagnostics(fit,type="deviance",linear.prediction=FALSE,ggtheme=theme_bw())
 ```
 
-#### 변수 log(protime), edema를 포함한 Cox 모형 적합 후 패턴변화가 줄어듬.
+#### 변수 log(protime), edema를 포함한 Cox 모형 적합 후 패턴변화가 줄어들었다고 보기는 어려움. 비례성이 의심됨.
 
 ### (7) 이산 공변량에 대해 비례성 검토를 해 보시오.
 
@@ -632,14 +678,34 @@ legend(-170,3.3,legend=c('edema=0','edema=0.5','edema=1'),lty=c(1,2,3),col=c('re
 
 ### (8) 적절한 비례위험모형을 제안하고 잔차분석을 하시오.
 
-#### (1) ~ (7) 의 결과를 통해 사용 공변량을 비례위험모형에 포함시켰을 때 패턴변화가 줄어들고 있고 이산 공변량인 edema의 경우 비례성 관계를 만족하고 있다고 판단된다. 이에 따라 5가지 공변량을 모두 포함한 모형을 적합해보고 잔차분석을 실시하도록 한다.
+#### (1) ~ (7) 의 결과를 통해 사용 공변량을 비례위험모형에 포함시켰을 때 패턴변화가 줄어들고 있고 이산 공변량인 edema의 경우 비례성 관계를 만족하고 있다고 판단된다. 하지만 log(protime)의 경우 비례성 가정이 의심됨에 따라 5가지 공변량을 모두 포함한 모형을 적합해보고 잔차분석을 실시하도록 한다.
+
+```{r}
+fit_5 <- coxph(Surv(time,censor)~age+log(bili)+albumin+log(protime)+edema,data=pbc) # 5가지 공변량 모두 포함
+cox.zph(fit_5) 
+par(mfrow=c(2,2))      
+plot(cox.zph(fit_5))
+ggcoxzph(cox.zph(fit_5))
+```
+
+#### 변수 log(protime)에서 비례성이 의심되며 모형 전체에 대해서도 비례성이 의심됨.
+
+```{r}
+fit_4 <- coxph(Surv(time,censor)~age+log(bili)+albumin+edema,data=pbc) # log(protime)을 제거 
+cox.zph(fit_4) 
+par(mfrow=c(2,2))      
+plot(cox.zph(fit_4))
+ggcoxzph(cox.zph(fit_4))
+```
+
+#### 전체적으로 비례성을 만족하고 있다고 판단됨. 
 
 ```{r}
 fit0 <- coxph(Surv(time,censor)~1,data=pbc)
 summary(fit0)
 r01 <- resid(fit0,data=pbc,type="martingale")
 r02 <- resid(fit0,data=pbc,type="deviance")
-fit <- coxph(Surv(time,censor)~age+log(bili)+albumin+log(protime)+edema,data=pbc)
+fit <- coxph(Surv(time,censor)~age+log(bili)+albumin+edema,data=pbc)
 summary(fit)
 r1 <- resid(fit,data=pbc,type="martingale")
 r2 <- resid(fit,data=pbc,type="deviance")
@@ -647,52 +713,43 @@ par(mfrow=c(2,2))
 # age 
 plot(age,r01,xlab="age",ylab="martingale residual")
 lines(lowess(age,r01,iter=0),lty=2)
-plot(age[is.na(log(protime))!=TRUE],r1,xlab="age",ylab="martingale residual")
-lines(lowess(age[is.na(log(protime))!=TRUE],r1,iter=0),lty=2)
+plot(age,r1,xlab="age",ylab="martingale residual")
+lines(lowess(age,r1,iter=0),lty=2)
 plot(age,r02,xlab="age",ylab="deviance residual")
 lines(lowess(age,r02,iter=0),lty=2)
-plot(age[is.na(log(protime))!=TRUE],r2,xlab="age",ylab="deviance residual")
-lines(lowess(age[is.na(log(protime))!=TRUE],r2,iter=0),lty=2)
+plot(age,r2,xlab="age",ylab="deviance residual")
+lines(lowess(age,r2,iter=0),lty=2)
 # log(bili) 
 plot(log(bili),r01,xlab="log(bili)",ylab="martingale residual")
 lines(lowess(log(bili),r01,iter=0),lty=2)
-plot(log(bili)[is.na(log(protime))!=TRUE],r1,xlab="log(bili)",ylab="martingale residual")
-lines(lowess(log(bili)[is.na(log(protime))!=TRUE],r1,iter=0),lty=2)
+plot(log(bili),r1,xlab="log(bili)",ylab="martingale residual")
+lines(lowess(log(bili),r1,iter=0),lty=2)
 plot(log(bili),r02,xlab="log(bili)",ylab="deviance residual")
 lines(lowess(log(bili),r02,iter=0),lty=2)
-plot(log(bili)[is.na(log(protime))!=TRUE],r2,xlab="log(bili)",ylab="deviance residual")
-lines(lowess(log(bili)[is.na(log(protime))!=TRUE],r2,iter=0),lty=2)
+plot(log(bili),r2,xlab="log(bili)",ylab="deviance residual")
+lines(lowess(log(bili),r2,iter=0),lty=2)
 # albumin
 plot(albumin,r01,xlab="albumin",ylab="martingale residual")
 lines(lowess(albumin,r01,iter=0),lty=2)
-plot(albumin[is.na(log(protime))!=TRUE],r1,xlab="albumin",ylab="martingale residual")
-lines(lowess(albumin[is.na(log(protime))!=TRUE],r1,iter=0),lty=2)
+plot(albumin,r1,xlab="albumin",ylab="martingale residual")
+lines(lowess(albumin,r1,iter=0),lty=2)
 plot(albumin,r02,xlab="albumin",ylab="deviance residual")
 lines(lowess(albumin,r02,iter=0),lty=2)
-plot(albumin[is.na(log(protime))!=TRUE],r2,xlab="albumin",ylab="deviance residual")
-lines(lowess(albumin[is.na(log(protime))!=TRUE],r2,iter=0),lty=2)
-# log(protime)
-plot(log(protime)[is.na(log(protime))!=TRUE],r01[is.na(log(protime))!=TRUE],xlab="log(protime)",ylab="martingale residual")
-lines(lowess(log(protime)[is.na(log(protime))!=TRUE],r01[is.na(log(protime))!=TRUE],iter=0),lty=2)
-plot(log(protime)[is.na(log(protime))!=TRUE],r1,xlab="log(protime)",ylab="martingale residual")
-lines(lowess(log(protime)[is.na(log(protime))!=TRUE],r1,iter=0),lty=2)
-plot(log(protime)[is.na(log(protime))!=TRUE],r02[is.na(log(protime))!=TRUE],xlab="log(protime)",ylab="deviance residual")
-lines(lowess(log(protime)[is.na(log(protime))!=TRUE],r02[is.na(log(protime))!=TRUE],iter=0),lty=2)
-plot(log(protime)[is.na(log(protime))!=TRUE],r2,xlab="log(protime)",ylab="deviance residual")
-lines(lowess(log(protime)[is.na(log(protime))!=TRUE],r2,iter=0),lty=2)
+plot(albumin,r2,xlab="albumin",ylab="deviance residual")
+lines(lowess(albumin,r2,iter=0),lty=2)
 # edema
 plot(edema,r01,xlab="edema",ylab="martingale residual")
 lines(lowess(edema,r01,iter=0),lty=2)
-plot(edema[is.na(log(protime))!=TRUE],r1,xlab="edema",ylab="martingale residual")
-lines(lowess(edema[is.na(log(protime))!=TRUE],r1,iter=0),lty=2)
+plot(edema,r1,xlab="edema",ylab="martingale residual")
+lines(lowess(edema,r1,iter=0),lty=2)
 plot(edema,r02,xlab="edema",ylab="deviance residual")
 lines(lowess(edema,r02,iter=0),lty=2)
-plot(edema[is.na(log(protime))!=TRUE],r2,xlab="edema",ylab="deviance residual")
-lines(lowess(edema[is.na(log(protime))!=TRUE],r2,iter=0),lty=2)
+plot(edema,r2,xlab="edema",ylab="deviance residual")
+lines(lowess(edema,r2,iter=0),lty=2)
 par(mfrow=c(1,1))
 ```
 
-#### 모형적합 결과 모든 공변량이 유의하며, 5가지 공변량을 모두 포함했을 때 잔차의 패턴변화가 줄어듬을 확인할 수 있다.
+#### 모형적합 결과 모든 공변량이 유의하며, 4가지 공변량을 모두 포함했을 때 잔차의 패턴변화가 줄어듬을 확인할 수 있다.
 
 ```{r}
 detach(pbc)
@@ -724,8 +781,7 @@ library(survminer)
 fit <- survfit(coxph(Surv(time,delta)~strata(factor(gtype)),data=hodg,method='breslow'))
 summary(fit)
 ggsurvplot(fit,data=pbc,conf.int=TRUE,risk.table.col="strata",ggtheme=theme_bw())
-plot(fit,fun='cumhaz',col=c('red','green'),lty=c(1,2),xlab='Time',ylab='log Cumulative Hazard Rate')
-legend(1500,0.6,legend=c('gtype=1','gtype=2'),lty=c(1,2),col=c('red','green'))
+ggsurvplot(fit,data=pbc,fun='cumhaz',conf.int=TRUE,risk.table.col="strata",ggtheme=theme_bw())
 ```
 
 #### 검토결과 생존함수와 로그 누적기저위험함수 모두 선이 교차하고 있으므로 비례성 관계를 만족하지 않아 보인다.
@@ -736,8 +792,7 @@ legend(1500,0.6,legend=c('gtype=1','gtype=2'),lty=c(1,2),col=c('red','green'))
 fit <- survfit(coxph(Surv(time,delta)~strata(factor(dtype)),data=hodg,method='breslow'))
 summary(fit)
 ggsurvplot(fit,data=pbc,conf.int=TRUE,risk.table.col="strata",ggtheme=theme_bw())
-plot(fit,fun='cumhaz',col=c('red','green'),lty=c(1,2),xlab='Time',ylab='log Cumulative Hazard Rate')
-legend(1500,0.6,legend=c('dtype=1','dtype=2'),lty=c(1,2),col=c('red','green'))
+ggsurvplot(fit,data=pbc,fun='cumhaz',conf.int=TRUE,risk.table.col="strata",ggtheme=theme_bw())
 ```
 
 #### 검토결과 생존함수와 로그 누적기저위험함수 모두 선이 교차하고 있으므로 비례성 관계를 만족하지 않아 보인다.
@@ -758,6 +813,7 @@ plot(score,r1,xlab="age",ylab="martingale residual")
 lines(lowess(score,r1,iter=0),lty=2)
 plot(wtime,r1,xlab="age",ylab="martingale residual")
 lines(lowess(wtime,r1,iter=0),lty=2)
+ggcoxfunctional(Surv(time,delta)~gtype+dtype+score+wtime,data=hodg)
 ```
 
 ### (4) 공변량 gtype이 있는 비례위험모형을 적합하고 마팅게일 잔차그림을 그리고 해석하시오.
@@ -772,6 +828,8 @@ lines(lowess(gtype,r11,iter=0),lty=2)
 plot(gtype,r1,xlab="gtype",ylab="martingale residual")
 lines(lowess(gtype,r1,iter=0),lty=2)
 par(mfrow=c(1,1))
+ggcoxfunctional(Surv(time,delta)~gtype,data=hodg)
+ggcoxdiagnostics(fit1,type="martingale",linear.prediction=FALSE,ggtheme=theme_bw())
 ```
 
 #### 변수 gtype을 추가하여 비례위험모형을 적합하면 잔차의 선형성이 제거됨을 확인할 수 있다.
@@ -788,6 +846,8 @@ lines(lowess(dtype,r21,iter=0),lty=2)
 plot(dtype,r1,xlab="dtype",ylab="martingale residual")
 lines(lowess(dtype,r1,iter=0),lty=2)
 par(mfrow=c(1,1))
+ggcoxfunctional(Surv(time,delta)~dtype,data=hodg)
+ggcoxdiagnostics(fit2,type="martingale",linear.prediction=FALSE,ggtheme=theme_bw())
 ```
 
 #### 변수 dtype을 추가하여 비례위험모형을 적합하면 잔차의 선형성이 제거됨을을 확인할 수 있다.
@@ -820,6 +880,8 @@ lines(lowess(score,r31,iter=0),lty=2)
 plot(score,r1,xlab="score",ylab="martingale residual")
 lines(lowess(score,r1,iter=0),lty=2)
 par(mfrow=c(1,1))
+ggcoxfunctional(Surv(time,delta)~dtype+score,data=hodg)
+ggcoxdiagnostics(fit3,type="martingale",linear.prediction=FALSE,ggtheme=theme_bw())
 ```
 
-#### 분석결과 공변량이 없는 모형과 비교하였을 때 잔차의 선형성이 제거됨을을 확인할 수 있다.
+#### 분석결과 공변량이 없는 모형과 비교하였을 때 잔차의 패턴변화가 줄어듬을 확인할 수 있다.
