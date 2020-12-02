@@ -1,0 +1,114 @@
+---
+title: "Homework (Chapter 11)"
+author: "Hwang Seong-Yun"
+date: '2020 12 2 '
+output: html_document
+---
+
+## 11.31) Refer to the data on salmon in Table 11.2.
+
+```{r}
+salmon <- read.csv("C:/Users/HSY/Desktop/salmon.csv",sep=",",header=T)
+salmon$location <- as.factor(salmon$location)
+salmon$gender <- as.factor(salmon$gender) 
+head(salmon)
+```
+
+### (a) Plot the bivariate data for the two groups of salmon. Are the sizes and orientation of the scatters roughly the same? Do bivariate normal distributions with a common covariance matrix appear to be viable population models for the Alaskan and Canadian salmon?
+
+```{r}
+library(ggplot2)
+ggplot(salmon) +
+  geom_point(aes(x=freshwater, y=marine, color=location),size=1) +  
+  stat_ellipse(aes(x=freshwater, y=marine, color=location),type = "norm")
+```
+
+#### Refer to the scatterplot with ellipse, I think the sizes and orientation of the scatters by lacation are roughly the same. And bivariate normal distributions with a common covariance matrix appear to be viable population models for the Alaskan and Canadian salmon. 
+
+### (b) Using a linear discriminant function for two normal populations with equal priors and equal costs [see (11-19)], construct dot diagrams of the discriminant scores for the two groups. Does it appear as if the growth ring diameters separate for the two groups reasonably well? Explain.
+
+- ${\hat{y _{0}}} =( {\bar{x _{1}}} - {\bar{x _{2}}} ) ^{T} S _{pooled}^{-1} x _{0}$  ,  ${\hat{m}} = ( {\bar{x _{1}}} - {\bar{x _{2}}} ) ^{T} S _{pooled}^{-1} ( {\bar{x _{1}}} + {\bar{x _{2}}} )/2$
+
+- Allocate $x _{0}$ to $pi _{ 1}$ if ${\hat{y _{0}}} >=  {\hat{m}}$
+
+```{r}
+x1 <- colMeans(salmon[salmon$location==1,3:4]) # Alaskan
+x2 <- colMeans(salmon[salmon$location==2,3:4]) # Canadian
+S1 <- var(salmon[salmon$location==1,3:4])
+S2 <- var(salmon[salmon$location==2,3:4])
+Sp <- (S1+S2)/2
+salmon$scores <- t(t(x1-x2)%*%solve(Sp)%*%t(salmon[,3:4]))
+m <- (t(x1-x2)%*%solve(Sp)%*%(x1+x2))/2
+salmon$scores_m <- salmon$scores-5.541204
+ggplot(salmon) +
+  geom_point(aes(x=1:100, y=scores_m, color=location),size=1) +
+  geom_hline(yintercept=0, linetype="dashed", color = "black") +
+  geom_vline(xintercept=50, linetype="dashed", color = "blue")
+```
+
+#### Refer to the dot diagram, I think growth ring diameters separate for the two groups reasonably well. 
+
+### (c) Repeat the analysis in Example 11.8 for the male and female salmon separately. Is it easier to discriminate Alaskan male salmon from Canadian male salmon than it is to discriminate the females in the two groups? Is gender (male or female) likely to be a useful discriminatory variable?
+
+```{r}
+## Alaskan
+salmon_Alaskan <- salmon[salmon$location==1,]
+x1 <- colMeans(salmon_Alaskan[salmon_Alaskan$gender==1,3:4]) # female
+x2 <- colMeans(salmon_Alaskan[salmon_Alaskan$gender==2,3:4]) # male
+S1 <- var(salmon_Alaskan[salmon_Alaskan$gender==1,3:4])
+S2 <- var(salmon_Alaskan[salmon_Alaskan$gender==2,3:4])
+Sp <- (25/48)*S1+(23/48)*S2
+salmon_Alaskan$scores1 <- t(t(x1-x2)%*%solve(Sp)%*%t(salmon_Alaskan[,3:4]))
+m <- (t(x1-x2)%*%solve(Sp)%*%(x1+x2))/2
+salmon_Alaskan$scores1_m <- salmon_Alaskan$scores-(-7.77448)
+ggplot(salmon_Alaskan) +
+  geom_point(aes(x=1:50, y=scores1_m, color=gender),size=1) +
+  geom_hline(yintercept=0, linetype="dashed", color = "black") 
+## Canadian
+salmon_Canadian <- salmon[salmon$location==2,]
+x1 <- colMeans(salmon_Canadian[salmon_Canadian$gender==1,3:4]) # female
+x2 <- colMeans(salmon_Canadian[salmon_Canadian$gender==2,3:4]) # male
+S1 <- var(salmon_Canadian[salmon_Canadian$gender==1,3:4])
+S2 <- var(salmon_Canadian[salmon_Canadian$gender==2,3:4])
+Sp <- (25/48)*S1+(23/48)*S2
+salmon_Canadian$scores1 <- t(t(x1-x2)%*%solve(Sp)%*%t(salmon_Canadian[,3:4]))
+m <- (t(x1-x2)%*%solve(Sp)%*%(x1+x2))/2
+salmon_Canadian$scores1_m <- salmon_Canadian$scores-2.994605
+ggplot(salmon_Canadian) +
+  geom_point(aes(x=1:50, y=scores1_m, color=gender),size=1) +
+  geom_hline(yintercept=0, linetype="dashed", color = "black") 
+```
+
+#### Refer to the result, I think gender is not discriminant variable. Variable location is more useful.
+
+```{r}
+## male
+salmon_male <- salmon[salmon$gender==2,] 
+x1 <- colMeans(salmon_male[salmon_male$location==1,3:4]) # Alaskan
+x2 <- colMeans(salmon_male[salmon_male$location==2,3:4]) # Canadian
+S1 <- var(salmon_male[salmon_male$location==1,3:4])
+S2 <- var(salmon_male[salmon_male$location==2,3:4])
+Sp <- (S1+S2)/2
+salmon_male$scores2 <- t(t(x1-x2)%*%solve(Sp)%*%t(salmon_male[,3:4]))
+m <- (t(x1-x2)%*%solve(Sp)%*%(x1+x2))/2
+salmon_male$scores2_m <- salmon_male$scores2-8.124211
+ggplot(salmon_male) +
+  geom_point(aes(x=1:48, y=scores2_m, color=location),size=1) +
+  geom_hline(yintercept=0, linetype="dashed", color = "black") 
+## female
+salmon_female <- salmon[salmon$gender==1,] 
+x1 <- colMeans(salmon_female[salmon_female$location==1,3:4]) # Alaskan
+x2 <- colMeans(salmon_female[salmon_female$location==2,3:4]) # Canadian
+S1 <- var(salmon_female[salmon_female$location==1,3:4])
+S2 <- var(salmon_female[salmon_female$location==2,3:4])
+Sp <- (25/46)*S1+(21/46)*S2
+salmon_female$scores2 <- t(t(x1-x2)%*%solve(Sp)%*%t(salmon_female[,3:4]))
+m <- (t(x1-x2)%*%solve(Sp)%*%(x1+x2))/2
+salmon_female$scores2_m <- salmon_female$scores2-8.124211
+ggplot(salmon_female) +
+  geom_point(aes(x=1:52, y=scores2_m, color=location),size=1) +
+  geom_hline(yintercept=0, linetype="dashed", color = "black")
+```
+
+
+
