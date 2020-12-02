@@ -1,0 +1,178 @@
+---
+title: "Homework (Chapter 9)"
+author: "Hwang Seong-Yun"
+date: '2020 12 2 '
+output: html_document
+---
+
+## packages
+```{r}
+library(survival)
+library(KMsurv)
+library(tidyverse)
+library(survminer)
+```
+
+
+## 연습문제 9-1) R 시스템에 내장된 폐암 관련 데이터셋 cancer를 이용하여 다음을 구하시오. cancer는 미국 Mayo Clinic에서 폐암환자를 대상으로 조사한 데이터이다. 포함된 변수는 다음과 같다.
+### inst : Institution code
+### time : Survival time in days
+### status : Censoring status 1=censored, 2=dead
+### age : Age in years (Z1)
+### sex : Male=1, Female=2 (Z2)
+### ph.ecog : ECOG performance score (0=good ~ 5=dead) (Z3)
+### ph.karno : Karnofsky performance score (bad=0 ~ good=100) rated by physician (Z4)
+### pat.karno : Karnofsky performance score rated by patient (Z5)
+### meal.cal : Calories consumed at meals (Z6)
+### wt.loss : Weight loss in last six months (Z7)
+
+```{r}
+library(survival)
+data(cancer)
+head(cancer)
+cancer$sex <- as.factor(cancer$sex)
+summary(cancer)
+```
+
+### (1) survival time(status==2 : event)에 대해 Kaplan-Meier 생존함수를 구하고 생존함수 그림을 그리시오.
+
+```{r}
+attach(cancer)
+Surv(time, status==2)
+```
+
+#### 동점은 없는 것으로 보임.
+#### Kaplan-Meier 생존함수를 구하면 다음과 같다.
+
+```{r}
+fit <- survfit(Surv(time, status==2) ~ 1, data=cancer)
+summary(fit)
+```
+
+#### 이에 대한 그림은 다음과 같이 그릴 수 있다.
+
+```{r}
+ggsurvplot(fit,conf.int = TRUE,risk.table.col = "strata",ggtheme = theme_bw())
+```
+
+### (2) survival time(status==2 : event)에 대해 성별에 따른 Kaplan-Meier 생존함수를 구하고 생존함수 그림을 그리시오. 
+
+#### 성별에 따른 Kaplan-Meier 생존함수를 구하면 다음과 같다. 
+
+```{r}
+fit1 <- survfit(Surv(time, status==2) ~ sex, data=cancer)
+summary(fit1)
+```
+
+#### 이에 대한 그림은 다음과 같이 그릴 수 있다.
+
+```{r}
+ggsurvplot(fit1,conf.int = TRUE,risk.table.col = "strata",ggtheme = theme_bw())
+```
+
+#### 생존함수가 교차가 일어나지 않고 있으므로 이에 따른 log-rank test를 수행해보면 다음과 같다.
+
+```{r}
+survdiff(Surv(time, status==2) ~ sex, data=cancer, rho=0)
+```
+
+#### p-value의 값이 0.001이므로 유의수준 0.05보다 작다. 이에 따라 성별에 따른 생존함수는 차이가 있다고 말할 수 있다.
+
+### (3) survival time(status==2 : event)에 대해 공변량을 포함하지 않은 지수회귀모형을 적합하고 추정된 생존함수식을 쓰시오.
+
+```{r}
+a1 <- survreg(Surv(time, status==2) ~ 1, data=cancer, dist="exponential")
+summary(a1)
+```
+
+#### 추정된 생존함수식은 다음과 같다.
+
+- $logT=\beta_{0}+\epsilon$ 적합결과 ${\hat{\beta_{0}}}=6.0445$ 이고 검정결과 $p-value<2 * 10 ^{-16}$ 이므로 매우 유의하다. 이에 따른 추정식은 $logT=6.0445$ 이고 생존함수식은 다음과 같다.
+
+- ${\hat{S}} (t)=exp[-t * exp(- {\hat{\beta  _{0}}} )]=exp(-e ^{-6.0445} t)$
+
+### (4) survival time(status==2 : event)에 대해 공변량을 포함하지 않은 와이블회귀모형을 적합하고 추정된 생존함수식을 쓰시오.
+
+```{r}
+a2 <- survreg(Surv(time, status==2) ~ 1, data=cancer, dist="weibull")
+summary(a2)
+```
+
+#### 추정된 생존함수식은 다음과 같다.
+
+- $logT= \beta  _{0} + \sigma  \epsilon$ 적합결과 ${\hat{\beta_{0}}}=6.0349$ 이고 검정결과 $p-value<2 * 10 ^{-16}$ 이므로 매우 유의하다. 또한  이에 따른 추정식은 $logT=6.0349$ 이고 생존함수식은 다음과 같다. ($\kappa=0.759$)
+
+- ${\hat{S}}(t)=exp[-t ^{{\hat{\kappa }}} exp(- {\hat{\beta  _{0}}} ) ^{{\hat{\kappa }}} ]=exp[-t ^{0.759} (exp(-6.0349)) ^{0.759} ]$
+
+### (5) survival time(status==2 : event)에 대해 공변량을 모두 포함한 지수회귀모형을 적합하고 추정된 생존함수식을 쓰시오.
+
+#### 변수 중 Institution Code(inst)는 설명변수로서 의미가 없다고 생각하여 제외하였음.
+
+```{r}
+b1 <- survreg(Surv(time, status==2) ~ age+sex+ph.ecog+ph.karno+pat.karno+meal.cal+wt.loss, data=cancer, dist="exponential")
+summary(b1)
+```
+
+#### 분석결과
+
+- 분석결과 변수 sex, ph.ecog에 대해서만 $\alpha=0.05$에서 회귀계수의 검정결과가 유의하다. 그리고 모형 전체에 대해서는 log-likelihood 검정결과 $p-value=0.0028$로 매우 유의함을 알 수 있다.
+
+- ${\hat{S}} (t)=exp[- {\hat{\lambda }} t]=exp[-t*exp(- {\hat{\beta  _{0}}} - {\hat{\beta  _{1}}} Z _{1} - {\hat{\beta  _{2}}} Z _{2} - {\hat{\beta  _{3}}} Z _{3} - {\hat{\beta  _{4}}} Z _{4} - {\hat{\beta  _{5}}} Z _{5} - {\hat{\beta  _{6}}} Z _{6} - {\hat{\beta  _{7}}} Z _{7} )]$
+$=exp[-t*exp(-7.53+0.00845age-0.5sex+0.595ph.ecog+$
+$0.0169ph.karno-0.00919pat.karno-0.00000981meal.cal-0.0101wt.loss)]$
+
+### (6) survival time(status==2 : event)에 대해 공변량을 모두 포함한 와이블회귀모형을 적합하고 추정된 생존함수식을 쓰시오.
+
+#### 변수 중 Institution Code(inst)는 설명변수로서 의미가 없다고 생각하여 제외하였음.
+
+```{r}
+b2 <- survreg(Surv(time, status==2) ~ age+sex+ph.ecog+ph.karno+pat.karno+meal.cal+wt.loss, data=cancer, dist="weibull")
+summary(b2)
+```
+
+#### 분석결과
+
+- 분석결과 변수 sex, ph.ecog, ph.karno에 대해서만 $\alpha=0.05$에서 회귀계수의 검정결과가 유의하다. 그리고 모형 전체에 대해서는 log-likelihood 검정결과 $p-value=0.00018$로 매우 유의함을 알 수 있다.
+
+- ${\hat{S}} (t)=exp[-( {\hat{\lambda }} t) ^{{\hat{\kappa }}} ]=$
+$exp[-t ^{{\hat{\kappa }}} (exp(- {\hat{\beta  _{0}}} - {\hat{\beta  _{1}}} Z _{1} - {\hat{\beta  _{2}}} Z _{2} - {\hat{\beta  _{3}}} Z _{3} - {\hat{\beta  _{4}}} Z _{4} - {\hat{\beta  _{5}}} Z _{5} - {\hat{\beta  _{6}}} Z _{6} - {\hat{\beta  _{7}}} Z _{7} )) ^{{\hat{\kappa }}} ]$
+$=exp[-t ^{0.695} (exp(-7.38+0.00642age-0.387sex+0.521ph.ecog$
+$+0.0164ph.karno-0.0086pat.karno-0.0000125meal.cal$
+$-0.00942wt.loss)) ^{0.695} ]$
+
+### (7) survival time(status==2 : event)에 대해 공변량을 모두 포함한 지수회귀모형을 적합하고 성별에 따라 추정된 생존함수식을 쓰시오.
+
+#### sex=1 (남자)
+
+- ${\hat{S}} (t)=exp[- {\hat{\lambda }} t]=$
+$exp[-t*exp(- {\hat{\beta  _{0}}} - {\hat{\beta  _{1}}} Z _{1} - {\hat{\beta  _{3}}} Z _{3} - {\hat{\beta  _{4}}} Z _{4} - {\hat{\beta  _{5}}} Z _{5} - {\hat{\beta  _{6}}} Z _{6} - {\hat{\beta  _{7}}} Z _{7} )]$
+$=exp[-t*exp(-7.53+0.00845age+0.595ph.ecog+$
+$0.0169ph.karno-0.00919pat.karno-0.00000981meal.cal-0.0101wt.loss)]$
+
+#### sex=2 (여자)
+
+- ${\hat{S}} (t)=exp[- {\hat{\lambda }} t]=$
+$exp[-t*exp(- {\hat{\beta  _{0}}} - {\hat{\beta  _{2}}} - {\hat{\beta  _{1}}} Z _{1} - {\hat{\beta  _{3}}} Z _{3} - {\hat{\beta  _{4}}} Z _{4} - {\hat{\beta  _{5}}} Z _{5} - {\hat{\beta  _{6}}} Z _{6} - {\hat{\beta  _{7}}} Z _{7} )]$
+$=exp[-t*exp(-8.03+0.00845age+0.595ph.ecog+$
+$0.0169ph.karno-0.00919pat.karno-0.00000981meal.cal-0.0101wt.loss)]$
+
+### (8) survival time(status==2 : event)에 대해 공변량을 모두 포함한 와이블회귀모형을 적합하고 성별에 따라 추정된 생존함수식을 쓰시오.
+
+#### sex=1 (남자)
+
+- ${\hat{S}} (t)=exp[-( {\hat{\lambda }} t) ^{{\hat{\kappa }}} ]=$
+$exp[-t ^{{\hat{\kappa }}} (exp(- {\hat{\beta  _{0}}} - {\hat{\beta  _{1}}} Z _{1} - {\hat{\beta  _{3}}} Z _{3} - {\hat{\beta  _{4}}} Z _{4} - {\hat{\beta  _{5}}} Z _{5} - {\hat{\beta  _{6}}} Z _{6} - {\hat{\beta  _{7}}} Z _{7} )) ^{{\hat{\kappa }}} ]$
+$=exp[-t ^{0.695} (exp(-7.38+0.00642age+0.521ph.ecog+$
+$0.0164ph.karno-0.0086pat.karno-0.0000125meal.cal$
+$-0.00942wt.loss)) ^{0.695} ]$ 
+
+#### sex=2 (여자)
+
+- ${\hat{S}} (t)=exp[-( {\hat{\lambda }} t) ^{{\hat{\kappa }}} ]=$
+$exp[-t ^{{\hat{\kappa }}} (exp(- {\hat{\beta  _{0}}} - {\hat{\beta  _{2}}} - {\hat{\beta  _{1}}} Z _{1} - {\hat{\beta  _{3}}} Z _{3} - {\hat{\beta  _{4}}} Z _{4} - {\hat{\beta  _{5}}} Z _{5} - {\hat{\beta  _{6}}} Z _{6} - {\hat{\beta  _{7}}} Z _{7} )) ^{{\hat{\kappa }}} ]$
+$=exp[-t ^{0.695} (exp(-7.767+0.00642age+0.521ph.ecog+$
+$0.0164ph.karno-0.0086pat.karno-0.0000125meal.cal$
+$-0.00942wt.loss)) ^{0.695} ]$
+
+## 연습문제 9-2) KMsurv 패키지에 내장된 후두암 데이터셋 larynx를 이용해 다음의 분석을 하시오. 포함된 변수는 다음과 같다.
+### 
