@@ -1,0 +1,643 @@
+---
+title: "Final Project"
+author: "Hwang Seong-Yun"
+date: '2020 12 31 '
+output: html_document
+---
+
+## 다음은 2018년 우리나라 시도별 산업별 종사자 수에 대한 통계청(KOSIS)의 자료이다.  다음 물음에 답하시오.
+- (참고: 
+“https://kosis.kr/statHtml/statHtml.do?orgId=101&tblId=DT_1K52C03&vw_cd=MT_ZTITLE&list_id=K22_4&seqNo=&lang_mode=ko&language=kor&obj_var_id=&itm_id=&conn_path=MT_ZTITLE/”)
+- (단, 각 시도의 각 11개의 산업별 종사자 수는 각 시도의 20세 이상의 총 인원수로 나누어서 분석할 것) 
+  
+#### spot : 시도, industry : 산업, company : 사업체수(곳), worker : 종사자수(명), rate : 산업별 종사자 비율(%)  
+#### 변수 industry 관련
+- a : 농업, 임업 및 어업
+- b : 광업
+- c : 제조업
+- d : 전기, 가스, 증기 및 공기조절 공급업
+- e : 수도, 하수 및 폐기물 처리, 원료 재생업
+- f : 건설업
+- g : 도매 및 소매업
+- h : 운수 및 창고업
+- i : 숙박 및 음식점업
+- j : 정보통신업
+- k : 금융 및 보험업
+- l : 부동산업
+- m : 전문, 과학 및 기술 서비스업
+- n : 사업시설 관리, 사업지원 및 임대 서비스업
+- o : 공공행정, 국방 및 사회보장 행정
+- p : 교육 서비스업
+- q : 보건업 및 사회복지서비스업
+- r : 예술, 스포츠 및 여가관련 서비스업
+- s : 협회 및 단체, 수리 및 기타 개인 서비스업
+  
+```{r}
+library(tidyverse)
+library(nFactors)
+library(psych)
+library(ggplot2)
+final <- read.csv("C:/Users/HSY/Desktop/final.csv",sep=",",header=T)
+final
+```
+
+
+
+### reference : https://statkclee.github.io/statistics/stat-exploratory-factor-analysis.html
+  
+### (1) 산업별 종사자 비율에 의해 각 시도를 요인분석을 통해 분류하시오.
+### (2) 요인분석을 한 후 요인에 적절한 이름을 부여하시오.
+### (3) 이상치 시도가 있는지 판단하시오.
+### (4) 요인분석 후 인자회전을 시키시오.
+
+- 총 17곳으로 분류된 시도를 기준으로 변수 company, worker, rate를 바탕으로 요인분석 실시, varimax rotate 적용  
+
+### 서울
+
+```{r}
+Seoul <- final[final$spot=="Seoul",c(2,3,4,5)]
+ggplot(Seoul, aes(x=industry, y=rate, fill=industry)) + 
+   geom_bar(stat="identity") + 
+   ggtitle("Bar Chart of rate (Seoul)")
+```
+
+#### 서울의 경우 도매 및 소매업의 비중이 가장 큼. 
+
+```{r}
+# 요인수 결정
+Seoul <- final[final$spot=="Seoul",c(3,4,5)] 
+Seoul_cor <- cor(Seoul, use = "pairwise.complete.obs")
+scree(Seoul_cor, factors = TRUE)
+```
+
+#### scree plot을 통해 요인수를 1로 결정
+
+```{r}
+Seoul_fa <- fa(Seoul, nfactors=1, n.obs=N, rotate="varimax")
+print(Seoul_fa$loadings, cutoff = 0.2)
+colnames(Seoul_fa$loadings) <- c("Factor1")
+fa.diagram(Seoul_fa)
+```
+
+#### 서울의 경우 다음과 같은 요인분석 결과를 얻는다.
+- $ company = 0.763 * Factor1 $
+- $ worker = 0.999 * Factor1 $
+- $ rate = 0.999 * Factor1 $
+- Factor1은 주로 서울의 산업별 종사자 비율과 관련한 잠재요인으로 보여진다.
+
+
+
+### 부산
+
+```{r}
+Busan <- final[final$spot=="Busan",c(2,3,4,5)]
+ggplot(Busan, aes(x=industry, y=rate, fill=industry)) + 
+   geom_bar(stat="identity") + 
+   ggtitle("Bar Chart of rate (Busan)")
+```
+
+#### 부산의 경우 도매 및 소매업이 1위, 제조업이 2위를 기록함. 
+
+```{r}
+# 요인수 결정
+Busan <- final[final$spot=="Busan",c(3,4,5)] 
+Busan_cor <- cor(Busan, use = "pairwise.complete.obs")
+scree(Busan_cor, factors = TRUE)
+```
+
+#### scree plot을 통해 요인수를 1로 결정
+
+```{r}
+Busan_fa <- fa(Busan, nfactors=1, n.obs=N, rotate="varimax")
+print(Busan_fa$loadings, cutoff = 0.2)
+colnames(Busan_fa$loadings) <- c("Factor1")
+fa.diagram(Busan_fa)
+```
+
+#### 부산의 경우 다음과 같은 요인분석 결과를 얻는다.
+- $ company = 0.820 * Factor1 $
+- $ worker = 0.999 * Factor1 $
+- $ rate = 0.999 * Factor1 $
+- Factor1은 주로 부산의 산업별 종사자 비율과 관련한 잠재요인으로 보여진다.
+
+
+### 대구
+
+```{r}
+Daegu <- final[final$spot=="Daegu",c(2,3,4,5)]
+ggplot(Daegu, aes(x=industry, y=rate, fill=industry)) + 
+   geom_bar(stat="identity") + 
+   ggtitle("Bar Chart of rate (Daegu)")
+```
+
+#### 대구의 경우 제조업이 1위, 도매 및 소매업이 2위를 기록함. 
+
+```{r}
+# 요인수 결정
+Daegu <- final[final$spot=="Daegu",c(3,4,5)] 
+Daegu_cor <- cor(Daegu, use = "pairwise.complete.obs")
+scree(Daegu_cor, factors = TRUE)
+```
+
+#### scree plot을 통해 요인수를 1로 결정
+
+```{r}
+Daegu_fa <- fa(Daegu, nfactors=1, n.obs=N, rotate="varimax")
+print(Daegu_fa$loadings, cutoff = 0.2)
+colnames(Daegu_fa$loadings) <- c("Factor1")
+fa.diagram(Daegu_fa)
+```
+
+#### 대구의 경우 다음과 같은 요인분석 결과를 얻는다.
+- $ company = 0.815 * Factor1 $
+- $ worker = 0.999 * Factor1 $
+- $ rate = 0.999 * Factor1 $
+- Factor1은 주로 대구의 산업별 종사자 비율과 관련한 잠재요인으로 보여진다.
+
+
+### 인천
+
+```{r}
+Incheon <- final[final$spot=="Incheon",c(2,3,4,5)]
+ggplot(Incheon, aes(x=industry, y=rate, fill=industry)) + 
+   geom_bar(stat="identity") + 
+   ggtitle("Bar Chart of rate (Incheon)")
+```
+
+#### 인천의 경우 제조업의 비중이 가장 큼. 
+
+```{r}
+# 요인수 결정
+Incheon <- final[final$spot=="Incheon",c(3,4,5)] 
+Incheon_cor <- cor(Incheon, use = "pairwise.complete.obs")
+scree(Incheon_cor, factors = TRUE)
+```
+
+#### scree plot을 통해 요인수를 1로 결정
+
+```{r}
+Incheon_fa <- fa(Incheon, nfactors=1, n.obs=N, rotate="varimax")
+print(Incheon_fa$loadings, cutoff = 0.2)
+colnames(Incheon_fa$loadings) <- c("Factor1")
+fa.diagram(Incheon_fa)
+```
+
+#### 인천의 경우 다음과 같은 요인분석 결과를 얻는다.
+- $ company = 0.734 * Factor1 $
+- $ worker = 0.999 * Factor1 $
+- $ rate = 0.999 * Factor1 $
+- Factor1은 주로 인천의 산업별 종사자 비율과 관련한 잠재요인으로 보여진다.
+
+
+### 광주
+
+```{r}
+Gwangju <- final[final$spot=="Gwangju",c(2,3,4,5)]
+ggplot(Gwangju, aes(x=industry, y=rate, fill=industry)) + 
+   geom_bar(stat="identity") + 
+   ggtitle("Bar Chart of rate (Gwangju)")
+```
+
+#### 광주의 경우 도매 및 소매업이 1위, 제조업이 2위를 기록함. 
+
+```{r}
+# 요인수 결정
+Gwangju <- final[final$spot=="Gwangju",c(3,4,5)] 
+Gwangju_cor <- cor(Gwangju, use = "pairwise.complete.obs")
+scree(Gwangju_cor, factors = TRUE)
+```
+
+#### scree plot을 통해 요인수를 1로 결정
+
+```{r}
+Gwangju_fa <- fa(Gwangju, nfactors=1, n.obs=N, rotate="varimax")
+print(Gwangju_fa$loadings, cutoff = 0.2)
+colnames(Gwangju_fa$loadings) <- c("Factor1")
+fa.diagram(Gwangju_fa)
+```
+
+#### 광주의 경우 다음과 같은 요인분석 결과를 얻는다.
+- $ company = 0.735 * Factor1 $
+- $ worker = 0.999 * Factor1 $
+- $ rate = 0.999 * Factor1 $
+- Factor1은 주로 광주의 산업별 종사자 비율과 관련한 잠재요인으로 보여진다.
+
+
+### 대전
+
+```{r}
+Daejeon <- final[final$spot=="Daejeon",c(2,3,4,5)]
+ggplot(Daejeon, aes(x=industry, y=rate, fill=industry)) + 
+   geom_bar(stat="identity") + 
+   ggtitle("Bar Chart of rate (Daejeon)")
+```
+
+#### 대전의 경우 도매 및 소매업이 1위, 숙박 및 음식점업이 2위를 기록함. 
+
+```{r}
+# 요인수 결정
+Daejeon <- final[final$spot=="Daejeon",c(3,4,5)] 
+Daejeon_cor <- cor(Daejeon, use = "pairwise.complete.obs")
+scree(Daejeon_cor, factors = TRUE)
+```
+
+#### scree plot을 통해 요인수를 1로 결정
+
+```{r}
+Daejeon_fa <- fa(Daejeon, nfactors=1, n.obs=N, rotate="varimax")
+print(Daejeon_fa$loadings, cutoff = 0.2)
+colnames(Daejeon_fa$loadings) <- c("Factor1")
+fa.diagram(Daejeon_fa)
+```
+
+#### 대전의 경우 다음과 같은 요인분석 결과를 얻는다.
+- $ company = 0.750 * Factor1 $
+- $ worker = 0.999 * Factor1 $
+- $ rate = 0.999 * Factor1 $
+- Factor1은 주로 대전의 산업별 종사자 비율과 관련한 잠재요인으로 보여진다.
+
+
+### 울산
+
+```{r}
+Ulsan <- final[final$spot=="Ulsan",c(2,3,4,5)]
+ggplot(Ulsan, aes(x=industry, y=rate, fill=industry)) + 
+   geom_bar(stat="identity") + 
+   ggtitle("Bar Chart of rate (Ulsan)")
+```
+
+#### 울산의 경우 제조업의 비중이 압도적으로 가장 큼. 
+
+```{r}
+# 요인수 결정
+Ulsan <- final[final$spot=="Ulsan",c(3,4,5)] 
+Ulsan_cor <- cor(Ulsan, use = "pairwise.complete.obs")
+scree(Ulsan_cor, factors = TRUE)
+```
+
+#### scree plot을 통해 요인수를 1로 결정
+
+```{r}
+Ulsan_fa <- fa(Ulsan, nfactors=1, n.obs=N, rotate="varimax")
+print(Ulsan_fa$loadings, cutoff = 0.2)
+colnames(Ulsan_fa$loadings) <- c("Factor1")
+fa.diagram(Ulsan_fa)
+```
+
+#### 울산의 경우 다음과 같은 요인분석 결과를 얻는다.
+- $ company = 0.453 * Factor1 $
+- $ worker = 0.999 * Factor1 $
+- $ rate = 0.999 * Factor1 $
+- Factor1은 주로 울산의 산업별 종사자 비율과 관련한 잠재요인으로 보여진다.
+
+
+### 세종
+
+```{r}
+Sejong <- final[final$spot=="Sejong",c(2,3,4,5)]
+ggplot(Sejong, aes(x=industry, y=rate, fill=industry)) + 
+   geom_bar(stat="identity") + 
+   ggtitle("Bar Chart of rate (Sejong)")
+```
+
+#### 세종의 경우 제조업이 1위, 공공행정, 국방 및 사회보장 행정이 2위를 기록함. 
+
+```{r}
+# 요인수 결정
+Sejong <- final[final$spot=="Sejong",c(3,4,5)] 
+Sejong_cor <- cor(Sejong, use = "pairwise.complete.obs")
+scree(Sejong_cor, factors = TRUE)
+```
+
+#### scree plot을 통해 요인수를 1로 결정
+
+```{r}
+Sejong_fa <- fa(Sejong, nfactors=1, n.obs=N, rotate="varimax")
+print(Sejong_fa$loadings, cutoff = 0.2)
+colnames(Sejong_fa$loadings) <- c("Factor1")
+fa.diagram(Sejong_fa)
+```
+
+#### 세종의 경우 다음과 같은 요인분석 결과를 얻는다.
+- $ company = 0.381 * Factor1 $
+- $ worker = 0.999 * Factor1 $
+- $ rate = 0.999 * Factor1 $
+- Factor1은 주로 세종의 산업별 종사자 비율과 관련한 잠재요인으로 보여진다.
+
+
+### 경기도
+
+```{r}
+Gyeonggi <- final[final$spot=="Gyeonggi",c(2,3,4,5)]
+ggplot(Gyeonggi, aes(x=industry, y=rate, fill=industry)) + 
+   geom_bar(stat="identity") + 
+   ggtitle("Bar Chart of rate (Gyeonggi)")
+```
+
+#### 경기도의 경우 제조업의 비중이 압도적으로 가장 큼. 
+
+```{r}
+# 요인수 결정
+Gyeonggi <- final[final$spot=="Gyeonggi",c(3,4,5)] 
+Gyeonggi_cor <- cor(Gyeonggi, use = "pairwise.complete.obs")
+scree(Gyeonggi_cor, factors = TRUE)
+```
+
+#### scree plot을 통해 요인수를 1로 결정
+
+```{r}
+Gyeonggi_fa <- fa(Gyeonggi, nfactors=1, n.obs=N, rotate="varimax")
+print(Gyeonggi_fa$loadings, cutoff = 0.2)
+colnames(Gyeonggi_fa$loadings) <- c("Factor1")
+fa.diagram(Gyeonggi_fa)
+```
+
+#### 경기도의 경우 다음과 같은 요인분석 결과를 얻는다.
+- $ company = 0.754 * Factor1 $
+- $ worker = 0.999 * Factor1 $
+- $ rate = 0.999 * Factor1 $
+- Factor1은 주로 경기도의 산업별 종사자 비율과 관련한 잠재요인으로 보여진다.
+
+
+### 강원도
+
+```{r}
+Gangwon <- final[final$spot=="Gangwon",c(2,3,4,5)]
+ggplot(Gangwon, aes(x=industry, y=rate, fill=industry)) + 
+   geom_bar(stat="identity") + 
+   ggtitle("Bar Chart of rate (Gangwon)")
+```
+
+#### 강원도의 경우 숙박 및 음식점업이 1위, 도매 및 소매업이 2위를 기록함. 
+
+```{r}
+# 요인수 결정
+Gangwon <- final[final$spot=="Gangwon",c(3,4,5)] 
+Gangwon_cor <- cor(Gangwon, use = "pairwise.complete.obs")
+scree(Gangwon_cor, factors = TRUE)
+```
+
+#### scree plot을 통해 요인수를 1로 결정
+
+```{r}
+Gangwon_fa <- fa(Gangwon, nfactors=1, n.obs=N, rotate="varimax")
+print(Gangwon_fa$loadings, cutoff = 0.2)
+colnames(Gangwon_fa$loadings) <- c("Factor1")
+fa.diagram(Gangwon_fa)
+```
+
+#### 강원도의 경우 다음과 같은 요인분석 결과를 얻는다.
+- $ company = 0.816 * Factor1 $
+- $ worker = 0.999 * Factor1 $
+- $ rate = 0.999 * Factor1 $
+- Factor1은 주로 강원도의 산업별 종사자 비율과 관련한 잠재요인으로 보여진다.
+
+
+### 충청북도
+
+```{r}
+Chungbuk <- final[final$spot=="Chungbuk",c(2,3,4,5)]
+ggplot(Chungbuk, aes(x=industry, y=rate, fill=industry)) + 
+   geom_bar(stat="identity") + 
+   ggtitle("Bar Chart of rate (Chungbuk)")
+```
+
+#### 충청북도의 경우 제조업의 비중이 압도적으로 가장 큼. 
+
+```{r}
+# 요인수 결정
+Chungbuk <- final[final$spot=="Chungbuk",c(3,4,5)] 
+Chungbuk_cor <- cor(Chungbuk, use = "pairwise.complete.obs")
+scree(Chungbuk_cor, factors = TRUE)
+```
+
+#### scree plot을 통해 요인수를 1로 결정
+
+```{r}
+Chungbuk_fa <- fa(Chungbuk, nfactors=1, n.obs=N, rotate="varimax")
+print(Chungbuk_fa$loadings, cutoff = 0.2)
+colnames(Chungbuk_fa$loadings) <- c("Factor1")
+fa.diagram(Chungbuk_fa)
+```
+
+#### 충청북도의 경우 다음과 같은 요인분석 결과를 얻는다.
+- $ company = 0.553 * Factor1 $
+- $ worker = 0.999 * Factor1 $
+- $ rate = 0.999 * Factor1 $
+- Factor1은 주로 충청북도의 산업별 종사자 비율과 관련한 잠재요인으로 보여진다.
+
+
+### 충청남도
+
+```{r}
+Chungnam <- final[final$spot=="Chungnam",c(2,3,4,5)]
+ggplot(Chungnam, aes(x=industry, y=rate, fill=industry)) + 
+   geom_bar(stat="identity") + 
+   ggtitle("Bar Chart of rate (Chungnam)")
+```
+
+#### 충청남도의 경우 제조업의 비중이 압도적으로 가장 큼. 
+
+```{r}
+# 요인수 결정
+Chungnam <- final[final$spot=="Chungnam",c(3,4,5)] 
+Chungnam_cor <- cor(Chungnam, use = "pairwise.complete.obs")
+scree(Chungnam_cor, factors = TRUE)
+```
+
+#### scree plot을 통해 요인수를 1로 결정
+
+```{r}
+Chungnam_fa <- fa(Chungnam, nfactors=1, n.obs=N, rotate="varimax")
+print(Chungnam_fa$loadings, cutoff = 0.2)
+colnames(Chungnam_fa$loadings) <- c("Factor1")
+fa.diagram(Chungnam_fa)
+```
+
+#### 충청남도의 경우 다음과 같은 요인분석 결과를 얻는다.
+- $ company = 0.549 * Factor1 $
+- $ worker = 0.999 * Factor1 $
+- $ rate = 0.999 * Factor1 $
+- Factor1은 주로 충청남도의 산업별 종사자 비율과 관련한 잠재요인으로 보여진다.
+
+
+### 전라북도
+
+```{r}
+Jeonbuk <- final[final$spot=="Jeonbuk",c(2,3,4,5)]
+ggplot(Jeonbuk, aes(x=industry, y=rate, fill=industry)) + 
+   geom_bar(stat="identity") + 
+   ggtitle("Bar Chart of rate (Jeonbuk)")
+```
+
+#### 전라북도의 경우 제조업이 1위, 도매 및 소매업이 2위를 기록함. 
+
+```{r}
+# 요인수 결정
+Jeonbuk <- final[final$spot=="Jeonbuk",c(3,4,5)] 
+Jeonbuk_cor <- cor(Jeonbuk, use = "pairwise.complete.obs")
+scree(Jeonbuk_cor, factors = TRUE)
+```
+
+#### scree plot을 통해 요인수를 1로 결정
+
+```{r}
+Jeonbuk_fa <- fa(Jeonbuk, nfactors=1, n.obs=N, rotate="varimax")
+print(Jeonbuk_fa$loadings, cutoff = 0.2)
+colnames(Jeonbuk_fa$loadings) <- c("Factor1")
+fa.diagram(Jeonbuk_fa)
+```
+
+#### 전라북도의 경우 다음과 같은 요인분석 결과를 얻는다.
+- $ company = 0.708 * Factor1 $
+- $ worker = 0.999 * Factor1 $
+- $ rate = 0.999 * Factor1 $
+- Factor1은 주로 전라북도의 산업별 종사자 비율과 관련한 잠재요인으로 보여진다.
+
+
+### 전라남도
+
+```{r}
+Jeonnam <- final[final$spot=="Jeonnam",c(2,3,4,5)]
+ggplot(Jeonnam, aes(x=industry, y=rate, fill=industry)) + 
+   geom_bar(stat="identity") + 
+   ggtitle("Bar Chart of rate (Jeonnam)")
+```
+
+#### 전라남도의 경우 제조업이 1위, 도매 및 소매업이 2위를 기록함. 
+
+```{r}
+# 요인수 결정
+Jeonnam <- final[final$spot=="Jeonnam",c(3,4,5)] 
+Jeonnam_cor <- cor(Jeonnam, use = "pairwise.complete.obs")
+scree(Jeonnam_cor, factors = TRUE)
+```
+
+#### scree plot을 통해 요인수를 1로 결정
+
+```{r}
+Jeonnam_fa <- fa(Jeonnam, nfactors=1, n.obs=N, rotate="varimax")
+print(Jeonnam_fa$loadings, cutoff = 0.2)
+colnames(Jeonnam_fa$loadings) <- c("Factor1")
+fa.diagram(Jeonnam_fa)
+```
+
+#### 전라남도의 경우 다음과 같은 요인분석 결과를 얻는다.
+- $ company = 0.705 * Factor1 $
+- $ worker = 0.999 * Factor1 $
+- $ rate = 0.999 * Factor1 $
+- Factor1은 주로 전라남도의 산업별 종사자 비율과 관련한 잠재요인으로 보여진다.
+
+
+### 경상북도
+
+```{r}
+Gyeongbuk <- final[final$spot=="Gyeongbuk",c(2,3,4,5)]
+ggplot(Gyeongbuk, aes(x=industry, y=rate, fill=industry)) + 
+   geom_bar(stat="identity") + 
+   ggtitle("Bar Chart of rate (Gyeongbuk)")
+```
+
+#### 경상북도의 경우 제조업의 비중이 압도적으로 가장 큼. 
+
+```{r}
+# 요인수 결정
+Gyeongbuk <- final[final$spot=="Gyeongbuk",c(3,4,5)] 
+Gyeongbuk_cor <- cor(Gyeongbuk, use = "pairwise.complete.obs")
+scree(Gyeongbuk_cor, factors = TRUE)
+```
+
+#### scree plot을 통해 요인수를 1로 결정
+
+```{r}
+Gyeongbuk_fa <- fa(Gyeongbuk, nfactors=1, n.obs=N, rotate="varimax")
+print(Gyeongbuk_fa$loadings, cutoff = 0.2)
+colnames(Gyeongbuk_fa$loadings) <- c("Factor1")
+fa.diagram(Gyeongbuk_fa)
+```
+
+#### 경상북도의 경우 다음과 같은 요인분석 결과를 얻는다.
+- $ company = 0.626 * Factor1 $
+- $ worker = 0.999 * Factor1 $
+- $ rate = 0.999 * Factor1 $
+- Factor1은 주로 경상북도의 산업별 종사자 비율과 관련한 잠재요인으로 보여진다.
+
+
+### 경상남도
+
+```{r}
+Gyeongnam <- final[final$spot=="Gyeongnam",c(2,3,4,5)]
+ggplot(Gyeongnam, aes(x=industry, y=rate, fill=industry)) + 
+   geom_bar(stat="identity") + 
+   ggtitle("Bar Chart of rate (Gyeongnam)")
+```
+
+#### 경상남도의 경우 제조업의 비중이 압도적으로 가장 큼. 
+
+```{r}
+# 요인수 결정
+Gyeongnam <- final[final$spot=="Gyeongnam",c(3,4,5)] 
+Gyeongnam_cor <- cor(Gyeongnam, use = "pairwise.complete.obs")
+scree(Gyeongnam_cor, factors = TRUE)
+```
+
+#### scree plot을 통해 요인수를 1로 결정
+
+```{r}
+Gyeongnam_fa <- fa(Gyeongnam, nfactors=1, n.obs=N, rotate="varimax")
+print(Gyeongnam_fa$loadings, cutoff = 0.2)
+colnames(Gyeongnam_fa$loadings) <- c("Factor1")
+fa.diagram(Gyeongnam_fa)
+```
+
+#### 경상남도의 경우 다음과 같은 요인분석 결과를 얻는다.
+- $ company = 0.652 * Factor1 $
+- $ worker = 0.999 * Factor1 $
+- $ rate = 0.999 * Factor1 $
+- Factor1은 주로 경상남도의 산업별 종사자 비율과 관련한 잠재요인으로 보여진다.
+
+
+### 제주도
+
+```{r}
+Jeju <- final[final$spot=="Jeju",c(2,3,4,5)]
+ggplot(Jeju, aes(x=industry, y=rate, fill=industry)) + 
+   geom_bar(stat="identity") + 
+   ggtitle("Bar Chart of rate (Jeju)")
+```
+
+#### 제주도의 경우 숙박 및 음식점업이 1위, 도매 및 소매업이 2위를 기록함. 
+
+```{r}
+# 요인수 결정
+Jeju <- final[final$spot=="Jeju",c(3,4,5)] 
+Jeju_cor <- cor(Jeju, use = "pairwise.complete.obs")
+scree(Jeju_cor, factors = TRUE)
+```
+
+#### scree plot을 통해 요인수를 1로 결정
+
+```{r}
+Jeju_fa <- fa(Jeju, nfactors=1, n.obs=N, rotate="varimax")
+print(Jeju_fa$loadings, cutoff = 0.2)
+colnames(Jeju_fa$loadings) <- c("Factor1")
+fa.diagram(Jeju_fa)
+```
+
+#### 제주도의 경우 다음과 같은 요인분석 결과를 얻는다.
+- $ company = 0.919 * Factor1 $
+- $ worker = 0.999 * Factor1 $
+- $ rate = 0.999 * Factor1 $
+- Factor1은 주로 제주도의 산업별 종사자 비율과 관련한 잠재요인으로 보여진다.
+
+
+
+### (5) 요인분석 결과를 총평하시오.   
+
+```{r}
+ggplot(final, aes(x=industry, y=rate, fill=spot)) + 
+   geom_bar(stat="identity",position="dodge") + 
+   ggtitle("Bar Chart of rate")
+```
+
+
