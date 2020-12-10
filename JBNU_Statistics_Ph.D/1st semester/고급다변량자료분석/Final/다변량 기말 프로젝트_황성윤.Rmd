@@ -673,6 +673,9 @@ fa.diagram(Jeju_fa)
 ggplot(final, aes(x=industry, y=rate1, fill=spot)) + 
    geom_bar(stat="identity",position="dodge") + 
    ggtitle("시도 및 산업별 사업체수 비율(%)")
+ggplot(final, aes(x=industry, y=rate2, fill=spot)) + 
+   geom_bar(stat="identity",position="dodge") + 
+   ggtitle("시도 및 산업별 종사자수 비율(%)")
 ```
 
 
