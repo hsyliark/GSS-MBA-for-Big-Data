@@ -5,6 +5,8 @@ date: '2020 12 31 '
 output: html_document
 ---
 
+### 박선, 황성윤
+
 ## 다음은 2018년 우리나라 시도별 산업별 종사자 수에 대한 통계청(KOSIS)의 자료이다.  다음 물음에 답하시오.
 - (참고: 
 “https://kosis.kr/statHtml/statHtml.do?orgId=101&tblId=DT_1K52C03&vw_cd=MT_ZTITLE&list_id=K22_4&seqNo=&lang_mode=ko&language=kor&obj_var_id=&itm_id=&conn_path=MT_ZTITLE/”)
@@ -664,10 +666,7 @@ fa.diagram(Jeju_fa)
 
 
 ### (4) 이상치 시도가 있는지 판단하시오.
-
-- 다른 시도와는 다르게 세종시의 경우 정부세종청사가 있기 때문에 공공행정, 국방 및 사회보장 행정 직군 종사자수가 많게 나왔고, 제주도의 경우 관광산업이 주로 이루어지는 만큼 숙박 및 음식점업에 해당하는 사업체수나 종사자수가 가장 많았다. 이를 통해 세종시와 제주도가 이상치를 나타내고 있다고 보여진다.
-
-### (5) 요인분석 결과를 총평하시오.   
+### (5) 요인분석 결과를 총평하시오.
 
 ```{r}
 ggplot(final, aes(x=industry, y=rate1, fill=spot)) + 
@@ -677,5 +676,11 @@ ggplot(final, aes(x=industry, y=rate2, fill=spot)) +
    geom_bar(stat="identity",position="dodge") + 
    ggtitle("시도 및 산업별 종사자수 비율(%)")
 ```
+
+- 다른 시도와는 다르게 세종시의 경우 정부세종청사가 있기 때문에 공공행정, 국방 및 사회보장 행정 직군 종사자수가 많게 나왔고, 제주도의 경우 관광산업이 주로 이루어지는 만큼 숙박 및 음식점업에 해당하는 사업체수나 종사자수가 가장 많았다. 이를 통해 세종시와 제주도가 다른 시도와는 다른 특별한 특성을 나타내고 있다고 판단된다.
+
+   
+
+
 
 
