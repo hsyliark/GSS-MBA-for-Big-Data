@@ -1,0 +1,134 @@
+---
+title: "Final"
+author: "Hwang Seong-Yun"
+date: '2020 12 23 '
+output: html_document
+---
+
+## (A) The denim dataset (faraway package) concerns the amount of waste in material cutting for a jeans manufacturer due to five suppliers.
+
+```{r}
+library(faraway)
+data(denim)
+```
+
+- waste : percentage wastage (%)
+- supplier : a factor with levels 1 2 3 4 5
+
+
+### 1. Plot the data and comment.
+
+```{r}
+summary(denim)
+```
+
+- 변수 waste는 청바지 제작 시 낭비되는 재료의 비율을 나타내고, 변수 supplier는 5가지의 공급업체를 나타내는 factor 변수이다. 자료를 살펴보기 위해 boxplot을 그려보면 다음과 같다.
+
+```{r}
+library(ggplot2)
+ggplot(data=denim, aes(x=supplier, y=waste, fill=supplier)) +
+  geom_boxplot() +
+  stat_summary(fun="mean", geom="point", shape=22, size=3, fill="black") +
+  ggtitle("Boxplot of denim data")
+```
+
+- Boxplot을 통해서 볼 때 5번 공급업체의 재료낭비비율에 대한 분산이 가장 큰 것으로 보여진다. 하지만, 이상치는 공급업체 1과 2에서 두드러지게 나타나고 있다. 그리고 재료낭비비율에 대한 평균은 공급업체 1이 가장 낮게 나타나고 있다.
+
+### 2. Fit the linear fixed effects model. Is the operator significant?
+
+- 분석을 위해 다음과 같은 fixed effects model을 가정한다.
+- $y _{ij} = \mu + \alpha  _{i} + \epsilon  _{ij}$
+- $\epsilon  _{ij} ->iid N(0, \sigma  ^{2} )$
+
+```{r}
+lmod <- lm(waste ~ supplier, data=denim)
+anova(lmod) 
+```
+
+- 모형적합 결과, 유의확률이 0.334이므로 유의수준 0.05보다 크다. 이에 따라 공급업체에 따른 재료낭비비율의 차이가 유의하지 않다고 말할 수 있다.
+
+### 3. Make a useful diagnostic plot for this model and comment.
+
+```{r}
+par(mfrow=c(2,2))
+plot(lmod)
+par(mfrow=c(1,1))
+```
+
+- 모형에 대한 검진그래프를 통해 잔차의 정규성이 의심되는 것을 확인할 수 있다. 또한 잔차에 대한 등분산성이나 독립성도 위배되는 것으로 보이며 이상치도 다수 존재함을 확인가능하다.
+
+### 4. Analyze the data with supplier as a random effect. What are the estimated standard deviations of the effects?
+
+- 분석을 위해 다음과 같은 random effects model을 가정한다.
+- $y _{ij} = \mu + \alpha  _{i} + \epsilon  _{ij}$
+- $\epsilon  _{ij} ->iid N(0, \sigma  ^{2} )$ 
+- $\alpha  _{i} -> N(0, \sigma  _{\alpha }^{2} )$
+
+```{r}
+library(lme4)
+lmod1 <- lmer(waste ~ (1 | supplier), data = denim)
+summary(lmod1)
+```
+
+- 위의 결과를 통해서 estimated standard deviations of the effects의 값은 $sqrt {0.6711} = 0.8192069$ 임을 확인할 수 있다. 
+
+### 5. Test the significance of the supplier term.
+### 6. Compute confidence intervals for the random effect SDs.
+
+```{r}
+confint(lmod1, oldNames = FALSE)
+```
+
+- 위의 결과에서 ${\hat{\sigma  _{\alpha }}}$에 대한 95% 신뢰구간에 0이 포함되어 있으므로 공급업체에 대한 term이 유의하다고 볼 수는 없다. 
+- 그리고 random effect SDs에 대한 95% 신뢰구간은 (0 , 4.2064)임을 추가로 확인할 수 있다.
+
+### 7. Estimate the effect of each supplier. If only one supplier will be used, choose the best.
+
+- 각 공급업체별 효과는 다음을 통해 추정할 수 있다.
+
+```{r}
+summary(lmod)
+```
+
+- 위의 결과를 통해 공급업체 1에 비해 공급업체 2는 4.3091%, 공급업체 3은 0.3089%, 공급업체 4는 2.9667%, 공급업체는 5.8542% 재료낭비비율이 높게 추정됨을 확인할 수 있다. 이에 따라 재료낭비비율이 가장 적게 추정되는 공급업체 1을 선택하는 것이 현명하다.
+
+## (B) Data on the butterfat content of milk from Canadian cows of five different breeds and two different ages can be found in the butterfat dataset (faraway package).
+
+```{r}
+library(faraway)
+data(butterfat)
+summary(butterfat)
+```
+
+- Butterfat : butter fat content by percentage
+- Breed : a factor with levels Ayrshire Canadian Guernsey Holstein-Fresian Jersey
+- Age : a factor with levels 2year Mature
+
+### 1. Make appropriate plots of the data and make your guess on the extistence of an interaction effect between breed and age.
+
+```{r}
+library(ggplot2)
+ggplot(data=butterfat, aes(x=Breed, y=Butterfat, fill=Age)) +
+  geom_boxplot() +
+  ggtitle("Boxplot of butterfat data")
+with(butterfat, interaction.plot(x.factor = Breed, trace.factor = Age, response = Butterfat))
+```
+
+- 위의 Boxplot과 interaction plot을 통해서 변수 Breed와 변수 Age 사이에는 교호작용 효과가 거의 없는 것으로 파악할 수 있다. Age에 따른 Butterfat~Breed 그래프의 증감이 거의 비슷하기 때문이다.
+
+### 2. Find and fit a reasonable regression model with butterfat content as response. Is the best breed in terms of butterfat content clearly superior to the second best breed?
+
+- 문제 1의 결과를 바탕으로 상호작용 효과가 없는 모형을 고려한다. 다만 Breed의 경우는 소의 종과 관련된 만큼 임의로 선택(random effect)했다는 가정 하에 다음과 같은 Mixed effect model을 가정한다.
+- $y _{ijk} = \mu + \alpha  _{i} + \beta  _{j} + \epsilon  _{ijk}$
+- $\epsilon  _{ijk} ->iid N(0, \sigma  ^{2} )$ 
+- $\alpha  _{i} -> N(0, \sigma  _{\alpha }^{2} )$
+
+```{r}
+fit <- lmer(Butterfat ~ (1 | Breed) + Age, data = butterfat)
+summary(fit)
+confint(fit, oldNames = FALSE)
+```
+
+- 위의 결과를 통해 Breed에 대한 ${\hat{\sigma  _{\alpha }}}$의 95% 신뢰구간은 (0.3380 , 1.2732)이므로 0을 포함하고 있지 않다. 따라서 Breed는 Butterfat에 대해 유의한 영향을 미치고 있음을 확인할 수 있다. 그러므로 문제에서 질문하는 내용(Is the best breed in terms of butterfat content clearly superior to the second best breed?)은 맞다고 볼 수 있다. 그러나, Age의 경우 ${\hat{\beta  _{j}}}$에 대한 95% 신뢰구간은 (-0.0584 , 0.2676)이므로 0을 포함하고 있다. 따라서 Age는 유의한 영향력이 없음을 알 수 있다.
+
+
