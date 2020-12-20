@@ -1,0 +1,317 @@
+---
+title: "Applied Multivariate Ananlysis_Final Project"
+author: "박선, 황성윤"
+date: '2020 12 20 '
+output: html_document
+---
+  
+```{r,message=F}
+library(readr)
+library(dplyr)
+```
+   
+### 다음 자료는 우리나라 시도별 산업별 종사자 수에 대한 통계청(KOSIS)의 자료이다. 다음 물음에 답하시오(박선, 황성윤)
+
+*참고: [2018년 시도·산업·종사자규모별 사업체수, 종사자수](https://kosis.kr/statHtml/statHtml.do?orgId=101&tblId=DT_1K52C03&vw_cd=MT_ZTITLE&list_id=K22_4&seqNo=&lang_mode=ko&language=kor&obj_var_id=&itm_id=&conn_path=MT_ZTITLE/)*
+
+(단, 각시도의 각 11개의 산업별 종사자 수는 각 시도의 20세 이상의 총 인원수로 나누어서 분석할 것) 
+  
+  
+#### **데이터 불러오기**
+```{r}
+setwd("C:/Users/Park sun/Desktop/2020-12-20 다변량 분석")
+workers <- read.csv("workers.csv")
+
+str(workers)
+summary(workers)
+```
+
+#### **데이터 구조 확인 및 전처리**
+```{r}
+names(workers) <- c("district","industry","workers_grp","inds_num","work_num")  #분석에 용이하게 영문으로 변수명 수정
+```
+  
+    
+* 분석에 용이하도록 변수명을 영어로 변경한다.
+  
+|변수(국문명)|변수(영문명)|
+|:----------:|:----------:|
+| 행정구역별 | district |
+| 산업별 | industry |
+| 종사자규모별 | workers_grp | 
+| 사업체수(개) | inds_num | 
+| 종사자수(명) | work_num |
+
+  
+  
+```{r}
+workers$district <- as.factor(workers$district)    # 데이터 정보에 적합하게 변수 타입 수정
+workers$industry <- as.factor(workers$industry)
+workers$workers_grp <- as.factor(workers$workers_grp)
+workers$work_num <- as.numeric(workers$work_num)
+```
+
+
+```{r}
+table(workers$district)   #범주형 변수에 대해 각 수준별로 빈도수 확인
+workers <-subset(workers,workers$district!="전국")
+```
+  
+* 행정 구역(시도)별 종사자수를 확인해보면 다음과 같다. 행정 시도는 특별자치시,특별자치도, 광역시를 추가한 총 19개의 구역으로 구분하였다. 
+* 행정 구역이 **전국**인 경우는 분석에서 제외한다.
+  
+```{r}
+# table(workers$industry)
+workers <-subset(workers,workers$industry!="전체 산업")
+workers$industry <- as.factor(substr(workers$industry, 1, unlist(gregexpr(pattern ='\\(',workers$industry))-1))
+table(workers$industry)
+length(levels(workers$industry))
+```
+  
+* 산업별 종사자수를 확인해보면 다음과 같다. 총 19개의 산업으로 구분되어있다.
+* 산업 구분이 **전체 산업**인 경우는 분석에서 제외한다.
+* 단, 분석에 용이하도록 괄호 안 산업 코드는 삭제한다. 
+  
+  
+```{r}  
+table(workers$workers_grp)
+workers <-subset(workers,workers$workers_grp!="계")
+workers <- within(workers, {
+                workers_grp_new = character(0)
+                workers_grp_new[workers_grp=="1000명 이상"] = "A"
+                workers_grp_new[workers_grp=="500 - 999명"] = "B"
+                workers_grp_new[workers_grp=="300 - 499명"] = "C"
+                workers_grp_new[workers_grp=="100 - 299명"] = "D"
+                workers_grp_new[workers_grp=="50 - 99명"] = "E"
+                workers_grp_new[workers_grp=="20 - 49명"] = "F"
+                workers_grp_new[workers_grp=="10 - 19명"] = "G"
+                workers_grp_new[workers_grp=="5 - 9명"] = "H"
+                workers_grp_new[workers_grp=="1 - 4명"] = "I"
+                workers_grp_new = factor(workers_grp_new)
+})
+workers <- workers[,-3]
+head(workers)
+```
+
+  
+* 종사자 규모별 종사자수를 확인해보면 다음과 같다. 종사자의 규모는 총 9등급으로 구분하였다.
+* 종사자 규모가 **계**인 경우는 분석에서 제외한다.
+* 분석이 용이하도록 규모별로 등급을 나눈 후 `workers_grp_new` 변수로 저장한다. 등급은 아래와 같다.
+  
+|종사자 규모|등급|
+|:---------:|:--:|
+| 1000명 이상 | A |
+| 500 - 999명 | B |
+| 300 - 499명 | C |
+| 100 - 299명 | D |
+| 50 - 99명 | E |
+| 20 - 49명 | F |
+| 10 - 19명 | G |
+| 5 - 9명 | H |
+| 1 - 4명 | I |
+
+
+```{r}
+summary(workers[,c(3,4)])  #수치형 변수에 대해 각 변수별 요약 정리
+
+sum(is.na(workers)) ##Na 개수 확인하기
+```
+  
+* 수치형 변수인 `inds_num`와 `work_num`를 요약해보면 위와 같다.
+* `work_num`변수에 결측치가 300개 있음을 확인 할 수 있다.
+  
+  
+  
+#### **파생 변수 생성**
+  
+*  각시도의 각 11개의 산업별 종사자 수는 각 시도의 20세 이상의 총 인원수로 나누어서 분석할 것
+* 각 시도의 20세 이상 인구수를 확인하기 위해 [2018년 기준 주민등록 인구통계](https://jumin.mois.go.kr/#)를 참고하였다.
+* 경제활동 인구를 **20세~ 69세**로 가정하고 분석을 실시하였다.
+  
+```{r}
+age_district <- read_csv("C:/Users/Park sun/Desktop/2020-12-20 다변량 분석/age_district.csv")  # 2018년도 각 시도별 인구수 확인
+# str(age_district)
+age_new <- age_district[,c(1,6:10)]
+names(age_new) <- c("district","20~29","30~39","40~49","50~59","60~69")
+```
+
+```{r}
+age_new <-subset(age_new,age_new$district!="전국  (0000000000)")
+# population <- apply(age_new[,-1],1,sum)
+# data2 <- tibble(district=age_new$district,
+                # population=population)
+age_new2 <- within(age_new,{district[district=="서울특별시  (1100000000)"] = "서울"
+            district[age_new$district=="부산광역시  (2600000000)"] = "부산"
+            district[age_new$district=="대구광역시  (2700000000)"] = "대구"
+            district[age_new$district=="인천광역시  (2800000000)"] = "인천"
+            district[age_new$district=="광주광역시  (2900000000)"] = "광주"
+            district[age_new$district=="대전광역시  (3000000000)"] = "대전"
+            district[age_new$district=="울산광역시  (3100000000)"] = "울산"
+            district[age_new$district=="세종특별자치시  (3600000000)"] = "세종"
+            district[age_new$district=="경기도  (4100000000)"] = "경기"
+            district[age_new$district=="강원도  (4200000000)"] = "강원"
+            district[age_new$district=="충청북도  (4300000000)"] = "충북"
+            district[age_new$district=="충청남도  (4400000000)"] = "충남"
+            district[age_new$district=="전라북도  (4500000000)"] = "전북"
+            district[age_new$district=="전라남도  (4600000000)"] = "전남"
+            district[age_new$district=="경상북도  (4700000000)"] = "경북"
+            district[age_new$district=="경상남도  (4800000000)"] = "경남"
+            district[age_new$district=="제주특별자치도  (5000000000)"] = "제주"
+            })
+```
+
+```{r}
+population <- apply(age_new2[,-1],1,sum)
+data2 <- tibble(district=as.factor(age_new2$district),
+                population=population)
+data2
+```
+   
+* `district`가 전국인 행은 제외해주고 각각의 시도를 `workers` 데이터셋의 `distrinct`와 통일 시켜주었다.
+  
+```{r}
+workers_new <- left_join(workers, data2, by = "district")
+workers_new$prob.work_num = round(workers_new$work_num/workers_new$population*100,3)
+workers_new<-workers_new[,-6]
+```
+  
+* 각각의 시도별 20세~69세 인구 수로 종사자 수 나눠 비율을 계산한 후 `workers_new` 데이터 셋을 생성 하여 `prob.work_num`변수를 생성하였다.
+    
+
+    
+```{r}
+sum(is.na(workers_new$prob.work_num))
+workers_new<-workers_new[!is.na(workers_new$prob.work_num),]
+```
+
+* 결측치를 확인하여 결측치는 삭제 처리하였다.
+  
+* 최종 데이터는 아래와 같다.
+```{r}
+head(workers_new)
+str(workers_new)
+```
+  
+  
+  
+  
+### (1) 산업별 종사자 비율에 의해 각 시도를 요인분석을 통해 분류하시오.
+
+*먼저, 분석에 적절한 형태로 데이터를 변환 시켜준다.
+
+```{r,message=F}
+library(reshape2)
+```
+
+```{r}
+workers_1 <- dcast(workers_new[,c("industry","district","prob.work_num")],
+                   industry~district,fun.aggregate = sum)
+
+head(workers_1)
+```
+
+**상관계수 확인하기**
+  
+```{r,message=F}
+library(corrgram)
+```
+
+```{r}
+round(cor(workers_1[,-1]),2)
+```
+
+```{r}
+corrgram(workers_1[,-1],upper.panel = panel.conf)
+```
+  
+* 각 시도별 상관계수를 확인해보면 위와 같다. 위 그림은 상관계수를 도식화한 그림이다.
+  
+**요인분석 수행**
+  
+```{r,message=F}
+library(psych)
+```
+
+```{r}
+work.factor <- principal(workers_1[,-1], rotate="none")
+work.factor$values
+plot(work.factor$values, type="b")
+```
+   
+* 각 시도 변수로 하여 유사한 시도를 묶어 새로운 잠재 요인으로 결정하기 위해 요인분석을 실시하였다. 결과는 위와 같다.
+  
+* *value*는 고유근을 말하고, 고유근이 1이상의 경우에만 인자수로 채택한다. 따라서 2까지가 1이 넘기 때문에 2개까지만 선택하는 것이 바람직하다고 보인다. 그러나 정보가 적기 때문에 본 분석에서는 요인의 수를 3으로 선택한다.
+
+
+
+### (2) 요인분석을 한 후 요인에 적절한 이름을 부여하시오.
+```{r}
+work.factor2 = principal(workers_1[,-1], nfactors = 3,rotate="none")
+work.factor2 
+```
+  
+* **h2**: 각 변수(시도)의 공통성(communality), 다른 변수들과의 공통성을 말하는 것으로 저 수치가 통상 0.3 보다 아래이면 다른 변수들과 공통점이 별로 없는 것으로 판단
+  
+* **u2**: 각 변수(시도)의 고유분산
+
+* **Proportion var**: 각 요인이 설명 하는 총 분산의 비율을 말하는 것으로 RC1이 총 분산의 82%, RC2가 11.3%, RC3가 3%로 이 세 요인으로 총 변동의 96.6%를 설명한다 해석할 수 있다.
+  
+* RC1과, RC2, RC3의 수치를 확인해보면 모든 경우에서 RC1의 값이 가장 큰 것으로 보아 해당 요인분석은 바람직하게 수행됐다고 보기 어렵다. 따라서 요인 회전을 통해 분산을 재분배 시키는 작업을 실시해야하는 것으로 보이고 각 요인에 대한 이름을 붙이기 위해서는 더 많은 정보가 필요한 것으로 판단된다.
+  
+```{r}
+biplot(work.factor2)
+```
+
+* 이를 bioplot으로 도출해보면 다음과 같다. 앞서 설명했듯이 각 변수간의 상관성이 너무 높기 때문에 해당 데이터는 요인분석을 실시하기에는 적절하지 않아보인다.
+  
+### (3) 이상치 시·도가 있는지 판단하시오.
+  
+```{r}  
+summary(workers_1[,-1])
+```
+```{r}
+boxplot(workers_1[,-1],cex.axis=0.7)
+```
+
+* 각 시도별로 이상치가 있는지 판단하기 위해 `summary()`함수와 상자그림을 이용해 살펴보았다. 결과를 살펴보면 한쪽으로 치우친 형태의 자료임을 확인할 수 있지만, 자료의 특성상 각 행은 산업별로 구분되기 때문에 섣불리 이상치라고 판단해서는 안된다고 보인다.
+  
+  
+  
+### (4) 요인분석 후 인자회전을 시키시오.
+```{r}
+work.factor4 = principal(workers_1[,-1], nfactors = 3, rotate = "varimax")
+work.factor4
+```
+
+* **h2**: 각 변수(시도)의 공통성(communality), 다른 변수들과의 공통성을 말하는 것으로 저 수치가 통상 0.3 보다 아래이면 다른 변수들과 공통점이 별로 없는 것으로 판단
+  
+* **u2**: 각 변수(시도)의 고유분산
+
+* **Proportion var**: 각 요인이 설명 하는 총 분산의 비율을 말하는 것으로 RC1이 총 분산의 54%, RC2가 35%, RC3가 8%로 이 세 요인으로 총 변동의 97%를 설명한다 해석할 수 있다.
+  
+* RC1과, RC2의 수치를 확인해보면
+  
+  - RC1: 경기(0.9) 경남(0.93) 경북(0.92) 대구(0.76) 울산(0.96) 인천(0.87) 전남(0.7) 전북(0.71) 충남(0.95) 충북(0.94) 
+  
+  - RC2: 강원(0.8) 광주(0.73) 대전(0.84) 부산(0.72) 서울(0.92) 제주(0.87)
+  
+  - RC3: 세종(0.71)
+  
+으로 나눌 수 있다. 각 요인에 대한 이름을 붙이기 위해서는 더 많은 정보가 필요한 것으로 판단된다.
+  
+```{r}
+biplot(work.factor4)
+```
+
+* 이를 bioplot으로 도출해보면 다음과 같다. 요인회전을 실시했으나 앞서 설명했듯이 각 변수간의 상관성이 너무 높기 때문에 해당 데이터는 요인분석을 실시하기에는 적절하지 않아보인다.
+  
+  
+### (5) 요인분석 결과를 총평하시오.
+   
+* 시도별 산업 종사자 비율을 요인 분석을 수행하여 각 시 도별로 묶을 수 있는지 살펴보았다.
+
+* 분석을 실시하기에 앞서, 변수(시도)별로 상관계수와 그래프를 통해 상관관계를 확인해 본 결과, 산업 종사자 비율은 시도별로 대체적으로 양의 상관관계를 가지고있음을 확인했다. 이는 요인 분석을 실시하는 데에 있어 중요하게 고려해야할 사항이며, 모든 변수의 상관관계가 높다는 것은 요인분석을 실시하기에 적절한 데이터가 아닐 수 도있다는 것을 의미한다고 보인다.
+
+* 적절한 요인의 수를 확인하기 위해 주성분분석 방법으로 요인을 추출해본 결과, 고유근이 두번째까지가 1이 넘기 때문에 요인의 수를 2개 까지만 선택하는 것이 바람직하다고 보였다. 그러나 정보가 적기 때문에 요인 분석 후 해석의 용이성을 위해 요인의 수를 3으로 선택하여 요인 분석을 수행하였다.
+  
+* 요인의 수를 3으로 정하고 요인회전(직각회전, Varimax)을 통해 분산을 재분배시키는 단계를 거쳐 요인 분석을 실시해본 결과, RC1이 총 분산의 54%, RC2가 35%, RC3가 8%로 이 세 요인으로 총 변동의 97%를 설명한다 해석할 수 있다. 그러나 RC값으로 구분된 변수들의 적절한 특성을 발견하기가 어려워 각 요인에 대한 이름을 붙이기 위해서는 더 많은 정보가 필요한 것으로 판단된다.
