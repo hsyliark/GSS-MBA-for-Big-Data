@@ -1,0 +1,45 @@
+---
+title: '210126'
+author: "Hwang Seong-Yun"
+date: '2021 1 26 '
+output: html_document
+---
+
+## 1. Importance Sampling 하에서 분산을 줄일 수 있는지 모의실험으로 확인
+
+### Binomial Distribution case
+- When $X -> B(100,0.25)$, calculate $P(X >= 75)$
+- Let $m=100,x=75,p=0.25$ and $q=0.75$. Then, $p << q$.
+- $P(X >= x) = \frac  {1}  {n} \sum _{i=1} ^{n} I(Y _{i} >= x) ( \frac {p} {q}  ) ^{Y _{i}} ( \frac {1-p} {1-q} ) ^{m-Y _{i}}$
+- Therefore, $P(X >= 75) = \frac  {1} {n} \sum _{i=1} ^{n} I(Y _{i} >= 75) * 3 ^{100-2Y _{i}}$
+
+#### m=100, p=0.25 인 이항분포에 대하여 sampling 후 점검 
+
+```{r}
+set.seed(1)
+X <- rbinom(10000, 100, 0.25)
+X1 <- I(X>=75) 
+(prob1 <- mean(X1))
+var(X1)
+```
+
+#### m=100, q=0.75 인 이항분포에 대하여 importance sampling 후 점검
+
+```{r}
+set.seed(1)
+Y <- rbinom(10000, 100, 0.75)
+Y1 <- I(Y>=75)*3^(100-2*Y)
+(prob2 <- mean(Y1))
+var(Y1)
+```
+
+### Normal Distribution case
+
+
+
+## 2. f(x)를 density estimator로 추정 후 g(y)를 적절히 선택하여 분산을 줄일 수 있는지 확인 (R의 density 함수, kde package ?)
+
+```{r}
+
+```
+
