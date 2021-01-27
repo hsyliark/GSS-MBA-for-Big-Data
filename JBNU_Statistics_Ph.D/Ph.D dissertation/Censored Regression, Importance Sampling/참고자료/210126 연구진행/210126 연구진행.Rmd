@@ -134,16 +134,12 @@ var(X1) > var(Y1)
 ```{r}
 transplant <- read.csv("C:/Users/HSY/Desktop/transplant.csv",sep=",",header=T)
 plot(density(transplant$time))
+rug(jitter(transplant$time))
 ```
 
 ```{r}
 hist(transplant$time,freq=FALSE)
 lines(density(transplant$time))
-```
-
-```{r}
-plot(density(transplant$time))
-rug(jitter(transplant$time))
 ```
 
 ```{r}
