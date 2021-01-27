@@ -127,7 +127,9 @@ var(X1) > var(Y1)
 
 ### Case1) transplant data 
 
-#### 변수 time에 대한 density estimator 추정 (censoring 무시)
+### 1. 변수 time에 대한 density estimator 추정 (censoring 무시)
+
+#### 주어진 데이터를 통해 변수 time에 대한 평균을 추정 
 
 ```{r}
 transplant <- read.csv("C:/Users/HSY/Desktop/transplant.csv",sep=",",header=T)
@@ -143,4 +145,31 @@ lines(density(transplant$time))
 plot(density(transplant$time))
 rug(jitter(transplant$time))
 ```
+
+```{r}
+mean(transplant$time)
+var(transplant$time)
+```
+
+#### 2. 분포함수 g(t)를 감마분포로 가정하고 importance sampling 적용
+
+```{r}
+library(fitdistrplus)
+plotdist(transplant$time)
+descdist(transplant$time)
+f1 <- fitdist(transplant$time, "gamma")
+summary(f1)
+plot(f1)
+```
+
+```{r}
+a <- density(transplant$time)
+V <- sort(rgamma(512,1,0.7897048))
+g <- a[["y"]]
+h <- dgamma(V,1,0.7897048)
+V1 <- (V*g)/h
+mean(V1)
+var(V1)
+```
+
 
