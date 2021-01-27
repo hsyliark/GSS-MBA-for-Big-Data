@@ -159,10 +159,10 @@ plot(f1)
 ```
 
 ```{r}
-a <- density(transplant$time)
-V <- sort(rgamma(512,1,0.7897048))
+a <- density(transplant$time,n=101)
+V <- sort(rgamma(101,shape=4,scale=5))
 g <- a[["y"]]
-h <- dgamma(V,1,0.7897048)
+h <- dgamma(V,shape=4,scale=5)
 V1 <- (V*g)/h
 mean(V1)
 var(V1)
