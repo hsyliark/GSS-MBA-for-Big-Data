@@ -1,0 +1,125 @@
+---
+title: 'Importance Sampling'
+author: "Hwang Seong-Yun"
+date: '2021 1 28 '
+output: html_document
+---
+
+## Importance Sampling 하에서 분산을 줄일 수 있는지 모의실험으로 확인
+
+### Case1) Binomial Distribution case
+- When $X -> B(100,0.25)$, calculate $P(X >= 75)$
+- Let $m=100,x=75,p=0.25$ and $q=0.75$. Then, $p << q$.
+- $P(X >= x) = \frac  {1}  {n} \sum _{i=1} ^{n} I(Y _{i} >= x) ( \frac {p} {q}  ) ^{Y _{i}} ( \frac {1-p} {1-q} ) ^{m-Y _{i}}$
+- Therefore, $P(X >= 75) = \frac  {1} {n} \sum _{i=1} ^{n} I(Y _{i} >= 75) * 3 ^{100-2Y _{i}}$
+
+#### 분포함수 h(x)가 m=100, p=0.25 인 이항분포에 대하여 sampling 후 점검 
+
+```{r}
+set.seed(1)
+X <- rbinom(10000, 100, 0.25)
+X1 <- I(X>=75) 
+(prob1 <- mean(X1))
+var(X1)
+```
+
+#### 분포함수 h(x)가 m=100, q=0.75 인 이항분포에 대하여 importance sampling 후 점검
+
+```{r}
+set.seed(1)
+Y <- rbinom(10000, 100, 0.75)
+Y1 <- I(Y>=75)*3^(100-2*Y)
+(prob2 <- mean(Y1))
+var(Y1)
+```
+
+### Case2) Normal Distribution case
+- Suppose that $X -> N(0,1 ^{2} ),Y -> N(2.575,1 ^{2} )$.
+- Then we want to calculate $P(X>=2.575)$.
+
+#### 분포함수 h(x)가 N(0,1)인 정규분포에 대하여 sampling 후 점검
+- $P(X >= 2.575)= \int _{2.575} ^{INF } {f _{X} (x)dx=p _{2.575}}$ 
+- ${\hat{p _{2.575}}} = \frac {1} {n} \sum _{i=1} ^{n} I(X _{i} >= 2.575)$
+
+```{r}
+set.seed(1)
+X <- rnorm(10000,0,1)
+X1 <- I(X>=2.575) 
+(prob1 <- mean(X1))
+var(X1)
+```
+
+#### 분포함수 h(x)가 N(2.575,1)인 정규분포에 대하여 importance sampling 후 점검
+- $P(X >= 2.575)= \int _{2.575} ^{INF } {f _{X} (x)dx= \int _{2.575} ^{INF } [{{f _{X} (y)} / {f _{Y} (y)}] f _{Y} (y)dy=p _{2.575}^{IS}}}$ 
+- ${\hat{p _{2.575}^{IS}}} = \frac {1} {n} \sum _{i=1} ^{n} I(Y _{i} >= 2.575) \frac {f _{X} (Y _{i} )} {f _{Y} (Y _{i} )} = \frac {1} {n} \sum _{i=1} ^{n} I(Y _{i} >= 2.575)*exp[- \frac {1} {2} (Y _{i}^{2} +(Y _{i} -2.575) ^{2} )]$
+
+```{r}
+set.seed(1)
+Y <- rnorm(10000,2.575,1)
+Y1 <- I(Y>=2.575)*exp(-(1/2)*(Y^2+(Y-2.575)^2))
+(prob2 <- mean(Y1))
+var(Y1)
+```
+
+#### 분산을 비교한 결과, importance sampling을 했을 경우 참값 대비 편향이 소폭 증가하였지만, 분산은 큰 폭으로 줄어듬을 확인할 수 있다. 이를 통해 h(x)에 대한 모평균을 x 근처에서 많은 mass를 가지도록 하는 것이 바람직하다고 판단할 수 있다. 
+
+```{r}
+var(X1) > var(Y1)
+```
+
+### Case3) Exponential Distribution case (https://www.youtube.com/watch?v=qz_tddlFYLM)
+- Suppose that $X->Exp(1)$.
+- Than we want to calculate $E(e ^{-X+cos(X)} )$.
+- $E _{X} [f(X)]= \int {f(x)g(x)dx= \int {[\frac {f(y)g(y)} {h(y)} ]h(y)dy=E _{Y} [\frac {f(Y)g(Y)} {h(Y)} ]}}$
+- 분포함수 h(x)의 그래프가 f(x)g(x)의 그래프와 가까워질 때 importance sampling의 성능도 좋아진다.
+
+#### f(x)g(x)와 h(x)의 그래프 비교
+- $f(x)g(x)=e ^{-x} e ^{-x+cos(x)}$
+- ex1) $h(x)=e ^{-x}$ (Exp(1))
+- ex2) $h(x)=2e ^{-2x}$ (Exp(2))
+- 그래프를 통해 분포함수 h(x)가 Exp(2)인 경우 importance sampling의 성능이 더 좋을 것이라고 예상할 수 있다.
+
+```{r}
+x <- seq(0,4,0.001)
+fg <- exp(-x)*exp(-x+cos(x))
+h1 <- exp(-x)
+h2 <- 2*exp(-2*x)
+plot(x,fg,ylab="f(x)g(x) or h(x)",xlab="x",ylim=c(0,3),type="l",col="#228B22")
+par(new=T)
+plot(x,h1,ylab="",xlab="x",ylim=c(0,3),type="l",col="#FF3030")
+par(new=T)
+plot(x,h2,ylab="",xlab="x",ylim=c(0,3),type="l",col="#009ACD")
+legend(x=2.5,y=3, c("Exp(2)","Exp(1)","f(x)g(x)"),lty=1,col=c("#009ACD","#FF3030","#228B22"))
+```
+
+#### h(x) -> Exp(1)
+- $E(e ^{-X+cos(X)} )= \int _{0} ^{INF } {f(x)g(x)dx} = \int _{0} ^{INF } {e ^{-x+cos(x)} e ^{-x} dx} =a$
+- ${\hat{a}} = \frac {1} {n} \sum _{i=1} ^{n} exp[-X _{i} +cos(X _{i} )]$ 
+
+```{r}
+set.seed(1)
+X <- rexp(10000,1)
+X1 <- exp(-X+cos(X))
+(a <- mean(X1))
+var(X1)
+```
+
+#### h(x) -> Exp(2)
+- $E(e ^{-X+cos(X)} )= \int _{0} ^{INF } {f(x)g(x)dx} = \int _{0} ^{INF } {\frac {f(y)g(y)}  {h(y)} h(y)dy} = \int _{0} ^{INF } {\frac {e ^{-y+cos(y)} e ^{-y}} {2e ^{-2y}} 2e ^{-2y} dy} =b$
+- ${\hat{b}} = \frac {1} {n} \sum _{i=1} ^{n} \frac {1} {2} exp[cos(Y _{i} )]$
+
+```{r}
+set.seed(2)
+Y <- rexp(10000,2)
+Y1 <- exp(cos(Y))/2
+(b <- mean(Y1))
+var(Y1)
+```
+
+#### 결과적으로 h(x)의 분포가 Exp(2)일 때 분산이 크게 줄어듬을 확인 가능하다. 
+
+```{r}
+var(X1) > var(Y1)
+```
+
+
