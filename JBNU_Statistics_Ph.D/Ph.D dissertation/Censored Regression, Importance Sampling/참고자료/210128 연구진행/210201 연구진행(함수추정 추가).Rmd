@@ -1,7 +1,7 @@
 ---
 title: 'Importance Sampling'
 author: "Hwang Seong-Yun"
-date: '2021 1 26 '
+date: '2021 2 1 '
 output: html_document
 ---
 
