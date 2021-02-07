@@ -1,7 +1,7 @@
 ---
 title: 'Importance Sampling'
 author: "Hwang Seong-Yun"
-date: '2021 2 3 '
+date: '2021 2 7 '
 output: html_document
 ---
 
@@ -141,7 +141,8 @@ var(X1) > var(Y1)
 
 ```{r}
 transplant <- read.csv("C:/Users/HSY/Desktop/transplant.csv",sep=",",header=T)
-transplant
+head(transplant,10)
+dim(transplant)
 plot(density(transplant$time))
 rug(jitter(transplant$time))
 ```
@@ -198,7 +199,8 @@ var(transplant$time) > var(V1)
 
 ```{r}
 tonguecancer <- read.csv("C:/Users/HSY/Desktop/tonguecancer.csv",sep=",",header=T)
-tonguecancer
+head(tonguecancer,10)
+dim(tonguecancer)
 plot(density(tonguecancer$time))
 rug(jitter(tonguecancer$time))
 ```
