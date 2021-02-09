@@ -1,7 +1,7 @@
 ---
 title: 'Importance Sampling'
 author: "Hwang Seong-Yun"
-date: '2021 2 7 '
+date: '2021 2 10 '
 output: html_document
 ---
 
@@ -176,8 +176,8 @@ lines(x,h,col="red")
 ```
 
 ```{r}
-a <- density(transplant$time,n=101)
-V <- sort(rgamma(101,shape=2,scale=18))
+a <- density(transplant$time,n=1000)
+V <- sort(rgamma(1000,shape=2,scale=18))
 g <- a[["y"]]
 h <- dgamma(V,shape=2,scale=18)
 V1 <- (V*g)/h
@@ -221,7 +221,7 @@ var(tonguecancer$time)
 plot(density(tonguecancer$time))
 rug(jitter(tonguecancer$time))
 x <- seq(0,1000,0.001)
-h <- dgamma(x,shape=2,scale=100)
+h <- dgamma(x,shape=3,scale=65)
 lines(x,h,col="blue")
 ```
 
@@ -229,15 +229,15 @@ lines(x,h,col="blue")
 hist(tonguecancer$time,freq=FALSE)
 lines(density(tonguecancer$time))
 x <- seq(0,1000,0.001)
-h <- dgamma(x,shape=2,scale=100)
+h <- dgamma(x,shape=3,scale=65)
 lines(x,h,col="red")
 ```
 
 ```{r}
-a <- density(tonguecancer$time,n=80)
-V <- sort(rgamma(80,shape=2,scale=100))
+a <- density(tonguecancer$time,n=1000)
+V <- sort(rgamma(1000,shape=3,scale=65))
 g <- a[["y"]]
-h <- dgamma(V,shape=2,scale=100)
+h <- dgamma(V,shape=3,scale=65)
 V1 <- (V*g)/h
 mean(V1)
 var(V1)
