@@ -1,0 +1,135 @@
+---
+title: 'Importance Sampling'
+author: "Hwang Seong-Yun"
+date: '2021 2 10 '
+output: html_document
+---
+
+
+## f(x)를 density estimator로 추정 후 g(y)를 적절히 선택하여 분산을 줄일 수 있는지 확인 (R의 density 함수, kde package ?)
+
+- $E _{g} [f(X)]= \int _{} ^{} {f(x)g(x)dx= \int _{} ^{} {\frac {f(x)g(x)} {h(x)} h(x)dx=E _{h} [\frac {f(X)g(X)} {h(X)} ]=m}}$
+- $V _{1} ,V _{2} ,...,V _{n} -> h(v)$
+- ${\hat{m}} = \frac {1}{n} \sum _{i=1} ^{n} \frac{f(V _{i} )g(V _{i} )} {h(V _{i} )}$
+- 주어진 자료에 대한 분포가 주어지지 않은 경우에는 그 분포를 추정해야 함. (g(x)를 추정)
+- 이후 추정된 분포 g(x)에 대한 특정값에서의 함수값을 구하는 것이 관건이라고 판단됨. 이 문제가 해결된다면 importance sampling에 대한 성능평가를 제대로 할 수 있음.
+
+### 변수 time에 대한 density mean estimator 추정 (censoring 무시)
+
+- g(x)만 추정하고 h(x)는 적절한 모수적 분포를 적용.
+
+### Case1) transplant data
+
+#### 주어진 데이터를 통해 변수 time에 대한 평균을 추정 
+
+```{r}
+transplant <- read.csv("C:/Users/HSY/Desktop/transplant.csv",sep=",",header=T)
+head(transplant,10)
+dim(transplant)
+plot(density(transplant$time))
+rug(jitter(transplant$time))
+```
+
+```{r}
+hist(transplant$time,freq=FALSE)
+lines(density(transplant$time))
+```
+
+```{r}
+mean(transplant$time)
+var(transplant$time)
+```
+
+#### 2. 분포함수 h(x)를 감마분포로 가정하고 importance sampling 적용
+
+```{r}
+plot(density(transplant$time))
+rug(jitter(transplant$time))
+x <- seq(0,100,0.001)
+h <- dgamma(x,shape=2,scale=18)
+lines(x,h,col="blue")
+```
+
+```{r}
+hist(transplant$time,freq=FALSE)
+lines(density(transplant$time))
+x <- seq(0,100,0.001)
+h <- dgamma(x,shape=2,scale=18)
+lines(x,h,col="red")
+```
+
+```{r}
+a <- density(transplant$time,n=1000)
+V <- sort(rgamma(1000,shape=2,scale=18))
+g <- a[["y"]]
+h <- dgamma(V,shape=2,scale=18)
+V1 <- (V*g)/h
+mean(V1)
+var(V1)
+```
+
+#### 결과적으로 importance sampling을 적용 시 분산이 줄어듬을 확인 가능하다.
+
+```{r}
+mean(transplant$time) ; mean(V1) 
+var(transplant$time) ; var(V1) 
+var(transplant$time) > var(V1)
+```
+
+### Case2) tonguecancer data
+
+#### 주어진 데이터를 통해 변수 time에 대한 평균을 추정 
+
+```{r}
+tonguecancer <- read.csv("C:/Users/HSY/Desktop/tonguecancer.csv",sep=",",header=T)
+head(tonguecancer,10)
+dim(tonguecancer)
+plot(density(tonguecancer$time))
+rug(jitter(tonguecancer$time))
+```
+
+```{r}
+hist(tonguecancer$time,freq=FALSE)
+lines(density(tonguecancer$time))
+```
+
+```{r}
+mean(tonguecancer$time)
+var(tonguecancer$time)
+```
+
+#### 2. 분포함수 h(x)를 감마분포로 가정하고 importance sampling 적용
+
+```{r}
+plot(density(tonguecancer$time))
+rug(jitter(tonguecancer$time))
+x <- seq(0,1000,0.001)
+h <- dgamma(x,shape=3,scale=65)
+lines(x,h,col="blue")
+```
+
+```{r}
+hist(tonguecancer$time,freq=FALSE)
+lines(density(tonguecancer$time))
+x <- seq(0,1000,0.001)
+h <- dgamma(x,shape=3,scale=65)
+lines(x,h,col="red")
+```
+
+```{r}
+a <- density(tonguecancer$time,n=1000)
+V <- sort(rgamma(1000,shape=3,scale=65))
+g <- a[["y"]]
+h <- dgamma(V,shape=3,scale=65)
+V1 <- (V*g)/h
+mean(V1)
+var(V1)
+```
+
+#### 결과적으로 importance sampling을 적용 시 분산이 줄어듬을 확인 가능하다.
+
+```{r}
+mean(tonguecancer$time) ; mean(V1) 
+var(tonguecancer$time) ; var(V1) 
+var(tonguecancer$time) > var(V1)
+```
