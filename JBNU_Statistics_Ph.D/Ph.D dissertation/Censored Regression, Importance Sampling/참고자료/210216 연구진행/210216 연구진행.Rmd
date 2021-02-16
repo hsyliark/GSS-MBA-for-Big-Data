@@ -1,0 +1,91 @@
+---
+title: 'Importance Sampling'
+author: "Hwang Seong-Yun"
+date: '2021 2 16 '
+output: html_document
+---
+
+
+## f(x)를 density estimator로 추정 후 g(y)를 적절히 선택하여 분산을 줄일 수 있는지 확인 (R의 density 함수, kde package ?)
+
+- $E _{g} [f(X)]= \int _{} ^{} {f(x)g(x)dx= \int _{} ^{} {\frac {f(x)g(x)} {h(x)} h(x)dx=E _{h} [\frac {f(X)g(X)} {h(X)} ]=m}}$
+- $V _{1} ,V _{2} ,...,V _{n} -> h(v)$
+- ${\hat{m}} = \frac {1}{n} \sum _{i=1} ^{n} \frac{f(V _{i} )g(V _{i} )} {h(V _{i} )}$
+- 주어진 자료에 대한 분포가 주어지지 않은 경우에는 그 분포를 추정해야 함. (g(x)를 추정)
+- 이후 추정된 분포 g(x)에 대한 특정값에서의 함수값을 구하는 것이 관건이라고 판단됨. 이 문제가 해결된다면 importance sampling에 대한 성능평가를 제대로 할 수 있음.
+
+### Case1) g(x) : Gamma(2,3) , h(x) : Gamma(3,4)
+
+- 이론적으로 Gamma(2,3) 에 대한 평균은 6이다.
+- 이에 대해 g(x) : Gamma(2,3) 에서 난수를 추출한 경우와 h(x) : Gamma(3,4) 를 이용한 importance sampling을 적용했을 때 분산이 어떻게 차이가 나는지 모의실험을 통해 확인하는 것이 목적임.   
+
+#### Graph of g(x) and h(x)
+
+```{r}
+x <- seq(0,40,0.001)
+g <- dgamma(x,shape=2,scale=3)
+h <- dgamma(x,shape=3,scale=4)
+plot(x,g,ylab="g(x) or h(x)",xlab="x",ylim=c(0,0.15),type="l",col="#228B22")
+par(new=T)
+plot(x,h,ylab="",xlab="x",ylim=c(0,0.15),type="l",col="#FF3030")
+legend(x=10,y=0.15, c("g(x) : Gamma(2,3)","h(x) : Gamma(3,4)"),lty=1,col=c("#FF3030","#228B22"))
+```
+
+- h(x)를 g(x)에 비해 오른쪽 꼬리가 더 두꺼운 분포로 선정함.
+
+#### 모의실험
+
+- 다음의 두가지 방법을 비교하기 위한 모의실험
+- 1. 실제 분포인 g(x)를 통해 난수 추출
+- 2. h(x)를 이용한 importance sampling을 통해 난수 추출
+- 1,2의 방법을 통해 1000개의 난수를 추출하고 각각의 평균과 분산을 계산함.
+- 이 과정을 1000번 반복하여 결과를 확인.
+
+```{r}
+GM <- c()
+GV <- c()
+GB <- c()
+ISM <- c()
+ISV <- c()
+ISB <- c()
+for (i in 1:1000) {
+  gr <- rgamma(1000,shape=2,scale=3)
+  GM[i] <- mean(gr)
+  GV[i] <- var(gr)
+  GB[i] <- abs(mean(gr)-6)
+  v <- rgamma(1000,shape=3,scale=4)
+  g <- dgamma(v,shape=2,scale=3)
+  h <- dgamma(v,shape=3,scale=4) 
+  ISM[i] <- mean(v*g/h)
+  ISV[i] <- var(v*g/h)
+  ISB[i] <- abs(mean(v*g/h)-6)
+}
+res <- data.frame(mean=c(GM,ISM),variance=c(GV,ISV),bias=c(GB,ISB),method=c(rep("Sampling",1000),rep("Importance Sampling",1000)))
+```
+
+- 평균추정결과
+
+```{r}
+library(ggplot2)
+ggplot(res,aes(x=method,y=mean,fill=method)) +
+  geom_boxplot() +
+  ggtitle("Estimate mean (Sampling vs Importance Sampling)")
+```
+
+- 분산 비교
+
+```{r}
+ggplot(res,aes(x=method,y=variance,fill=method)) +
+  geom_boxplot() +
+  ggtitle("Comparing variance (Sampling vs Importance Sampling)")
+```
+
+- 편향 비교
+
+```{r}
+ggplot(res,aes(x=method,y=bias,fill=method)) +
+  geom_boxplot() +
+  ggtitle("Comparing bias (Sampling vs Importance Sampling)")
+```
+
+- 결과적으로 Importance Sampling을 적용했을 경우 분산과 편향 모두 크게 줄어듬을 확인할 수 있다.
