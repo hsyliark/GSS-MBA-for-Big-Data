@@ -16,6 +16,10 @@ output: html_document
 
 ### Case1) g(x) : Gamma(2,3) , h(x) : Gamma(3,4)
 
+- $X \sim Gamma(\alpha,\beta )$
+- $f _{X} (x)= \frac{1} {\Gamma(\alpha)\beta^{\alpha }} x ^{\alpha -1} e ^{-\frac {x} {\beta }} ,x>0,\Gamma (\alpha )= \int _{0} ^{\infty} {x ^{\alpha -1}} e ^{-x} dx$
+- $E(X)= \alpha  \beta , Var(X)= \alpha  \beta  ^{2}$
+
 - 이론적으로 Gamma(2,3) 에 대한 평균은 6이다.
 - 이에 대해 g(x) : Gamma(2,3) 에서 난수를 추출한 경우와 h(x) : Gamma(3,4) 를 이용한 importance sampling을 적용했을 때 분산이 어떻게 차이가 나는지 모의실험을 통해 확인하는 것이 목적임.   
 
@@ -89,3 +93,10 @@ ggplot(res,aes(x=method,y=bias,fill=method)) +
 ```
 
 - 결과적으로 Importance Sampling을 적용했을 경우 분산과 편향 모두 크게 줄어듬을 확인할 수 있다.
+
+
+### Case2) g(x) : Weibull(2,3) , h(x) : Weibull(3,4)
+
+- $X \sim Weibull(\alpha,\beta )$
+- $f _{X} (x)=( \frac{\alpha } {\beta } )(\frac {x} {\beta } ) ^{\alpha -1} exp(-(\frac {x} {\beta } ) ^{\alpha } ),x>0$
+- $E(X)= \beta  \Gamma (1+ \frac{1} {\alpha } ),Var(X)= \beta  ^{2} [ \Gamma (1+ \frac{2} {\alpha } )- (\Gamma (1+ \frac{1} {\alpha } )) ^{2} ]$
