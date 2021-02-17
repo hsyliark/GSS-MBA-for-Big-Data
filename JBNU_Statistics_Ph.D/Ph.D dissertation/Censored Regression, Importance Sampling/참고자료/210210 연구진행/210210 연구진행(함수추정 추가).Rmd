@@ -8,10 +8,10 @@ output: html_document
 ## 1. Importance Sampling 하에서 분산을 줄일 수 있는지 모의실험으로 확인
 
 ### Case1) Binomial Distribution case
-- When $X -> B(100,0.25)$, calculate $P(X >= 75)$
+- When $X \sim B(100,0.25)$, calculate $P(X \geq 75)$
 - Let $m=100,x=75,p=0.25$ and $q=0.75$. Then, $p << q$.
-- $P(X >= x) = \frac  {1}  {n} \sum _{i=1} ^{n} I(Y _{i} >= x) ( \frac {p} {q}  ) ^{Y _{i}} ( \frac {1-p} {1-q} ) ^{m-Y _{i}}$
-- Therefore, $P(X >= 75) = \frac  {1} {n} \sum _{i=1} ^{n} I(Y _{i} >= 75) * 3 ^{100-2Y _{i}}$
+- $P(X \geq x) = \frac  {1}  {n} \sum _{i=1} ^{n} I(Y _{i} \geq x) ( \frac {p} {q}  ) ^{Y _{i}} ( \frac {1-p} {1-q} ) ^{m-Y _{i}}$
+- Therefore, $P(X \geq 75) = \frac  {1} {n} \sum _{i=1} ^{n} I(Y _{i} \geq 75) * 3 ^{100-2Y _{i}}$
 
 #### 분포함수 h(x)가 m=100, p=0.25 인 이항분포에 대하여 sampling 후 점검 
 
@@ -34,12 +34,12 @@ var(Y1)
 ```
 
 ### Case2) Normal Distribution case
-- Suppose that $X -> N(0,1 ^{2} ),Y -> N(2.575,1 ^{2} )$.
+- Suppose that $X \sim N(0,1 ^{2} ),Y \sim N(2.575,1 ^{2} )$.
 - Then we want to calculate $P(X>=2.575)$.
 
 #### 분포함수 h(x)가 N(0,1)인 정규분포에 대하여 sampling 후 점검
-- $P(X >= 2.575)= \int _{2.575} ^{INF } {f _{X} (x)dx=p _{2.575}}$ 
-- ${\hat{p _{2.575}}} = \frac {1} {n} \sum _{i=1} ^{n} I(X _{i} >= 2.575)$
+- $P(X \geq 2.575)= \int _{2.575} ^{\infty } {f _{X} (x)dx=p _{2.575}}$ 
+- ${\hat{p _{2.575}}} = \frac {1} {n} \sum _{i=1} ^{n} I(X _{i} \geq 2.575)$
 
 ```{r}
 set.seed(1)
@@ -50,8 +50,8 @@ var(X1)
 ```
 
 #### 분포함수 h(x)가 N(2.575,1)인 정규분포에 대하여 importance sampling 후 점검
-- $P(X >= 2.575)= \int _{2.575} ^{INF } {f _{X} (x)dx= \int _{2.575} ^{INF } [{{f _{X} (y)} / {f _{Y} (y)}] f _{Y} (y)dy=p _{2.575}^{IS}}}$ 
-- ${\hat{p _{2.575}^{IS}}} = \frac {1} {n} \sum _{i=1} ^{n} I(Y _{i} >= 2.575) \frac {f _{X} (Y _{i} )} {f _{Y} (Y _{i} )} = \frac {1} {n} \sum _{i=1} ^{n} I(Y _{i} >= 2.575)*exp[- \frac {1} {2} (Y _{i}^{2} +(Y _{i} -2.575) ^{2} )]$
+- $P(X \geq 2.575)= \int _{2.575} ^{\infty } {f _{X} (x)dx= \int _{2.575} ^{\infty } [{{f _{X} (y)} / {f _{Y} (y)}] f _{Y} (y)dy=p _{2.575}^{IS}}}$ 
+- ${\hat{p _{2.575}^{IS}}} = \frac {1} {n} \sum _{i=1} ^{n} I(Y _{i} \geq 2.575) \frac {f _{X} (Y _{i} )} {f _{Y} (Y _{i} )} = \frac {1} {n} \sum _{i=1} ^{n} I(Y _{i} \geq 2.575)*exp[- \frac {1} {2} (Y _{i}^{2} +(Y _{i} -2.575) ^{2} )]$
 
 ```{r}
 set.seed(1)
@@ -68,7 +68,7 @@ var(X1) > var(Y1)
 ```
 
 ### Case3) Exponential Distribution case (https://www.youtube.com/watch?v=qz_tddlFYLM)
-- Suppose that $X->Exp(1)$.
+- Suppose that $X \sim Exp(1)$.
 - Than we want to calculate $E(e ^{-X+cos(X)} )$.
 - $E _{X} [f(X)]= \int {f(x)g(x)dx= \int {[\frac {f(y)g(y)} {h(y)} ]h(y)dy=E _{Y} [\frac {f(Y)g(Y)} {h(Y)} ]}}$
 - 분포함수 h(x)의 그래프가 f(x)g(x)의 그래프와 가까워질 때 importance sampling의 성능도 좋아진다.
@@ -93,7 +93,7 @@ legend(x=2.5,y=3, c("Exp(2)","Exp(1)","f(x)g(x)"),lty=1,col=c("#009ACD","#FF3030
 ```
 
 #### h(x) -> Exp(1)
-- $E(e ^{-X+cos(X)} )= \int _{0} ^{INF } {f(x)g(x)dx} = \int _{0} ^{INF } {e ^{-x+cos(x)} e ^{-x} dx} =a$
+- $E(e ^{-X+cos(X)} )= \int _{0} ^{\infty } {f(x)g(x)dx} = \int _{0} ^{\infty } {e ^{-x+cos(x)} e ^{-x} dx} =a$
 - ${\hat{a}} = \frac {1} {n} \sum _{i=1} ^{n} exp[-X _{i} +cos(X _{i} )]$ 
 
 ```{r}
@@ -105,7 +105,7 @@ var(X1)
 ```
 
 #### h(x) -> Exp(2)
-- $E(e ^{-X+cos(X)} )= \int _{0} ^{INF } {f(x)g(x)dx} = \int _{0} ^{INF } {\frac {f(y)g(y)}  {h(y)} h(y)dy} = \int _{0} ^{INF } {\frac {e ^{-y+cos(y)} e ^{-y}} {2e ^{-2y}} 2e ^{-2y} dy} =b$
+- $E(e ^{-X+cos(X)} )= \int _{0} ^{\infty } {f(x)g(x)dx} = \int _{0} ^{\infty } {\frac {f(y)g(y)}  {h(y)} h(y)dy} = \int _{0} ^{\infty } {\frac {e ^{-y+cos(y)} e ^{-y}} {2e ^{-2y}} 2e ^{-2y} dy} =b$
 - ${\hat{b}} = \frac {1} {n} \sum _{i=1} ^{n} \frac {1} {2} exp[cos(Y _{i} )]$
 
 ```{r}
@@ -126,7 +126,7 @@ var(X1) > var(Y1)
 ## 2. f(x)를 density estimator로 추정 후 g(y)를 적절히 선택하여 분산을 줄일 수 있는지 확인 (R의 density 함수, kde package ?)
 
 - $E _{g} [f(X)]= \int _{} ^{} {f(x)g(x)dx= \int _{} ^{} {\frac {f(x)g(x)} {h(x)} h(x)dx=E _{h} [\frac {f(X)g(X)} {h(X)} ]=m}}$
-- $V _{1} ,V _{2} ,...,V _{n} -> h(v)$
+- $V _{1} ,V _{2} ,...,V _{n} \sim h(v)$
 - ${\hat{m}} = \frac {1}{n} \sum _{i=1} ^{n} \frac{f(V _{i} )g(V _{i} )} {h(V _{i} )}$
 - 주어진 자료에 대한 분포가 주어지지 않은 경우에는 그 분포를 추정해야 함. (g(x)를 추정)
 - 이후 추정된 분포 g(x)에 대한 특정값에서의 함수값을 구하는 것이 관건이라고 판단됨. 이 문제가 해결된다면 importance sampling에 대한 성능평가를 제대로 할 수 있음.

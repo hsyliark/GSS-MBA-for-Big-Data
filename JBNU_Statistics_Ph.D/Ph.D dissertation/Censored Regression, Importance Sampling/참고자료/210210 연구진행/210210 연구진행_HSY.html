@@ -383,10 +383,10 @@ summary {
 <div id="case1-binomial-distribution-case" class="section level3">
 <h3>Case1) Binomial Distribution case</h3>
 <ul>
-<li>When <span class="math inline">\(X -&gt; B(100,0.25)\)</span>, calculate <span class="math inline">\(P(X &gt;= 75)\)</span></li>
+<li>When <span class="math inline">\(X \sim B(100,0.25)\)</span>, calculate <span class="math inline">\(P(X \geq 75)\)</span></li>
 <li>Let <span class="math inline">\(m=100,x=75,p=0.25\)</span> and <span class="math inline">\(q=0.75\)</span>. Then, <span class="math inline">\(p &lt;&lt; q\)</span>.</li>
-<li><span class="math inline">\(P(X &gt;= x) = \frac {1} {n} \sum _{i=1} ^{n} I(Y _{i} &gt;= x) ( \frac {p} {q} ) ^{Y _{i}} ( \frac {1-p} {1-q} ) ^{m-Y _{i}}\)</span></li>
-<li>Therefore, <span class="math inline">\(P(X &gt;= 75) = \frac {1} {n} \sum _{i=1} ^{n} I(Y _{i} &gt;= 75) * 3 ^{100-2Y _{i}}\)</span></li>
+<li><span class="math inline">\(P(X \geq x) = \frac {1} {n} \sum _{i=1} ^{n} I(Y _{i} \geq x) ( \frac {p} {q} ) ^{Y _{i}} ( \frac {1-p} {1-q} ) ^{m-Y _{i}}\)</span></li>
+<li>Therefore, <span class="math inline">\(P(X \geq 75) = \frac {1} {n} \sum _{i=1} ^{n} I(Y _{i} \geq 75) * 3 ^{100-2Y _{i}}\)</span></li>
 </ul>
 <div id="분포함수-hx가-m100-p0.25-인-이항분포에-대하여-sampling-후-점검" class="section level4">
 <h4>분포함수 h(x)가 m=100, p=0.25 인 이항분포에 대하여 sampling 후 점검</h4>
@@ -412,14 +412,14 @@ Y1 &lt;- I(Y&gt;=75)*3^(100-2*Y)
 <div id="case2-normal-distribution-case" class="section level3">
 <h3>Case2) Normal Distribution case</h3>
 <ul>
-<li>Suppose that <span class="math inline">\(X -&gt; N(0,1 ^{2} ),Y -&gt; N(2.575,1 ^{2} )\)</span>.</li>
+<li>Suppose that <span class="math inline">\(X \sim N(0,1 ^{2} ),Y \sim N(2.575,1 ^{2} )\)</span>.</li>
 <li>Then we want to calculate <span class="math inline">\(P(X&gt;=2.575)\)</span>.</li>
 </ul>
 <div id="분포함수-hx가-n01인-정규분포에-대하여-sampling-후-점검" class="section level4">
 <h4>분포함수 h(x)가 N(0,1)인 정규분포에 대하여 sampling 후 점검</h4>
 <ul>
-<li><span class="math inline">\(P(X &gt;= 2.575)= \int _{2.575} ^{INF } {f _{X} (x)dx=p _{2.575}}\)</span></li>
-<li><span class="math inline">\({\hat{p _{2.575}}} = \frac {1} {n} \sum _{i=1} ^{n} I(X _{i} &gt;= 2.575)\)</span></li>
+<li><span class="math inline">\(P(X \geq 2.575)= \int _{2.575} ^{\infty } {f _{X} (x)dx=p _{2.575}}\)</span></li>
+<li><span class="math inline">\({\hat{p _{2.575}}} = \frac {1} {n} \sum _{i=1} ^{n} I(X _{i} \geq 2.575)\)</span></li>
 </ul>
 <pre class="r"><code>set.seed(1)
 X &lt;- rnorm(10000,0,1)
@@ -432,8 +432,8 @@ X1 &lt;- I(X&gt;=2.575)
 <div id="분포함수-hx가-n2.5751인-정규분포에-대하여-importance-sampling-후-점검" class="section level4">
 <h4>분포함수 h(x)가 N(2.575,1)인 정규분포에 대하여 importance sampling 후 점검</h4>
 <ul>
-<li><span class="math inline">\(P(X &gt;= 2.575)= \int _{2.575} ^{INF } {f _{X} (x)dx= \int _{2.575} ^{INF } [{{f _{X} (y)} / {f _{Y} (y)}] f _{Y} (y)dy=p _{2.575}^{IS}}}\)</span></li>
-<li><span class="math inline">\({\hat{p _{2.575}^{IS}}} = \frac {1} {n} \sum _{i=1} ^{n} I(Y _{i} &gt;= 2.575) \frac {f _{X} (Y _{i} )} {f _{Y} (Y _{i} )} = \frac {1} {n} \sum _{i=1} ^{n} I(Y _{i} &gt;= 2.575)*exp[- \frac {1} {2} (Y _{i}^{2} +(Y _{i} -2.575) ^{2} )]\)</span></li>
+<li><span class="math inline">\(P(X \geq 2.575)= \int _{2.575} ^{\infty } {f _{X} (x)dx= \int _{2.575} ^{\infty } [{{f _{X} (y)} / {f _{Y} (y)}] f _{Y} (y)dy=p _{2.575}^{IS}}}\)</span></li>
+<li><span class="math inline">\({\hat{p _{2.575}^{IS}}} = \frac {1} {n} \sum _{i=1} ^{n} I(Y _{i} \geq 2.575) \frac {f _{X} (Y _{i} )} {f _{Y} (Y _{i} )} = \frac {1} {n} \sum _{i=1} ^{n} I(Y _{i} \geq 2.575)*exp[- \frac {1} {2} (Y _{i}^{2} +(Y _{i} -2.575) ^{2} )]\)</span></li>
 </ul>
 <pre class="r"><code>set.seed(1)
 Y &lt;- rnorm(10000,2.575,1)
@@ -452,7 +452,7 @@ Y1 &lt;- I(Y&gt;=2.575)*exp(-(1/2)*(Y^2+(Y-2.575)^2))
 <div id="case3-exponential-distribution-case-httpswww.youtube.comwatchvqz_tddlfylm" class="section level3">
 <h3>Case3) Exponential Distribution case (<a href="https://www.youtube.com/watch?v=qz_tddlFYLM" class="uri">https://www.youtube.com/watch?v=qz_tddlFYLM</a>)</h3>
 <ul>
-<li>Suppose that <span class="math inline">\(X-&gt;Exp(1)\)</span>.</li>
+<li>Suppose that <span class="math inline">\(X \sim Exp(1)\)</span>.</li>
 <li>Than we want to calculate <span class="math inline">\(E(e ^{-X+cos(X)} )\)</span>.</li>
 <li><span class="math inline">\(E _{X} [f(X)]= \int {f(x)g(x)dx= \int {[\frac {f(y)g(y)} {h(y)} ]h(y)dy=E _{Y} [\frac {f(Y)g(Y)} {h(Y)} ]}}\)</span></li>
 <li>분포함수 h(x)의 그래프가 f(x)g(x)의 그래프와 가까워질 때 importance sampling의 성능도 좋아진다.</li>
@@ -480,7 +480,7 @@ legend(x=2.5,y=3, c(&quot;Exp(2)&quot;,&quot;Exp(1)&quot;,&quot;f(x)g(x)&quot;),
 <div id="hx---exp1" class="section level4">
 <h4>h(x) -&gt; Exp(1)</h4>
 <ul>
-<li><span class="math inline">\(E(e ^{-X+cos(X)} )= \int _{0} ^{INF } {f(x)g(x)dx} = \int _{0} ^{INF } {e ^{-x+cos(x)} e ^{-x} dx} =a\)</span></li>
+<li><span class="math inline">\(E(e ^{-X+cos(X)} )= \int _{0} ^{\infty } {f(x)g(x)dx} = \int _{0} ^{\infty } {e ^{-x+cos(x)} e ^{-x} dx} =a\)</span></li>
 <li><span class="math inline">\({\hat{a}} = \frac {1} {n} \sum _{i=1} ^{n} exp[-X _{i} +cos(X _{i} )]\)</span></li>
 </ul>
 <pre class="r"><code>set.seed(1)
@@ -494,7 +494,7 @@ X1 &lt;- exp(-X+cos(X))
 <div id="hx---exp2" class="section level4">
 <h4>h(x) -&gt; Exp(2)</h4>
 <ul>
-<li><span class="math inline">\(E(e ^{-X+cos(X)} )= \int _{0} ^{INF } {f(x)g(x)dx} = \int _{0} ^{INF } {\frac {f(y)g(y)} {h(y)} h(y)dy} = \int _{0} ^{INF } {\frac {e ^{-y+cos(y)} e ^{-y}} {2e ^{-2y}} 2e ^{-2y} dy} =b\)</span></li>
+<li><span class="math inline">\(E(e ^{-X+cos(X)} )= \int _{0} ^{\infty } {f(x)g(x)dx} = \int _{0} ^{\infty } {\frac {f(y)g(y)} {h(y)} h(y)dy} = \int _{0} ^{\infty } {\frac {e ^{-y+cos(y)} e ^{-y}} {2e ^{-2y}} 2e ^{-2y} dy} =b\)</span></li>
 <li><span class="math inline">\({\hat{b}} = \frac {1} {n} \sum _{i=1} ^{n} \frac {1} {2} exp[cos(Y _{i} )]\)</span></li>
 </ul>
 <pre class="r"><code>set.seed(2)
@@ -516,7 +516,7 @@ Y1 &lt;- exp(cos(Y))/2
 <h2>2. f(x)를 density estimator로 추정 후 g(y)를 적절히 선택하여 분산을 줄일 수 있는지 확인 (R의 density 함수, kde package ?)</h2>
 <ul>
 <li><span class="math inline">\(E _{g} [f(X)]= \int _{} ^{} {f(x)g(x)dx= \int _{} ^{} {\frac {f(x)g(x)} {h(x)} h(x)dx=E _{h} [\frac {f(X)g(X)} {h(X)} ]=m}}\)</span></li>
-<li><span class="math inline">\(V _{1} ,V _{2} ,...,V _{n} -&gt; h(v)\)</span></li>
+<li><span class="math inline">\(V _{1} ,V _{2} ,...,V _{n} \sim h(v)\)</span></li>
 <li><span class="math inline">\({\hat{m}} = \frac {1}{n} \sum _{i=1} ^{n} \frac{f(V _{i} )g(V _{i} )} {h(V _{i} )}\)</span></li>
 <li>주어진 자료에 대한 분포가 주어지지 않은 경우에는 그 분포를 추정해야 함. (g(x)를 추정)</li>
 <li>이후 추정된 분포 g(x)에 대한 특정값에서의 함수값을 구하는 것이 관건이라고 판단됨. 이 문제가 해결된다면 importance sampling에 대한 성능평가를 제대로 할 수 있음.</li>
