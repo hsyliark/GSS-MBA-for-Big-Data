@@ -9,7 +9,7 @@ output: html_document
 ## f(x)를 density estimator로 추정 후 g(y)를 적절히 선택하여 분산을 줄일 수 있는지 확인 (R의 density 함수, kde package ?)
 
 - $E _{g} [f(X)]= \int _{} ^{} {f(x)g(x)dx= \int _{} ^{} {\frac {f(x)g(x)} {h(x)} h(x)dx=E _{h} [\frac {f(X)g(X)} {h(X)} ]=m}}$
-- $V _{1} ,V _{2} ,...,V _{n} -> h(v)$
+- $V _{1} ,V _{2} ,...,V _{n} \sim h(v)$
 - ${\hat{m}} = \frac {1}{n} \sum _{i=1} ^{n} \frac{f(V _{i} )g(V _{i} )} {h(V _{i} )}$
 - 주어진 자료에 대한 분포가 주어지지 않은 경우에는 그 분포를 추정해야 함. (g(x)를 추정)
 - 이후 추정된 분포 g(x)에 대한 특정값에서의 함수값을 구하는 것이 관건이라고 판단됨. 이 문제가 해결된다면 importance sampling에 대한 성능평가를 제대로 할 수 있음.
