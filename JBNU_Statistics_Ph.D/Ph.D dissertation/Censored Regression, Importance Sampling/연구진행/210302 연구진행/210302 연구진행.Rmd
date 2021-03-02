@@ -100,7 +100,7 @@ ggplot(res1,aes(x=method,y=bias,fill=method)) +
 - $\hat{MSE} = \frac{1} {n} \sum _{i=1} ^{n} (M_{i} -M_{0} )^{2}$
 - ${Var} =E[(M-E(M))  ^{2} ]$
 - $\hat{Var} = \frac{1} {n} \sum _{i=1} ^{n} [M_{i} -( \frac{1} {n} \sum _{j=1} ^{n} M_{j} )]^{2}$
-- ${Bias}^{2} =(E(M)-M_{0} )  ^{2} $
+- ${Bias}^{2}=(E(M)-M_{0})^{2}$
 - $\hat{Bias}^{2} =[( \frac{1} {n} \sum _{j=1} ^{n} M_{j} )-M_{0} ]^{2}$
 - $M$ : GM 또는 ISM을 통해 계산된 평균추정값
 - $M_{0}$ : 실제 분포에 대한 이론적인 평균
@@ -207,7 +207,7 @@ ggplot(res2,aes(x=method,y=bias,fill=method)) +
 - $\hat{MSE} = \frac{1} {n} \sum _{i=1} ^{n} (M_{i} -M_{0} )^{2}$
 - ${Var} =E[(M-E(M))  ^{2} ]$
 - $\hat{Var} = \frac{1} {n} \sum _{i=1} ^{n} [M_{i} -( \frac{1} {n} \sum _{j=1} ^{n} M_{j} )]^{2}$
-- ${Bias}^{2} =(E(M)-M_{0} )  ^{2} $
+- ${Bias}^{2}=(E(M)-M_{0})^{2}$
 - $\hat{Bias}^{2} =[( \frac{1} {n} \sum _{j=1} ^{n} M_{j} )-M_{0} ]^{2}$
 - $M$ : GM 또는 ISM을 통해 계산된 평균추정값
 - $M_{0}$ : 실제 분포에 대한 이론적인 평균
