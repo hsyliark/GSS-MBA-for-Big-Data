@@ -230,3 +230,12 @@ Bias2.GM > Bias2.ISM
 
 ### Case3) 실제 생존자료에 적용 (censoring 무시, 대상변수 : time)
 
+```{r}
+library(fitdistrplus)
+plotdist(ex1$Chla)
+descdist(ex1$Chla)
+f1 <- fitdist(ex1$Chla, "gamma")
+summary(f1)
+plot(f1)
+```
+
