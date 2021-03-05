@@ -228,14 +228,220 @@ Bias2.GM > Bias2.ISM
 
 
 
-### Case3) 실제 생존자료에 적용 (censoring 무시, 대상변수 : time)
+### Case3) 실제 생존자료에 적용 
+
+#### 1) transplant data (평균추정, censoring 무시, 대상변수 : time)
+
+```{r}
+transplant <- read.csv("C:/Users/HSY/Desktop/transplant.csv",sep=",",header=T)
+head(transplant)
+```
+
+```{r}
+plot(density(transplant$time))
+rug(jitter(transplant$time))
+```
+
+```{r}
+hist(transplant$time,freq=FALSE)
+lines(density(transplant$time))
+```
+
+- 그래프를 통해 변수 time에 대한 적절한 분포를 Gamma 아니면 Weibull로 생각해볼 수 있다.
+
+#### Gamma distribution 가정
 
 ```{r}
 library(fitdistrplus)
-plotdist(ex1$Chla)
-descdist(ex1$Chla)
-f1 <- fitdist(ex1$Chla, "gamma")
+f1 <- fitdist(transplant$time, "gamma")
 summary(f1)
 plot(f1)
+gofstat(f1)$chisqpvalue
 ```
+
+- Gamma 분포를 가정한 결과 shape 모수는 1, rate 모수는 0.7897048(scale 모수는 1.266296)로 추정되었다.
+- 그리고 Chi-square p-value를 통해 변수 time에 대한 적절한 분포가 Gamma 분포라는 귀무가설을 기각하지 못하므로 Gamma 분포를 가정하는 것이 통계적으로 타당하다고 볼 수 있다.
+- 이를 바탕으로 추정된 g(x)를 Gamma(1,1.266296)로 두고 적절한 대체분포 h(x)를 찾아보도록 한다.
+
+```{r}
+x <- seq(0,20,0.001)
+g <- dgamma(x,shape=f1$cor[1,1],scale=1/f1$cor[2,1])
+h <- dgamma(x,shape=1,scale=2)
+plot(x,g,ylab="g(x) or h(x)",xlab="x",ylim=c(0,1),type="l",col="#228B22")
+par(new=T)
+plot(x,h,ylab="",xlab="x",ylim=c(0,1),type="l",col="#FF3030")
+legend(x=5,y=1, c("g(x) : Gamma(1,1.266296)","h(x) : Gamma(1,2)"),lty=1,col=c("#228B22","#FF3030"))
+```
+
+- h(x)를 g(x)에 비해 오른쪽 꼬리가 더 두꺼운 분포로 선정하였다.
+- h(x) : Gamma(1,2)
+- 모의실험은 Case1,2 에서 진행한 방식을 동일하게 적용한다.
+
+- 다음의 두가지 방법을 비교하기 위한 모의실험
+- 1. 실제 분포인 g(x)를 통해 난수 추출
+- 2. h(x)를 이용한 importance sampling을 통해 난수 추출
+- 1,2의 방법을 통해 1000개의 난수를 추출하고 각각의 평균과 분산을 계산함.
+- 이 과정을 1000번 반복하여 결과를 확인.
+
+```{r}
+GM <- c()
+GV <- c()
+GB <- c()
+ISM <- c()
+ISV <- c()
+ISB <- c()
+for (i in 1:1000) {
+  gr <- rgamma(1000,shape=f1$cor[1,1],scale=1/f1$cor[2,1])
+  GM[i] <- mean(gr)
+  GV[i] <- var(gr)
+  GB[i] <- abs(mean(gr)-f1$cor[1,1]/f1$cor[2,1])
+  v <- rgamma(1000,shape=1,scale=2)
+  g <- dgamma(v,shape=f1$cor[1,1],scale=1/f1$cor[2,1])
+  h <- dgamma(v,shape=1,scale=2) 
+  ISM[i] <- mean(v*g/h)
+  ISV[i] <- var(v*g/h)
+  ISB[i] <- abs(mean(v*g/h)-f1$cor[1,1]/f1$cor[2,1])
+}
+res3 <- data.frame(mean=c(GM,ISM),variance=c(GV,ISV),bias=c(GB,ISB),method=c(rep("Sampling",1000),rep("Importance Sampling",1000)))
+```
+
+- 평균추정결과
+
+```{r}
+library(ggplot2)
+ggplot(res3,aes(x=method,y=mean,fill=method)) +
+  geom_boxplot() +
+  ggtitle("Estimate mean (Sampling vs Importance Sampling) / Gamma")
+```
+
+- 분산 비교
+
+```{r}
+ggplot(res3,aes(x=method,y=variance,fill=method)) +
+  geom_boxplot() +
+  ggtitle("Comparing variance (Sampling vs Importance Sampling) / Gamma")
+```
+
+- 편향 비교
+
+```{r}
+ggplot(res3,aes(x=method,y=bias,fill=method)) +
+  geom_boxplot() +
+  ggtitle("Comparing bias (Sampling vs Importance Sampling) / Gamma")
+```
+
+- 결과적으로 Importance Sampling을 적용했을 경우 분산과 편향 모두 감소함을 확인할 수 있다.
+- 추가적으로 MSE, Variance, Bias^2 에 대한 추정량까지 비교하면 다음과 같다.
+
+```{r}
+(MSE.GM <- mean((res3$mean[res3$method=="Sampling"]-f1$cor[1,1]/f1$cor[2,1])^2))
+(MSE.ISM <- mean((res3$mean[res3$method=="Importance Sampling"]-f1$cor[1,1]/f1$cor[2,1])^2))
+MSE.GM > MSE.ISM
+(Var.GM <- mean((res3$mean[res3$method=="Sampling"]-mean(res3$mean[res3$method=="Sampling"]))^2))
+(Var.ISM <- mean((res3$mean[res3$method=="Importance Sampling"]-mean(res3$mean[res3$method=="Importance Sampling"]))^2))
+Var.GM > Var.ISM
+(Bias2.GM <- (mean(res3$mean[res3$method=="Sampling"])-f1$cor[1,1]/f1$cor[2,1])^2)
+(Bias2.ISM <- (mean(res3$mean[res3$method=="Importance Sampling"])-f1$cor[1,1]/f1$cor[2,1])^2)
+Bias2.GM > Bias2.ISM
+```
+
+- 분석한 결과, Importance Sampling을 수행하였을 때 MSE, Variance, Bias^2 에 대한 추정량이 일반 Sampling의 경우와 비교했을 때 모두 줄어드는 것을 확인할 수 있다. 
+
+#### Weibull distribution 가정
+
+```{r}
+library(fitdistrplus)
+f2 <- fitdist(transplant$time, "weibull")
+summary(f2)
+plot(f2)
+gofstat(f2)$chisqpvalue
+```
+
+- Weibull 분포를 가정한 결과 shape 모수는 1, scale 모수는 0.3102541로 추정되었다.
+- 그리고 Chi-square p-value를 통해 변수 time에 대한 적절한 분포가 Weibull 분포라는 귀무가설을 기각하지 못하므로 Weibull 분포를 가정하는 것이 통계적으로 타당하다고 볼 수 있다.
+- 이를 바탕으로 추정된 g(x)를 Weibull(1,0.3102541)로 두고 적절한 대체분포 h(x)를 찾아보도록 한다.
+
+```{r}
+x <- seq(0,20,0.001)
+g <- dweibull(x,shape=f2$cor[1,1],scale=f2$cor[2,1])
+h <- dweibull(x,shape=1,scale=2)
+plot(x,g,ylab="g(x) or h(x)",xlab="x",ylim=c(0,1),type="l",col="#228B22")
+par(new=T)
+plot(x,h,ylab="",xlab="x",ylim=c(0,1),type="l",col="#FF3030")
+legend(x=5,y=1, c("g(x) : Gamma(1,1.266296)","h(x) : Gamma(1,2)"),lty=1,col=c("#228B22","#FF3030"))
+```
+
+- h(x)를 g(x)에 비해 오른쪽 꼬리가 더 두꺼운 분포로 선정하였다.
+- h(x) : Weibull(1,2)
+- 모의실험은 Case1,2 에서 진행한 방식을 동일하게 적용한다.
+
+- 다음의 두가지 방법을 비교하기 위한 모의실험
+- 1. 실제 분포인 g(x)를 통해 난수 추출
+- 2. h(x)를 이용한 importance sampling을 통해 난수 추출
+- 1,2의 방법을 통해 1000개의 난수를 추출하고 각각의 평균과 분산을 계산함.
+- 이 과정을 1000번 반복하여 결과를 확인.
+
+```{r}
+GM <- c()
+GV <- c()
+GB <- c()
+ISM <- c()
+ISV <- c()
+ISB <- c()
+for (i in 1:1000) {
+  gr <- rweibull(1000,shape=f2$cor[1,1],scale=f2$cor[2,1])
+  GM[i] <- mean(gr)
+  GV[i] <- var(gr)
+  GB[i] <- abs(mean(gr)-f2$cor[2,1]*gamma(1+1/f2$cor[1,1]))
+  v <- rweibull(1000,shape=1,scale=2)
+  g <- dweibull(v,shape=f2$cor[1,1],scale=f2$cor[2,1])
+  h <- dweibull(v,shape=1,scale=2) 
+  ISM[i] <- mean(v*g/h)
+  ISV[i] <- var(v*g/h)
+  ISB[i] <- abs(mean(v*g/h)-f2$cor[2,1]*gamma(1+1/f2$cor[1,1]))
+}
+res4 <- data.frame(mean=c(GM,ISM),variance=c(GV,ISV),bias=c(GB,ISB),method=c(rep("Sampling",1000),rep("Importance Sampling",1000)))
+```
+
+- 평균추정결과
+
+```{r}
+library(ggplot2)
+ggplot(res4,aes(x=method,y=mean,fill=method)) +
+  geom_boxplot() +
+  ggtitle("Estimate mean (Sampling vs Importance Sampling) / Weibull")
+```
+
+- 분산 비교
+
+```{r}
+ggplot(res4,aes(x=method,y=variance,fill=method)) +
+  geom_boxplot() +
+  ggtitle("Comparing variance (Sampling vs Importance Sampling) / Weibull")
+```
+
+- 편향 비교
+
+```{r}
+ggplot(res4,aes(x=method,y=bias,fill=method)) +
+  geom_boxplot() +
+  ggtitle("Comparing bias (Sampling vs Importance Sampling) / Weibull")
+```
+
+- 결과적으로 Importance Sampling을 적용했을 경우 분산과 편향 모두 감소함을 확인할 수 있다.
+- 추가적으로 MSE, Variance, Bias^2 에 대한 추정량까지 비교하면 다음과 같다.
+
+```{r}
+(MSE.GM <- mean((res4$mean[res4$method=="Sampling"]-f2$cor[2,1]*gamma(1+1/f2$cor[1,1]))^2))
+(MSE.ISM <- mean((res4$mean[res4$method=="Importance Sampling"]-f2$cor[2,1]*gamma(1+1/f2$cor[1,1]))^2))
+MSE.GM > MSE.ISM
+(Var.GM <- mean((res4$mean[res4$method=="Sampling"]-mean(res4$mean[res4$method=="Sampling"]))^2))
+(Var.ISM <- mean((res4$mean[res4$method=="Importance Sampling"]-mean(res4$mean[res4$method=="Importance Sampling"]))^2))
+Var.GM > Var.ISM
+(Bias2.GM <- (mean(res4$mean[res4$method=="Sampling"])-f2$cor[2,1]*gamma(1+1/f2$cor[1,1]))^2)
+(Bias2.ISM <- (mean(res4$mean[res4$method=="Importance Sampling"])-f2$cor[2,1]*gamma(1+1/f2$cor[1,1]))^2)
+Bias2.GM > Bias2.ISM
+```
+
+- 분석한 결과, Importance Sampling을 수행하였을 때 MSE, Variance, Bias^2 에 대한 추정량이 일반 Sampling의 경우와 비교했을 때 모두 줄어드는 것을 확인할 수 있다. 
 
