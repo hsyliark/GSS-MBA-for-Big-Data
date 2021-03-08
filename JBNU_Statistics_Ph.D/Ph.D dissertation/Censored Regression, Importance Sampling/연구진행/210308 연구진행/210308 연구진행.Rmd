@@ -51,6 +51,7 @@ library(fitdistrplus)
 f1 <- fitdist(transplant$time, "gamma")
 summary(f1)
 plot(f1)
+gofstat(f1)
 gofstat(f1)$chisqpvalue
 ```
 
@@ -98,14 +99,14 @@ for (i in 1:1000) {
   ISV[i] <- var(v*g/h)
   ISB[i] <- abs(mean(v*g/h)-f1$estimate[1]/f1$estimate[2])
 }
-res3 <- data.frame(mean=c(GM,ISM),variance=c(GV,ISV),bias=c(GB,ISB),method=c(rep("Sampling",1000),rep("Importance Sampling",1000)))
+res1 <- data.frame(mean=c(GM,ISM),variance=c(GV,ISV),bias=c(GB,ISB),method=c(rep("Sampling",1000),rep("Importance Sampling",1000)))
 ```
 
 - 평균추정결과
 
 ```{r}
 library(ggplot2)
-ggplot(res3,aes(x=method,y=mean,fill=method)) +
+ggplot(res1,aes(x=method,y=mean,fill=method)) +
   geom_boxplot() +
   ggtitle("Estimate mean (Sampling vs Importance Sampling) / Gamma")
 ```
@@ -113,7 +114,7 @@ ggplot(res3,aes(x=method,y=mean,fill=method)) +
 - 분산 비교
 
 ```{r}
-ggplot(res3,aes(x=method,y=variance,fill=method)) +
+ggplot(res1,aes(x=method,y=variance,fill=method)) +
   geom_boxplot() +
   ggtitle("Comparing variance (Sampling vs Importance Sampling) / Gamma")
 ```
@@ -121,7 +122,7 @@ ggplot(res3,aes(x=method,y=variance,fill=method)) +
 - 편향 비교
 
 ```{r}
-ggplot(res3,aes(x=method,y=bias,fill=method)) +
+ggplot(res1,aes(x=method,y=bias,fill=method)) +
   geom_boxplot() +
   ggtitle("Comparing bias (Sampling vs Importance Sampling) / Gamma")
 ```
@@ -141,14 +142,14 @@ ggplot(res3,aes(x=method,y=bias,fill=method)) +
 - $M_{0}$ : 실제 분포에 대한 이론적인 평균
 
 ```{r}
-(MSE.GM <- mean((res3$mean[res3$method=="Sampling"]-f1$estimate[1]/f1$estimate[2])^2))
-(MSE.ISM <- mean((res3$mean[res3$method=="Importance Sampling"]-f1$estimate[1]/f1$estimate[2])^2))
+(MSE.GM <- mean((res1$mean[res1$method=="Sampling"]-f1$estimate[1]/f1$estimate[2])^2))
+(MSE.ISM <- mean((res1$mean[res1$method=="Importance Sampling"]-f1$estimate[1]/f1$estimate[2])^2))
 MSE.GM > MSE.ISM
-(Var.GM <- mean((res3$mean[res3$method=="Sampling"]-mean(res3$mean[res3$method=="Sampling"]))^2))
-(Var.ISM <- mean((res3$mean[res3$method=="Importance Sampling"]-mean(res3$mean[res3$method=="Importance Sampling"]))^2))
+(Var.GM <- mean((res1$mean[res1$method=="Sampling"]-mean(res1$mean[res1$method=="Sampling"]))^2))
+(Var.ISM <- mean((res1$mean[res1$method=="Importance Sampling"]-mean(res1$mean[res1$method=="Importance Sampling"]))^2))
 Var.GM > Var.ISM
-(Bias2.GM <- (mean(res3$mean[res3$method=="Sampling"])-f1$estimate[1]/f1$estimate[2])^2)
-(Bias2.ISM <- (mean(res3$mean[res3$method=="Importance Sampling"])-f1$estimate[1]/f1$estimate[2])^2)
+(Bias2.GM <- (mean(res1$mean[res1$method=="Sampling"])-f1$estimate[1]/f1$estimate[2])^2)
+(Bias2.ISM <- (mean(res1$mean[res1$method=="Importance Sampling"])-f1$estimate[1]/f1$estimate[2])^2)
 Bias2.GM > Bias2.ISM
 ```
 
@@ -165,6 +166,7 @@ library(fitdistrplus)
 f2 <- fitdist(transplant$time, "weibull")
 summary(f2)
 plot(f2)
+gofstat(f2)
 gofstat(f2)$chisqpvalue
 ```
 
@@ -212,14 +214,14 @@ for (i in 1:1000) {
   ISV[i] <- var(v*g/h)
   ISB[i] <- abs(mean(v*g/h)-f2$estimate[2]*gamma(1+1/f2$estimate[1]))
 }
-res4 <- data.frame(mean=c(GM,ISM),variance=c(GV,ISV),bias=c(GB,ISB),method=c(rep("Sampling",1000),rep("Importance Sampling",1000)))
+res2 <- data.frame(mean=c(GM,ISM),variance=c(GV,ISV),bias=c(GB,ISB),method=c(rep("Sampling",1000),rep("Importance Sampling",1000)))
 ```
 
 - 평균추정결과
 
 ```{r}
 library(ggplot2)
-ggplot(res4,aes(x=method,y=mean,fill=method)) +
+ggplot(res2,aes(x=method,y=mean,fill=method)) +
   geom_boxplot() +
   ggtitle("Estimate mean (Sampling vs Importance Sampling) / Weibull")
 ```
@@ -227,7 +229,7 @@ ggplot(res4,aes(x=method,y=mean,fill=method)) +
 - 분산 비교
 
 ```{r}
-ggplot(res4,aes(x=method,y=variance,fill=method)) +
+ggplot(res2,aes(x=method,y=variance,fill=method)) +
   geom_boxplot() +
   ggtitle("Comparing variance (Sampling vs Importance Sampling) / Weibull")
 ```
@@ -235,7 +237,7 @@ ggplot(res4,aes(x=method,y=variance,fill=method)) +
 - 편향 비교
 
 ```{r}
-ggplot(res4,aes(x=method,y=bias,fill=method)) +
+ggplot(res2,aes(x=method,y=bias,fill=method)) +
   geom_boxplot() +
   ggtitle("Comparing bias (Sampling vs Importance Sampling) / Weibull")
 ```
@@ -255,14 +257,14 @@ ggplot(res4,aes(x=method,y=bias,fill=method)) +
 - $M_{0}$ : 실제 분포에 대한 이론적인 평균
 
 ```{r}
-(MSE.GM <- mean((res4$mean[res4$method=="Sampling"]-f2$estimate[2]*gamma(1+1/f2$estimate[1]))^2))
-(MSE.ISM <- mean((res4$mean[res4$method=="Importance Sampling"]-f2$estimate[2]*gamma(1+1/f2$estimate[1]))^2))
+(MSE.GM <- mean((res2$mean[res2$method=="Sampling"]-f2$estimate[2]*gamma(1+1/f2$estimate[1]))^2))
+(MSE.ISM <- mean((res2$mean[res2$method=="Importance Sampling"]-f2$estimate[2]*gamma(1+1/f2$estimate[1]))^2))
 MSE.GM > MSE.ISM
-(Var.GM <- mean((res4$mean[res4$method=="Sampling"]-mean(res4$mean[res4$method=="Sampling"]))^2))
-(Var.ISM <- mean((res4$mean[res4$method=="Importance Sampling"]-mean(res4$mean[res4$method=="Importance Sampling"]))^2))
+(Var.GM <- mean((res2$mean[res2$method=="Sampling"]-mean(res2$mean[res2$method=="Sampling"]))^2))
+(Var.ISM <- mean((res2$mean[res2$method=="Importance Sampling"]-mean(res2$mean[res2$method=="Importance Sampling"]))^2))
 Var.GM > Var.ISM
-(Bias2.GM <- (mean(res4$mean[res4$method=="Sampling"])-f2$estimate[2]*gamma(1+1/f2$estimate[1]))^2)
-(Bias2.ISM <- (mean(res4$mean[res4$method=="Importance Sampling"])-f2$estimate[2]*gamma(1+1/f2$estimate[1]))^2)
+(Bias2.GM <- (mean(res2$mean[res2$method=="Sampling"])-f2$estimate[2]*gamma(1+1/f2$estimate[1]))^2)
+(Bias2.ISM <- (mean(res2$mean[res2$method=="Importance Sampling"])-f2$estimate[2]*gamma(1+1/f2$estimate[1]))^2)
 Bias2.GM > Bias2.ISM
 ```
 
