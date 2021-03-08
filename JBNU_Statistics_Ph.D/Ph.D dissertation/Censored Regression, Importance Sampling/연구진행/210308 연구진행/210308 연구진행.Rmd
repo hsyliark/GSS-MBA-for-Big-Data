@@ -13,7 +13,7 @@ output: html_document
 - 주어진 자료에 대한 분포가 주어지지 않은 경우에는 그 분포를 추정해야 함. (g(x)를 추정)
 - 이후 추정된 분포 g(x)에 대한 특정값에서의 함수값을 구하는 것이 관건이라고 판단됨. 이 문제가 해결된다면 Importance Sampling에 대한 성능평가를 제대로 할 수 있음.
 
-### Case1) transplant data 
+### transplant data 
 
 - 목적 : 변수 time의 평균을 추정 (censoring은 무시)
 - 분포 g(x)는 모수적인 방법으로 추정
