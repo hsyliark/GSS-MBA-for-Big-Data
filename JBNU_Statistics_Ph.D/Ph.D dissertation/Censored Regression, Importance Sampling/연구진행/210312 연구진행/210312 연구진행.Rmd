@@ -276,59 +276,41 @@ Bias2.GM > Bias2.ISM
 
 #### 과정 요약
 - 1. 특정한 분포(e.g : Gamma(2,3))에서 난수 1000개 추출
-- 2. 1에서 지정한 특정한 분포는 잊어버리고 추출한 난수를 가지고 다시 분포 g(x)를 추정(Gamma, Weibull 등등)
-- 3. 추정된 분포에 대해 모수를 조절하여 적절한 대체분포 h(x)를 설정
-- 4. 1000번 반복 모의실험
-- 5. 결과확인
+- 2. 1에서 지정한 특정한 분포는 잊어버리고 추출된 난수를 가지고 다시 분포 g(x)를 추정(Gamma, Weibull 등 / 추출된 난수에 대한 정확한 분포는 모르는 상황이므로 분포를 다시 추정하는 것임)
+- 3. 추정된 분포 g(x)에 대해 모수를 조절하여 적절한 대체분포 h(x)를 설정
+- 4. h(x)를 이용한 Importance Sampling을 통해 난수 추출
+- 5. 일반 Sampling으로 추출한 난수와 Importance Sampling으로 추출한 난수에 대해 분산을 계산
+- 6. 1~5의 과정을 1000번 반복
+- 7. 결과 확인 (Importance Sampling 적용 시 추출한 sample의 분산이 감소하는지 확인 / g(x)가 실제분포가 아닌 추정된 분포이므로 실제평균과 추정된 평균을 비교하는 편향(bias)은 의미가 없음)
 
 ```{r}
 library(fitdistrplus)
 GM <- c()
 GV <- c()
-GB <- c()
 ISM <- c()
 ISV <- c()
-ISB <- c()
 for (i in 1:1000) {
-  random <- rgamma(1000,shape=2,scale=3)
-  f3 <- fitdist(random,"gamma")
-  gr <- rgamma(1000,shape=f3$estimate[1],scale=1/f3$estimate[2])
+  gr <- rgamma(1000,shape=2,scale=3) # 특정한 분포에서 난수 추출
+  f3 <- fitdist(gr,"gamma") # 특정한 분포는 잊어버리고 추출된 난수에 대하여 분포 g(x)를 추정 
   GM[i] <- mean(gr)
   GV[i] <- var(gr)
-  GB[i] <- abs(mean(gr)-f3$estimate[1]/f3$estimate[2])
+  # 추정된 분포 g(x)에 대해 모수를 조절하여 적절한 대체분포 h(x)를 설정
   v <- rgamma(1000,shape=f3$estimate[1],scale=(1/f3$estimate[2])+1)
   g <- dgamma(v,shape=f3$estimate[1],scale=1/f3$estimate[2])
   h <- dgamma(v,shape=f3$estimate[1],scale=(1/f3$estimate[2])+1) 
   ISM[i] <- mean(v*g/h)
   ISV[i] <- var(v*g/h)
-  ISB[i] <- abs(mean(v*g/h)-f3$estimate[1]/f3$estimate[2])
 }
-res3 <- data.frame(mean=c(GM,ISM),variance=c(GV,ISV),bias=c(GB,ISB),method=c(rep("Sampling",1000),rep("Importance Sampling",1000)))
-```
-
-- 평균추정결과
-
-```{r}
-library(ggplot2)
-ggplot(res3,aes(x=method,y=mean,fill=method)) +
-  geom_boxplot() +
-  ggtitle("Estimate mean (Sampling vs Importance Sampling)")
+res3 <- data.frame(mean=c(GM,ISM),variance=c(GV,ISV),method=c(rep("Sampling",1000),rep("Importance Sampling",1000)))
 ```
 
 - 분산 비교
 
 ```{r}
+library(ggplot2)
 ggplot(res3,aes(x=method,y=variance,fill=method)) +
   geom_boxplot() +
   ggtitle("Comparing variance (Sampling vs Importance Sampling)")
 ```
 
-- 편향 비교
-
-```{r}
-ggplot(res3,aes(x=method,y=bias,fill=method)) +
-  geom_boxplot() +
-  ggtitle("Comparing bias (Sampling vs Importance Sampling)")
-```
-
-- 결과적으로 Importance Sampling을 적용했을 경우 분산과 편향 모두 감소함을 확인할 수 있다.
+- 결과적으로 Importance Sampling을 적용했을 경우 분산이 감소함을 확인할 수 있다.
