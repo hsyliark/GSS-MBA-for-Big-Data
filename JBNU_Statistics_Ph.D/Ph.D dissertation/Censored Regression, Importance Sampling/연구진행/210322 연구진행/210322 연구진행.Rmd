@@ -22,7 +22,7 @@ output: html_document
 - 2. 1에서 지정한 특정한 분포는 잊어버리고 추출된 난수를 가지고 다시 분포 g(x)를 추정(Gamma, Weibull 등 / 추출된 난수에 대한 정확한 분포는 모르는 상황이므로 분포를 다시 추정하는 것임)
 - 3. 추정된 분포 g(x)에 대해 모수를 조절하여 적절한 대체분포 h(x)를 설정
 - 4. h(x)를 이용한 Importance Sampling을 통해 난수 추출
-- 5. 일반 Sampling으로 추출한 난수와 Importance Sampling으로 추출한 난수에 대해 분산을 계산
+- 5. 일반 Sampling으로 추출한 난수와 Importance Sampling으로 추출한 난수에 대해 평균과 분산을 계산
 - 6. 1~5의 과정을 1000번 반복
 - 7. 결과 확인 
 
