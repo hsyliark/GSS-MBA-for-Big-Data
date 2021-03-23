@@ -1,0 +1,411 @@
+---
+title: "Importance Sampling"
+author: "Hwang Seong-Yun"
+date: '2021 03 29 '
+output: html_document
+---
+
+## Importance Sampling
+### 실제 자료에 있는 변수에 대한 g(x)를 추정 후 대체분포 h(x)를 적절히 선택하여 분산을 줄일 수 있는지 확인 (R의 density 함수, kde package ?)
+
+- https://en.wikipedia.org/wiki/Importance_sampling
+- $E_{g}[f(X)]=\int_{}^{}{f(x)g(x)dx=\int_{}^{}{\frac{f(x)g(x)}{h(x)}h(x)dx=E_{h}[\frac{f(X)g(X)}{h(X)}]=m}}$
+- $V_{1},V_{2},...,V_{n} \sim h(v)$
+- ${\hat{m}}=\frac{1}{n}\sum_{i=1}^{n}\frac{f(V_{i})g(V_{i})}{h(V_{i})}$
+- 주어진 자료에 대한 분포가 주어지지 않은 경우에는 그 분포를 추정해야 함. (g(x)를 추정)
+- 이후 추정된 분포 g(x)에 대한 특정값에서의 함수값을 구하는 것이 관건이라고 판단됨. 이 문제가 해결된다면 Importance Sampling에 대한 성능평가를 제대로 할 수 있음.
+- 대체분포 h(x)를 선정하는 데 있어 다음과 같이 h(x)를 선정하면 scaled sample에 대한 분산이 최소가 된다는 사실이 알려져 있음.
+- $h ^{*}(X)={min}_{h}Var_{h}\big(\frac{f(X)g(X)}{h(X)}\big)=\frac{|f(X)|g(X)}{\int_{}^{}{|f(x)|g(x)dx}}$
+
+
+
+### 모의실험
+
+#### 과정 요약
+- 1. 특정한 분포(e.g : Gamma(2,3))에서 난수 1000개 추출
+- 2. 1에서 지정한 특정한 분포는 잊어버리고 추출된 난수를 가지고 다시 분포 g(x)를 추정(Gamma, Weibull 등 / 추출된 난수에 대한 정확한 분포는 모르는 상황이므로 분포를 다시 추정하는 것임)
+- 3. 추정된 분포 g(x)에 대해 모수를 조절하여 적절한 대체분포 h(x)를 설정
+- 4. h(x)를 이용한 Importance Sampling을 통해 난수 추출
+- 5. 일반 Sampling으로 추출한 난수와 Importance Sampling으로 추출한 난수에 대해 평균과 분산을 계산
+- 6. 1~5의 과정을 1000번 반복
+- 7. MSE, Variance, Bias^2 에 대한 추정량 확인 
+
+#### Gamma distribution
+
+- $X \sim Gamma(\alpha,\beta)$
+- $f_{X}(x)=\frac{1}{\Gamma(\alpha)\beta^{\alpha}}x^{\alpha-1}e^{-\frac{x}{\beta}},x>0,\Gamma(\alpha)=\int_{0}^{\infty}{x^{\alpha-1}}e^{-x}dx$
+- $E(X)=\alpha\beta,Var(X)=\alpha\beta^{2}$
+- 만약 $g(x) \sim Gamma(\alpha,\beta)$라고 한다면 평균을 추정하는데 있어 이에 대한 최적의 대체분포는 $h^{*}(x) \sim Gamma(\alpha+1,\beta)$이다. 
+
+#### Weibull distribution 
+
+- $X \sim Weibull(\alpha,\beta)$
+- $f_{X}(x)=(\frac{\alpha}{\beta})(\frac{x}{\beta} )^{\alpha-1} exp(-(\frac{x}{\beta})^{\alpha}),x>0$
+- $E(X)=\beta\Gamma(1+\frac{1}{\alpha}),Var(X)=\beta^{2}[\Gamma(1+\frac{2}{\alpha})-(\Gamma(1+\frac{1}{\alpha}))^{2}]$
+
+#### MSE, Variance, Bias^2 에 대한 추정량 
+
+- ${MSE}=E[(M-M_{0})^{2}]$
+- $\hat{MSE}=\frac{1}{n}\sum_{i=1}^{n}(M_{i}-M_{0})^{2}$
+- ${Var}=E[(M-E(M))^{2}]$
+- $\hat{Var}=\frac{1}{n}\sum_{i=1}^{n}[M_{i}-(\frac{1}{n}\sum_{j=1}^{n}M_{j})]^{2}$
+- ${Bias}^{2}=(E(M)-M_{0})^{2}$
+- $\hat{Bias}^{2}=[(\frac{1}{n}\sum_{j=1}^{n}M_{j})-M_{0}]^{2}$
+- $M$ : GM 또는 ISM을 통해 계산된 평균추정값
+- $M_{0}$ : 실제 분포에 대한 이론적인 평균
+
+
+### 모의실험 (Gamma distribution)
+
+- ${\hat{g}}(x) \sim Gamma(\hat{\alpha},\hat{\beta})$에 대한 대체분포 ${\hat{h}}(x)$를 $Gamma(\hat{\alpha}+1,\hat{\beta})$ 근방에서 조절 후 결과 확인
+
+```{r}
+library(fitdistrplus)
+```
+
+### Case1) Gamma(2,3) 에서 난수 추출
+
+#### Case1-1)
+- ${\hat{g}}(x) \sim Gamma({\hat{\alpha}},{\hat{\beta}})\rightarrow {\hat{h}}(x) \sim Gamma({\hat{\alpha}}+0.8,{\hat{\beta}})$
+
+```{r}
+GM <- c()
+GV <- c()
+ISM <- c()
+ISV <- c()
+for (i in 1:1000) {
+  gr <- rgamma(1000,shape=2,scale=3) # 특정한 분포에서 난수 추출
+  f3 <- fitdist(gr,"gamma") # 특정한 분포는 잊어버리고 추출된 난수에 대하여 분포 g(x)를 추정 
+  GM[i] <- mean(gr)
+  GV[i] <- var(gr)
+  # 추정된 분포 g(x)에 대해 모수를 조절하여 적절한 대체분포 h(x)를 설정
+  v <- rgamma(1000,shape=f3$estimate[1]+0.8,scale=(1/f3$estimate[2]))
+  g <- dgamma(v,shape=f3$estimate[1],scale=1/f3$estimate[2])
+  h <- dgamma(v,shape=f3$estimate[1]+0.8,scale=(1/f3$estimate[2])) 
+  ISM[i] <- mean(v*g/h)
+  ISV[i] <- var(v*g/h)
+}
+res3_1 <- data.frame(mean=c(GM,ISM),variance=c(GV,ISV),method=c(rep("Sampling",1000),rep("Importance Sampling",1000)))
+```
+
+- MSE, Variance, Bias^2 에 대한 추정량 비교
+
+```{r}
+(MSE.GM <- mean((res3_1$mean[res3_1$method=="Sampling"]-6)^2)) ; (MSE.ISM <- mean((res3_1$mean[res3_1$method=="Importance Sampling"]-6)^2))
+MSE.GM > MSE.ISM
+(Var.GM <- mean((res3_1$mean[res3_1$method=="Sampling"]-mean(res3_1$mean[res3_1$method=="Sampling"]))^2)) ; (Var.ISM <- mean((res3_1$mean[res3_1$method=="Importance Sampling"]-mean(res3_1$mean[res3_1$method=="Importance Sampling"]))^2))
+Var.GM > Var.ISM
+(Bias2.GM <- (mean(res3_1$mean[res3_1$method=="Sampling"])-6)^2) ; (Bias2.ISM <- (mean(res3_1$mean[res3_1$method=="Importance Sampling"])-6)^2)
+Bias2.GM > Bias2.ISM
+```
+
+#### Case1-2)
+- ${\hat{g}}(x) \sim Gamma({\hat{\alpha}},{\hat{\beta}})\rightarrow {\hat{h}}(x) \sim Gamma({\hat{\alpha}}+0.9,{\hat{\beta}})$
+
+```{r}
+GM <- c()
+GV <- c()
+ISM <- c()
+ISV <- c()
+for (i in 1:1000) {
+  gr <- rgamma(1000,shape=2,scale=3) # 특정한 분포에서 난수 추출
+  f3 <- fitdist(gr,"gamma") # 특정한 분포는 잊어버리고 추출된 난수에 대하여 분포 g(x)를 추정 
+  GM[i] <- mean(gr)
+  GV[i] <- var(gr)
+  # 추정된 분포 g(x)에 대해 모수를 조절하여 적절한 대체분포 h(x)를 설정
+  v <- rgamma(1000,shape=f3$estimate[1]+0.9,scale=(1/f3$estimate[2]))
+  g <- dgamma(v,shape=f3$estimate[1],scale=1/f3$estimate[2])
+  h <- dgamma(v,shape=f3$estimate[1]+0.9,scale=(1/f3$estimate[2])) 
+  ISM[i] <- mean(v*g/h)
+  ISV[i] <- var(v*g/h)
+}
+res3_2 <- data.frame(mean=c(GM,ISM),variance=c(GV,ISV),method=c(rep("Sampling",1000),rep("Importance Sampling",1000)))
+```
+
+- MSE, Variance, Bias^2 에 대한 추정량 비교
+
+```{r}
+(MSE.GM <- mean((res3_2$mean[res3_2$method=="Sampling"]-6)^2)) ; (MSE.ISM <- mean((res3_2$mean[res3_2$method=="Importance Sampling"]-6)^2))
+MSE.GM > MSE.ISM
+(Var.GM <- mean((res3_2$mean[res3_2$method=="Sampling"]-mean(res3_2$mean[res3_2$method=="Sampling"]))^2)) ; (Var.ISM <- mean((res3_2$mean[res3_2$method=="Importance Sampling"]-mean(res3_2$mean[res3_2$method=="Importance Sampling"]))^2))
+Var.GM > Var.ISM
+(Bias2.GM <- (mean(res3_2$mean[res3_2$method=="Sampling"])-6)^2) ; (Bias2.ISM <- (mean(res3_2$mean[res3_2$method=="Importance Sampling"])-6)^2)
+Bias2.GM > Bias2.ISM
+```
+
+#### Case1-3)
+- ${\hat{g}}(x) \sim Gamma({\hat{\alpha}},{\hat{\beta}})\rightarrow {\hat{h}}(x) \sim Gamma({\hat{\alpha}}+1,{\hat{\beta}})$
+
+```{r}
+GM <- c()
+GV <- c()
+ISM <- c()
+ISV <- c()
+for (i in 1:1000) {
+  gr <- rgamma(1000,shape=2,scale=3) # 특정한 분포에서 난수 추출
+  f3 <- fitdist(gr,"gamma") # 특정한 분포는 잊어버리고 추출된 난수에 대하여 분포 g(x)를 추정 
+  GM[i] <- mean(gr)
+  GV[i] <- var(gr)
+  # 추정된 분포 g(x)에 대해 모수를 조절하여 적절한 대체분포 h(x)를 설정
+  v <- rgamma(1000,shape=f3$estimate[1]+1,scale=(1/f3$estimate[2]))
+  g <- dgamma(v,shape=f3$estimate[1],scale=1/f3$estimate[2])
+  h <- dgamma(v,shape=f3$estimate[1]+1,scale=(1/f3$estimate[2])) 
+  ISM[i] <- mean(v*g/h)
+  ISV[i] <- var(v*g/h)
+}
+res3_3 <- data.frame(mean=c(GM,ISM),variance=c(GV,ISV),method=c(rep("Sampling",1000),rep("Importance Sampling",1000)))
+```
+
+- MSE, Variance, Bias^2 에 대한 추정량 비교
+
+```{r}
+(MSE.GM <- mean((res3_3$mean[res3_3$method=="Sampling"]-6)^2)) ; (MSE.ISM <- mean((res3_3$mean[res3_3$method=="Importance Sampling"]-6)^2))
+MSE.GM > MSE.ISM
+(Var.GM <- mean((res3_3$mean[res3_3$method=="Sampling"]-mean(res3_3$mean[res3_3$method=="Sampling"]))^2)) ; (Var.ISM <- mean((res3_3$mean[res3_3$method=="Importance Sampling"]-mean(res3_3$mean[res3_3$method=="Importance Sampling"]))^2))
+Var.GM > Var.ISM
+(Bias2.GM <- (mean(res3_3$mean[res3_3$method=="Sampling"])-6)^2) ; (Bias2.ISM <- (mean(res3_3$mean[res3_3$method=="Importance Sampling"])-6)^2)
+Bias2.GM > Bias2.ISM
+```
+
+#### Case1-4)
+- ${\hat{g}}(x) \sim Gamma({\hat{\alpha}},{\hat{\beta}})\rightarrow {\hat{h}}(x) \sim Gamma({\hat{\alpha}}+1.1,{\hat{\beta}})$
+
+```{r}
+GM <- c()
+GV <- c()
+ISM <- c()
+ISV <- c()
+for (i in 1:1000) {
+  gr <- rgamma(1000,shape=2,scale=3) # 특정한 분포에서 난수 추출
+  f3 <- fitdist(gr,"gamma") # 특정한 분포는 잊어버리고 추출된 난수에 대하여 분포 g(x)를 추정 
+  GM[i] <- mean(gr)
+  GV[i] <- var(gr)
+  # 추정된 분포 g(x)에 대해 모수를 조절하여 적절한 대체분포 h(x)를 설정
+  v <- rgamma(1000,shape=f3$estimate[1]+1.1,scale=(1/f3$estimate[2]))
+  g <- dgamma(v,shape=f3$estimate[1],scale=1/f3$estimate[2])
+  h <- dgamma(v,shape=f3$estimate[1]+1.1,scale=(1/f3$estimate[2])) 
+  ISM[i] <- mean(v*g/h)
+  ISV[i] <- var(v*g/h)
+}
+res3_4 <- data.frame(mean=c(GM,ISM),variance=c(GV,ISV),method=c(rep("Sampling",1000),rep("Importance Sampling",1000)))
+```
+
+- MSE, Variance, Bias^2 에 대한 추정량 비교
+
+```{r}
+(MSE.GM <- mean((res3_4$mean[res3_4$method=="Sampling"]-6)^2)) ; (MSE.ISM <- mean((res3_4$mean[res3_4$method=="Importance Sampling"]-6)^2))
+MSE.GM > MSE.ISM
+(Var.GM <- mean((res3_4$mean[res3_4$method=="Sampling"]-mean(res3_4$mean[res3_4$method=="Sampling"]))^2)) ; (Var.ISM <- mean((res3_4$mean[res3_4$method=="Importance Sampling"]-mean(res3_4$mean[res3_4$method=="Importance Sampling"]))^2))
+Var.GM > Var.ISM
+(Bias2.GM <- (mean(res3_4$mean[res3_4$method=="Sampling"])-6)^2) ; (Bias2.ISM <- (mean(res3_4$mean[res3_4$method=="Importance Sampling"])-6)^2)
+Bias2.GM > Bias2.ISM
+```
+
+#### Case1-5)
+- ${\hat{g}}(x) \sim Gamma({\hat{\alpha}},{\hat{\beta}})\rightarrow {\hat{h}}(x) \sim Gamma({\hat{\alpha}}+1.2,{\hat{\beta}})$
+
+```{r}
+GM <- c()
+GV <- c()
+ISM <- c()
+ISV <- c()
+for (i in 1:1000) {
+  gr <- rgamma(1000,shape=2,scale=3) # 특정한 분포에서 난수 추출
+  f3 <- fitdist(gr,"gamma") # 특정한 분포는 잊어버리고 추출된 난수에 대하여 분포 g(x)를 추정 
+  GM[i] <- mean(gr)
+  GV[i] <- var(gr)
+  # 추정된 분포 g(x)에 대해 모수를 조절하여 적절한 대체분포 h(x)를 설정
+  v <- rgamma(1000,shape=f3$estimate[1]+1.2,scale=(1/f3$estimate[2]))
+  g <- dgamma(v,shape=f3$estimate[1],scale=1/f3$estimate[2])
+  h <- dgamma(v,shape=f3$estimate[1]+1.2,scale=(1/f3$estimate[2])) 
+  ISM[i] <- mean(v*g/h)
+  ISV[i] <- var(v*g/h)
+}
+res3_5 <- data.frame(mean=c(GM,ISM),variance=c(GV,ISV),method=c(rep("Sampling",1000),rep("Importance Sampling",1000)))
+```
+
+- MSE, Variance, Bias^2 에 대한 추정량 비교
+
+```{r}
+(MSE.GM <- mean((res3_5$mean[res3_5$method=="Sampling"]-6)^2)) ; (MSE.ISM <- mean((res3_5$mean[res3_5$method=="Importance Sampling"]-6)^2))
+MSE.GM > MSE.ISM
+(Var.GM <- mean((res3_5$mean[res3_5$method=="Sampling"]-mean(res3_5$mean[res3_5$method=="Sampling"]))^2)) ; (Var.ISM <- mean((res3_5$mean[res3_5$method=="Importance Sampling"]-mean(res3_5$mean[res3_5$method=="Importance Sampling"]))^2))
+Var.GM > Var.ISM
+(Bias2.GM <- (mean(res3_5$mean[res3_5$method=="Sampling"])-6)^2) ; (Bias2.ISM <- (mean(res3_5$mean[res3_5$method=="Importance Sampling"])-6)^2)
+Bias2.GM > Bias2.ISM
+```
+
+----------------------------------------------------------------------
+
+### Case2) Gamma(4,50) 에서 난수 추출 
+- Case1에 비해 분산이 더 큰 분포에서의 난수 추출을 통해 Importance Sampling 시 분산축소효과가 확실하게 일어나는지 확인  
+
+#### Case2-1)
+- ${\hat{g}}(x) \sim Gamma({\hat{\alpha}},{\hat{\beta}})\rightarrow {\hat{h}}(x) \sim Gamma({\hat{\alpha}}+0.8,{\hat{\beta}})$
+
+```{r}
+GM <- c()
+GV <- c()
+ISM <- c()
+ISV <- c()
+for (i in 1:1000) {
+  gr <- rgamma(1000,shape=4,scale=50) # 특정한 분포에서 난수 추출
+  f3 <- fitdist(gr,"gamma") # 특정한 분포는 잊어버리고 추출된 난수에 대하여 분포 g(x)를 추정 
+  GM[i] <- mean(gr)
+  GV[i] <- var(gr)
+  # 추정된 분포 g(x)에 대해 모수를 조절하여 적절한 대체분포 h(x)를 설정
+  v <- rgamma(1000,shape=f3$estimate[1]+0.8,scale=(1/f3$estimate[2]))
+  g <- dgamma(v,shape=f3$estimate[1],scale=1/f3$estimate[2])
+  h <- dgamma(v,shape=f3$estimate[1]+0.8,scale=(1/f3$estimate[2])) 
+  ISM[i] <- mean(v*g/h)
+  ISV[i] <- var(v*g/h)
+}
+res3_1 <- data.frame(mean=c(GM,ISM),variance=c(GV,ISV),method=c(rep("Sampling",1000),rep("Importance Sampling",1000)))
+```
+
+- MSE, Variance, Bias^2 에 대한 추정량 비교
+
+```{r}
+(MSE.GM <- mean((res3_1$mean[res3_1$method=="Sampling"]-200)^2)) ; (MSE.ISM <- mean((res3_1$mean[res3_1$method=="Importance Sampling"]-200)^2))
+MSE.GM > MSE.ISM
+(Var.GM <- mean((res3_1$mean[res3_1$method=="Sampling"]-mean(res3_1$mean[res3_1$method=="Sampling"]))^2)) ; (Var.ISM <- mean((res3_1$mean[res3_1$method=="Importance Sampling"]-mean(res3_1$mean[res3_1$method=="Importance Sampling"]))^2))
+Var.GM > Var.ISM
+(Bias2.GM <- (mean(res3_1$mean[res3_1$method=="Sampling"])-200)^2) ; (Bias2.ISM <- (mean(res3_1$mean[res3_1$method=="Importance Sampling"])-200)^2)
+Bias2.GM > Bias2.ISM
+```
+
+#### Case2-2)
+- ${\hat{g}}(x) \sim Gamma({\hat{\alpha}},{\hat{\beta}})\rightarrow {\hat{h}}(x) \sim Gamma({\hat{\alpha}}+0.9,{\hat{\beta}})$
+
+```{r}
+GM <- c()
+GV <- c()
+ISM <- c()
+ISV <- c()
+for (i in 1:1000) {
+  gr <- rgamma(1000,shape=4,scale=50) # 특정한 분포에서 난수 추출
+  f3 <- fitdist(gr,"gamma") # 특정한 분포는 잊어버리고 추출된 난수에 대하여 분포 g(x)를 추정 
+  GM[i] <- mean(gr)
+  GV[i] <- var(gr)
+  # 추정된 분포 g(x)에 대해 모수를 조절하여 적절한 대체분포 h(x)를 설정
+  v <- rgamma(1000,shape=f3$estimate[1]+0.9,scale=(1/f3$estimate[2]))
+  g <- dgamma(v,shape=f3$estimate[1],scale=1/f3$estimate[2])
+  h <- dgamma(v,shape=f3$estimate[1]+0.9,scale=(1/f3$estimate[2])) 
+  ISM[i] <- mean(v*g/h)
+  ISV[i] <- var(v*g/h)
+}
+res3_2 <- data.frame(mean=c(GM,ISM),variance=c(GV,ISV),method=c(rep("Sampling",1000),rep("Importance Sampling",1000)))
+```
+
+- MSE, Variance, Bias^2 에 대한 추정량 비교
+
+```{r}
+(MSE.GM <- mean((res3_2$mean[res3_2$method=="Sampling"]-200)^2)) ; (MSE.ISM <- mean((res3_2$mean[res3_2$method=="Importance Sampling"]-200)^2))
+MSE.GM > MSE.ISM
+(Var.GM <- mean((res3_2$mean[res3_2$method=="Sampling"]-mean(res3_2$mean[res3_2$method=="Sampling"]))^2)) ; (Var.ISM <- mean((res3_2$mean[res3_2$method=="Importance Sampling"]-mean(res3_2$mean[res3_2$method=="Importance Sampling"]))^2))
+Var.GM > Var.ISM
+(Bias2.GM <- (mean(res3_2$mean[res3_2$method=="Sampling"])-200)^2) ; (Bias2.ISM <- (mean(res3_2$mean[res3_2$method=="Importance Sampling"])-200)^2)
+Bias2.GM > Bias2.ISM
+```
+
+#### Case2-3)
+- ${\hat{g}}(x) \sim Gamma({\hat{\alpha}},{\hat{\beta}})\rightarrow {\hat{h}}(x) \sim Gamma({\hat{\alpha}}+1,{\hat{\beta}})$
+
+```{r}
+GM <- c()
+GV <- c()
+ISM <- c()
+ISV <- c()
+for (i in 1:1000) {
+  gr <- rgamma(1000,shape=4,scale=50) # 특정한 분포에서 난수 추출
+  f3 <- fitdist(gr,"gamma") # 특정한 분포는 잊어버리고 추출된 난수에 대하여 분포 g(x)를 추정 
+  GM[i] <- mean(gr)
+  GV[i] <- var(gr)
+  # 추정된 분포 g(x)에 대해 모수를 조절하여 적절한 대체분포 h(x)를 설정
+  v <- rgamma(1000,shape=f3$estimate[1]+1,scale=(1/f3$estimate[2]))
+  g <- dgamma(v,shape=f3$estimate[1],scale=1/f3$estimate[2])
+  h <- dgamma(v,shape=f3$estimate[1]+1,scale=(1/f3$estimate[2])) 
+  ISM[i] <- mean(v*g/h)
+  ISV[i] <- var(v*g/h)
+}
+res3_3 <- data.frame(mean=c(GM,ISM),variance=c(GV,ISV),method=c(rep("Sampling",1000),rep("Importance Sampling",1000)))
+```
+
+- MSE, Variance, Bias^2 에 대한 추정량 비교
+
+```{r}
+(MSE.GM <- mean((res3_3$mean[res3_3$method=="Sampling"]-200)^2)) ; (MSE.ISM <- mean((res3_3$mean[res3_3$method=="Importance Sampling"]-200)^2))
+MSE.GM > MSE.ISM
+(Var.GM <- mean((res3_3$mean[res3_3$method=="Sampling"]-mean(res3_3$mean[res3_3$method=="Sampling"]))^2)) ; (Var.ISM <- mean((res3_3$mean[res3_3$method=="Importance Sampling"]-mean(res3_3$mean[res3_3$method=="Importance Sampling"]))^2))
+Var.GM > Var.ISM
+(Bias2.GM <- (mean(res3_3$mean[res3_3$method=="Sampling"])-200)^2) ; (Bias2.ISM <- (mean(res3_3$mean[res3_3$method=="Importance Sampling"])-200)^2)
+Bias2.GM > Bias2.ISM
+```
+
+#### Case2-4)
+- ${\hat{g}}(x) \sim Gamma({\hat{\alpha}},{\hat{\beta}})\rightarrow {\hat{h}}(x) \sim Gamma({\hat{\alpha}}+1.1,{\hat{\beta}})$
+
+```{r}
+GM <- c()
+GV <- c()
+ISM <- c()
+ISV <- c()
+for (i in 1:1000) {
+  gr <- rgamma(1000,shape=4,scale=50) # 특정한 분포에서 난수 추출
+  f3 <- fitdist(gr,"gamma") # 특정한 분포는 잊어버리고 추출된 난수에 대하여 분포 g(x)를 추정 
+  GM[i] <- mean(gr)
+  GV[i] <- var(gr)
+  # 추정된 분포 g(x)에 대해 모수를 조절하여 적절한 대체분포 h(x)를 설정
+  v <- rgamma(1000,shape=f3$estimate[1]+1.1,scale=(1/f3$estimate[2]))
+  g <- dgamma(v,shape=f3$estimate[1],scale=1/f3$estimate[2])
+  h <- dgamma(v,shape=f3$estimate[1]+1.1,scale=(1/f3$estimate[2])) 
+  ISM[i] <- mean(v*g/h)
+  ISV[i] <- var(v*g/h)
+}
+res3_4 <- data.frame(mean=c(GM,ISM),variance=c(GV,ISV),method=c(rep("Sampling",1000),rep("Importance Sampling",1000)))
+```
+
+- MSE, Variance, Bias^2 에 대한 추정량 비교
+
+```{r}
+(MSE.GM <- mean((res3_4$mean[res3_4$method=="Sampling"]-200)^2)) ; (MSE.ISM <- mean((res3_4$mean[res3_4$method=="Importance Sampling"]-200)^2))
+MSE.GM > MSE.ISM
+(Var.GM <- mean((res3_4$mean[res3_4$method=="Sampling"]-mean(res3_4$mean[res3_4$method=="Sampling"]))^2)) ; (Var.ISM <- mean((res3_4$mean[res3_4$method=="Importance Sampling"]-mean(res3_4$mean[res3_4$method=="Importance Sampling"]))^2))
+Var.GM > Var.ISM
+(Bias2.GM <- (mean(res3_4$mean[res3_4$method=="Sampling"])-200)^2) ; (Bias2.ISM <- (mean(res3_4$mean[res3_4$method=="Importance Sampling"])-200)^2)
+Bias2.GM > Bias2.ISM
+```
+
+#### Case2-5)
+- ${\hat{g}}(x) \sim Gamma({\hat{\alpha}},{\hat{\beta}})\rightarrow {\hat{h}}(x) \sim Gamma({\hat{\alpha}}+1.2,{\hat{\beta}})$
+
+```{r}
+GM <- c()
+GV <- c()
+ISM <- c()
+ISV <- c()
+for (i in 1:1000) {
+  gr <- rgamma(1000,shape=4,scale=50) # 특정한 분포에서 난수 추출
+  f3 <- fitdist(gr,"gamma") # 특정한 분포는 잊어버리고 추출된 난수에 대하여 분포 g(x)를 추정 
+  GM[i] <- mean(gr)
+  GV[i] <- var(gr)
+  # 추정된 분포 g(x)에 대해 모수를 조절하여 적절한 대체분포 h(x)를 설정
+  v <- rgamma(1000,shape=f3$estimate[1]+1.2,scale=(1/f3$estimate[2]))
+  g <- dgamma(v,shape=f3$estimate[1],scale=1/f3$estimate[2])
+  h <- dgamma(v,shape=f3$estimate[1]+1.2,scale=(1/f3$estimate[2])) 
+  ISM[i] <- mean(v*g/h)
+  ISV[i] <- var(v*g/h)
+}
+res3_5 <- data.frame(mean=c(GM,ISM),variance=c(GV,ISV),method=c(rep("Sampling",1000),rep("Importance Sampling",1000)))
+```
+
+- MSE, Variance, Bias^2 에 대한 추정량 비교
+
+```{r}
+(MSE.GM <- mean((res3_5$mean[res3_5$method=="Sampling"]-200)^2)) ; (MSE.ISM <- mean((res3_5$mean[res3_5$method=="Importance Sampling"]-200)^2))
+MSE.GM > MSE.ISM
+(Var.GM <- mean((res3_5$mean[res3_5$method=="Sampling"]-mean(res3_5$mean[res3_5$method=="Sampling"]))^2)) ; (Var.ISM <- mean((res3_5$mean[res3_5$method=="Importance Sampling"]-mean(res3_5$mean[res3_5$method=="Importance Sampling"]))^2))
+Var.GM > Var.ISM
+(Bias2.GM <- (mean(res3_5$mean[res3_5$method=="Sampling"])-200)^2) ; (Bias2.ISM <- (mean(res3_5$mean[res3_5$method=="Importance Sampling"])-200)^2)
+Bias2.GM > Bias2.ISM
+```
