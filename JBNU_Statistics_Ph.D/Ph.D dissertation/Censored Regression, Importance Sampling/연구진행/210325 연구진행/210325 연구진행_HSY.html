@@ -373,7 +373,7 @@ summary {
 
 <h1 class="title toc-ignore">Importance Sampling</h1>
 <h4 class="author">Hwang Seong-Yun</h4>
-<h4 class="date">2021 03 29</h4>
+<h4 class="date">2021 03 25</h4>
 
 </div>
 
@@ -489,18 +489,18 @@ res3_1 &lt;- data.frame(mean=c(GM,ISM),variance=c(GV,ISV),method=c(rep(&quot;Sam
 <li>MSE, Variance, Bias^2 에 대한 추정량 비교</li>
 </ul>
 <pre class="r"><code>(MSE.GM &lt;- mean((res3_1$mean[res3_1$method==&quot;Sampling&quot;]-6)^2)) ; (MSE.ISM &lt;- mean((res3_1$mean[res3_1$method==&quot;Importance Sampling&quot;]-6)^2))</code></pre>
-<pre><code>## [1] 0.01819064</code></pre>
-<pre><code>## [1] 0.01870355</code></pre>
+<pre><code>## [1] 0.01908859</code></pre>
+<pre><code>## [1] 0.01994231</code></pre>
 <pre class="r"><code>MSE.GM &gt; MSE.ISM</code></pre>
 <pre><code>## [1] FALSE</code></pre>
 <pre class="r"><code>(Var.GM &lt;- mean((res3_1$mean[res3_1$method==&quot;Sampling&quot;]-mean(res3_1$mean[res3_1$method==&quot;Sampling&quot;]))^2)) ; (Var.ISM &lt;- mean((res3_1$mean[res3_1$method==&quot;Importance Sampling&quot;]-mean(res3_1$mean[res3_1$method==&quot;Importance Sampling&quot;]))^2))</code></pre>
-<pre><code>## [1] 0.01818807</code></pre>
-<pre><code>## [1] 0.01869868</code></pre>
+<pre><code>## [1] 0.0190571</code></pre>
+<pre><code>## [1] 0.01989695</code></pre>
 <pre class="r"><code>Var.GM &gt; Var.ISM</code></pre>
 <pre><code>## [1] FALSE</code></pre>
 <pre class="r"><code>(Bias2.GM &lt;- (mean(res3_1$mean[res3_1$method==&quot;Sampling&quot;])-6)^2) ; (Bias2.ISM &lt;- (mean(res3_1$mean[res3_1$method==&quot;Importance Sampling&quot;])-6)^2)</code></pre>
-<pre><code>## [1] 2.575047e-06</code></pre>
-<pre><code>## [1] 4.874647e-06</code></pre>
+<pre><code>## [1] 3.14834e-05</code></pre>
+<pre><code>## [1] 4.536061e-05</code></pre>
 <pre class="r"><code>Bias2.GM &gt; Bias2.ISM</code></pre>
 <pre><code>## [1] FALSE</code></pre>
 </div>
@@ -530,20 +530,20 @@ res3_2 &lt;- data.frame(mean=c(GM,ISM),variance=c(GV,ISV),method=c(rep(&quot;Sam
 <li>MSE, Variance, Bias^2 에 대한 추정량 비교</li>
 </ul>
 <pre class="r"><code>(MSE.GM &lt;- mean((res3_2$mean[res3_2$method==&quot;Sampling&quot;]-6)^2)) ; (MSE.ISM &lt;- mean((res3_2$mean[res3_2$method==&quot;Importance Sampling&quot;]-6)^2))</code></pre>
-<pre><code>## [1] 0.01896655</code></pre>
-<pre><code>## [1] 0.01902032</code></pre>
+<pre><code>## [1] 0.01938248</code></pre>
+<pre><code>## [1] 0.01956213</code></pre>
 <pre class="r"><code>MSE.GM &gt; MSE.ISM</code></pre>
 <pre><code>## [1] FALSE</code></pre>
 <pre class="r"><code>(Var.GM &lt;- mean((res3_2$mean[res3_2$method==&quot;Sampling&quot;]-mean(res3_2$mean[res3_2$method==&quot;Sampling&quot;]))^2)) ; (Var.ISM &lt;- mean((res3_2$mean[res3_2$method==&quot;Importance Sampling&quot;]-mean(res3_2$mean[res3_2$method==&quot;Importance Sampling&quot;]))^2))</code></pre>
-<pre><code>## [1] 0.01895992</code></pre>
-<pre><code>## [1] 0.0190135</code></pre>
+<pre><code>## [1] 0.01938191</code></pre>
+<pre><code>## [1] 0.01956175</code></pre>
 <pre class="r"><code>Var.GM &gt; Var.ISM</code></pre>
 <pre><code>## [1] FALSE</code></pre>
 <pre class="r"><code>(Bias2.GM &lt;- (mean(res3_2$mean[res3_2$method==&quot;Sampling&quot;])-6)^2) ; (Bias2.ISM &lt;- (mean(res3_2$mean[res3_2$method==&quot;Importance Sampling&quot;])-6)^2)</code></pre>
-<pre><code>## [1] 6.622958e-06</code></pre>
-<pre><code>## [1] 6.819337e-06</code></pre>
+<pre><code>## [1] 5.689126e-07</code></pre>
+<pre><code>## [1] 3.766527e-07</code></pre>
 <pre class="r"><code>Bias2.GM &gt; Bias2.ISM</code></pre>
-<pre><code>## [1] FALSE</code></pre>
+<pre><code>## [1] TRUE</code></pre>
 </div>
 <div id="case1-3" class="section level4">
 <h4>Case1-3)</h4>
@@ -571,18 +571,18 @@ res3_3 &lt;- data.frame(mean=c(GM,ISM),variance=c(GV,ISV),method=c(rep(&quot;Sam
 <li>MSE, Variance, Bias^2 에 대한 추정량 비교</li>
 </ul>
 <pre class="r"><code>(MSE.GM &lt;- mean((res3_3$mean[res3_3$method==&quot;Sampling&quot;]-6)^2)) ; (MSE.ISM &lt;- mean((res3_3$mean[res3_3$method==&quot;Importance Sampling&quot;]-6)^2))</code></pre>
-<pre><code>## [1] 0.01866308</code></pre>
-<pre><code>## [1] 0.01866409</code></pre>
+<pre><code>## [1] 0.01898027</code></pre>
+<pre><code>## [1] 0.01898108</code></pre>
 <pre class="r"><code>MSE.GM &gt; MSE.ISM</code></pre>
 <pre><code>## [1] FALSE</code></pre>
 <pre class="r"><code>(Var.GM &lt;- mean((res3_3$mean[res3_3$method==&quot;Sampling&quot;]-mean(res3_3$mean[res3_3$method==&quot;Sampling&quot;]))^2)) ; (Var.ISM &lt;- mean((res3_3$mean[res3_3$method==&quot;Importance Sampling&quot;]-mean(res3_3$mean[res3_3$method==&quot;Importance Sampling&quot;]))^2))</code></pre>
-<pre><code>## [1] 0.01865881</code></pre>
-<pre><code>## [1] 0.01865985</code></pre>
+<pre><code>## [1] 0.01898003</code></pre>
+<pre><code>## [1] 0.01898086</code></pre>
 <pre class="r"><code>Var.GM &gt; Var.ISM</code></pre>
 <pre><code>## [1] FALSE</code></pre>
 <pre class="r"><code>(Bias2.GM &lt;- (mean(res3_3$mean[res3_3$method==&quot;Sampling&quot;])-6)^2) ; (Bias2.ISM &lt;- (mean(res3_3$mean[res3_3$method==&quot;Importance Sampling&quot;])-6)^2)</code></pre>
-<pre><code>## [1] 4.262262e-06</code></pre>
-<pre><code>## [1] 4.243584e-06</code></pre>
+<pre><code>## [1] 2.439698e-07</code></pre>
+<pre><code>## [1] 2.198193e-07</code></pre>
 <pre class="r"><code>Bias2.GM &gt; Bias2.ISM</code></pre>
 <pre><code>## [1] TRUE</code></pre>
 </div>
@@ -612,20 +612,20 @@ res3_4 &lt;- data.frame(mean=c(GM,ISM),variance=c(GV,ISV),method=c(rep(&quot;Sam
 <li>MSE, Variance, Bias^2 에 대한 추정량 비교</li>
 </ul>
 <pre class="r"><code>(MSE.GM &lt;- mean((res3_4$mean[res3_4$method==&quot;Sampling&quot;]-6)^2)) ; (MSE.ISM &lt;- mean((res3_4$mean[res3_4$method==&quot;Importance Sampling&quot;]-6)^2))</code></pre>
-<pre><code>## [1] 0.01861206</code></pre>
-<pre><code>## [1] 0.01883399</code></pre>
+<pre><code>## [1] 0.01865216</code></pre>
+<pre><code>## [1] 0.01889952</code></pre>
 <pre class="r"><code>MSE.GM &gt; MSE.ISM</code></pre>
 <pre><code>## [1] FALSE</code></pre>
 <pre class="r"><code>(Var.GM &lt;- mean((res3_4$mean[res3_4$method==&quot;Sampling&quot;]-mean(res3_4$mean[res3_4$method==&quot;Sampling&quot;]))^2)) ; (Var.ISM &lt;- mean((res3_4$mean[res3_4$method==&quot;Importance Sampling&quot;]-mean(res3_4$mean[res3_4$method==&quot;Importance Sampling&quot;]))^2))</code></pre>
-<pre><code>## [1] 0.01861116</code></pre>
-<pre><code>## [1] 0.01883225</code></pre>
+<pre><code>## [1] 0.01864523</code></pre>
+<pre><code>## [1] 0.01889444</code></pre>
 <pre class="r"><code>Var.GM &gt; Var.ISM</code></pre>
 <pre><code>## [1] FALSE</code></pre>
 <pre class="r"><code>(Bias2.GM &lt;- (mean(res3_4$mean[res3_4$method==&quot;Sampling&quot;])-6)^2) ; (Bias2.ISM &lt;- (mean(res3_4$mean[res3_4$method==&quot;Importance Sampling&quot;])-6)^2)</code></pre>
-<pre><code>## [1] 8.990924e-07</code></pre>
-<pre><code>## [1] 1.741446e-06</code></pre>
+<pre><code>## [1] 6.923777e-06</code></pre>
+<pre><code>## [1] 5.083781e-06</code></pre>
 <pre class="r"><code>Bias2.GM &gt; Bias2.ISM</code></pre>
-<pre><code>## [1] FALSE</code></pre>
+<pre><code>## [1] TRUE</code></pre>
 </div>
 <div id="case1-5" class="section level4">
 <h4>Case1-5)</h4>
@@ -653,20 +653,20 @@ res3_5 &lt;- data.frame(mean=c(GM,ISM),variance=c(GV,ISV),method=c(rep(&quot;Sam
 <li>MSE, Variance, Bias^2 에 대한 추정량 비교</li>
 </ul>
 <pre class="r"><code>(MSE.GM &lt;- mean((res3_5$mean[res3_5$method==&quot;Sampling&quot;]-6)^2)) ; (MSE.ISM &lt;- mean((res3_5$mean[res3_5$method==&quot;Importance Sampling&quot;]-6)^2))</code></pre>
-<pre><code>## [1] 0.01769684</code></pre>
-<pre><code>## [1] 0.01874966</code></pre>
+<pre><code>## [1] 0.01821958</code></pre>
+<pre><code>## [1] 0.01862689</code></pre>
 <pre class="r"><code>MSE.GM &gt; MSE.ISM</code></pre>
 <pre><code>## [1] FALSE</code></pre>
 <pre class="r"><code>(Var.GM &lt;- mean((res3_5$mean[res3_5$method==&quot;Sampling&quot;]-mean(res3_5$mean[res3_5$method==&quot;Sampling&quot;]))^2)) ; (Var.ISM &lt;- mean((res3_5$mean[res3_5$method==&quot;Importance Sampling&quot;]-mean(res3_5$mean[res3_5$method==&quot;Importance Sampling&quot;]))^2))</code></pre>
-<pre><code>## [1] 0.01763134</code></pre>
-<pre><code>## [1] 0.01865903</code></pre>
+<pre><code>## [1] 0.01821388</code></pre>
+<pre><code>## [1] 0.01862205</code></pre>
 <pre class="r"><code>Var.GM &gt; Var.ISM</code></pre>
 <pre><code>## [1] FALSE</code></pre>
 <pre class="r"><code>(Bias2.GM &lt;- (mean(res3_5$mean[res3_5$method==&quot;Sampling&quot;])-6)^2) ; (Bias2.ISM &lt;- (mean(res3_5$mean[res3_5$method==&quot;Importance Sampling&quot;])-6)^2)</code></pre>
-<pre><code>## [1] 6.550541e-05</code></pre>
-<pre><code>## [1] 9.062719e-05</code></pre>
+<pre><code>## [1] 5.706736e-06</code></pre>
+<pre><code>## [1] 4.838823e-06</code></pre>
 <pre class="r"><code>Bias2.GM &gt; Bias2.ISM</code></pre>
-<pre><code>## [1] FALSE</code></pre>
+<pre><code>## [1] TRUE</code></pre>
 <hr />
 </div>
 </div>
@@ -701,20 +701,20 @@ res3_1 &lt;- data.frame(mean=c(GM,ISM),variance=c(GV,ISV),method=c(rep(&quot;Sam
 <li>MSE, Variance, Bias^2 에 대한 추정량 비교</li>
 </ul>
 <pre class="r"><code>(MSE.GM &lt;- mean((res3_1$mean[res3_1$method==&quot;Sampling&quot;]-400)^2)) ; (MSE.ISM &lt;- mean((res3_1$mean[res3_1$method==&quot;Importance Sampling&quot;]-400)^2))</code></pre>
-<pre><code>## [1] 41.21881</code></pre>
-<pre><code>## [1] 43.08735</code></pre>
+<pre><code>## [1] 38.16992</code></pre>
+<pre><code>## [1] 39.40279</code></pre>
 <pre class="r"><code>MSE.GM &gt; MSE.ISM</code></pre>
 <pre><code>## [1] FALSE</code></pre>
 <pre class="r"><code>(Var.GM &lt;- mean((res3_1$mean[res3_1$method==&quot;Sampling&quot;]-mean(res3_1$mean[res3_1$method==&quot;Sampling&quot;]))^2)) ; (Var.ISM &lt;- mean((res3_1$mean[res3_1$method==&quot;Importance Sampling&quot;]-mean(res3_1$mean[res3_1$method==&quot;Importance Sampling&quot;]))^2))</code></pre>
-<pre><code>## [1] 41.19398</code></pre>
-<pre><code>## [1] 43.04376</code></pre>
+<pre><code>## [1] 38.14864</code></pre>
+<pre><code>## [1] 39.38965</code></pre>
 <pre class="r"><code>Var.GM &gt; Var.ISM</code></pre>
 <pre><code>## [1] FALSE</code></pre>
 <pre class="r"><code>(Bias2.GM &lt;- (mean(res3_1$mean[res3_1$method==&quot;Sampling&quot;])-400)^2) ; (Bias2.ISM &lt;- (mean(res3_1$mean[res3_1$method==&quot;Importance Sampling&quot;])-400)^2)</code></pre>
-<pre><code>## [1] 0.02483574</code></pre>
-<pre><code>## [1] 0.04359106</code></pre>
+<pre><code>## [1] 0.02127879</code></pre>
+<pre><code>## [1] 0.01313571</code></pre>
 <pre class="r"><code>Bias2.GM &gt; Bias2.ISM</code></pre>
-<pre><code>## [1] FALSE</code></pre>
+<pre><code>## [1] TRUE</code></pre>
 </div>
 <div id="case2-2" class="section level4">
 <h4>Case2-2)</h4>
@@ -742,20 +742,20 @@ res3_2 &lt;- data.frame(mean=c(GM,ISM),variance=c(GV,ISV),method=c(rep(&quot;Sam
 <li>MSE, Variance, Bias^2 에 대한 추정량 비교</li>
 </ul>
 <pre class="r"><code>(MSE.GM &lt;- mean((res3_2$mean[res3_2$method==&quot;Sampling&quot;]-400)^2)) ; (MSE.ISM &lt;- mean((res3_2$mean[res3_2$method==&quot;Importance Sampling&quot;]-400)^2))</code></pre>
-<pre><code>## [1] 40.23542</code></pre>
-<pre><code>## [1] 40.31289</code></pre>
+<pre><code>## [1] 43.18251</code></pre>
+<pre><code>## [1] 43.62925</code></pre>
 <pre class="r"><code>MSE.GM &gt; MSE.ISM</code></pre>
 <pre><code>## [1] FALSE</code></pre>
 <pre class="r"><code>(Var.GM &lt;- mean((res3_2$mean[res3_2$method==&quot;Sampling&quot;]-mean(res3_2$mean[res3_2$method==&quot;Sampling&quot;]))^2)) ; (Var.ISM &lt;- mean((res3_2$mean[res3_2$method==&quot;Importance Sampling&quot;]-mean(res3_2$mean[res3_2$method==&quot;Importance Sampling&quot;]))^2))</code></pre>
-<pre><code>## [1] 40.20328</code></pre>
-<pre><code>## [1] 40.27763</code></pre>
+<pre><code>## [1] 43.17852</code></pre>
+<pre><code>## [1] 43.62604</code></pre>
 <pre class="r"><code>Var.GM &gt; Var.ISM</code></pre>
 <pre><code>## [1] FALSE</code></pre>
 <pre class="r"><code>(Bias2.GM &lt;- (mean(res3_2$mean[res3_2$method==&quot;Sampling&quot;])-400)^2) ; (Bias2.ISM &lt;- (mean(res3_2$mean[res3_2$method==&quot;Importance Sampling&quot;])-400)^2)</code></pre>
-<pre><code>## [1] 0.03213801</code></pre>
-<pre><code>## [1] 0.0352591</code></pre>
+<pre><code>## [1] 0.003985469</code></pre>
+<pre><code>## [1] 0.00320652</code></pre>
 <pre class="r"><code>Bias2.GM &gt; Bias2.ISM</code></pre>
-<pre><code>## [1] FALSE</code></pre>
+<pre><code>## [1] TRUE</code></pre>
 </div>
 <div id="case2-3" class="section level4">
 <h4>Case2-3)</h4>
@@ -783,18 +783,18 @@ res3_3 &lt;- data.frame(mean=c(GM,ISM),variance=c(GV,ISV),method=c(rep(&quot;Sam
 <li>MSE, Variance, Bias^2 에 대한 추정량 비교</li>
 </ul>
 <pre class="r"><code>(MSE.GM &lt;- mean((res3_3$mean[res3_3$method==&quot;Sampling&quot;]-400)^2)) ; (MSE.ISM &lt;- mean((res3_3$mean[res3_3$method==&quot;Importance Sampling&quot;]-400)^2))</code></pre>
-<pre><code>## [1] 39.77771</code></pre>
-<pre><code>## [1] 39.77234</code></pre>
+<pre><code>## [1] 39.6791</code></pre>
+<pre><code>## [1] 39.66722</code></pre>
 <pre class="r"><code>MSE.GM &gt; MSE.ISM</code></pre>
 <pre><code>## [1] TRUE</code></pre>
 <pre class="r"><code>(Var.GM &lt;- mean((res3_3$mean[res3_3$method==&quot;Sampling&quot;]-mean(res3_3$mean[res3_3$method==&quot;Sampling&quot;]))^2)) ; (Var.ISM &lt;- mean((res3_3$mean[res3_3$method==&quot;Importance Sampling&quot;]-mean(res3_3$mean[res3_3$method==&quot;Importance Sampling&quot;]))^2))</code></pre>
-<pre><code>## [1] 39.73707</code></pre>
-<pre><code>## [1] 39.73067</code></pre>
+<pre><code>## [1] 39.53796</code></pre>
+<pre><code>## [1] 39.5244</code></pre>
 <pre class="r"><code>Var.GM &gt; Var.ISM</code></pre>
 <pre><code>## [1] TRUE</code></pre>
 <pre class="r"><code>(Bias2.GM &lt;- (mean(res3_3$mean[res3_3$method==&quot;Sampling&quot;])-400)^2) ; (Bias2.ISM &lt;- (mean(res3_3$mean[res3_3$method==&quot;Importance Sampling&quot;])-400)^2)</code></pre>
-<pre><code>## [1] 0.04063868</code></pre>
-<pre><code>## [1] 0.0416676</code></pre>
+<pre><code>## [1] 0.1411442</code></pre>
+<pre><code>## [1] 0.142816</code></pre>
 <pre class="r"><code>Bias2.GM &gt; Bias2.ISM</code></pre>
 <pre><code>## [1] FALSE</code></pre>
 </div>
@@ -824,20 +824,20 @@ res3_4 &lt;- data.frame(mean=c(GM,ISM),variance=c(GV,ISV),method=c(rep(&quot;Sam
 <li>MSE, Variance, Bias^2 에 대한 추정량 비교</li>
 </ul>
 <pre class="r"><code>(MSE.GM &lt;- mean((res3_4$mean[res3_4$method==&quot;Sampling&quot;]-400)^2)) ; (MSE.ISM &lt;- mean((res3_4$mean[res3_4$method==&quot;Importance Sampling&quot;]-400)^2))</code></pre>
-<pre><code>## [1] 37.86457</code></pre>
-<pre><code>## [1] 38.14631</code></pre>
+<pre><code>## [1] 39.469</code></pre>
+<pre><code>## [1] 39.97946</code></pre>
 <pre class="r"><code>MSE.GM &gt; MSE.ISM</code></pre>
 <pre><code>## [1] FALSE</code></pre>
 <pre class="r"><code>(Var.GM &lt;- mean((res3_4$mean[res3_4$method==&quot;Sampling&quot;]-mean(res3_4$mean[res3_4$method==&quot;Sampling&quot;]))^2)) ; (Var.ISM &lt;- mean((res3_4$mean[res3_4$method==&quot;Importance Sampling&quot;]-mean(res3_4$mean[res3_4$method==&quot;Importance Sampling&quot;]))^2))</code></pre>
-<pre><code>## [1] 37.86403</code></pre>
-<pre><code>## [1] 38.14629</code></pre>
+<pre><code>## [1] 39.40448</code></pre>
+<pre><code>## [1] 39.91235</code></pre>
 <pre class="r"><code>Var.GM &gt; Var.ISM</code></pre>
 <pre><code>## [1] FALSE</code></pre>
 <pre class="r"><code>(Bias2.GM &lt;- (mean(res3_4$mean[res3_4$method==&quot;Sampling&quot;])-400)^2) ; (Bias2.ISM &lt;- (mean(res3_4$mean[res3_4$method==&quot;Importance Sampling&quot;])-400)^2)</code></pre>
-<pre><code>## [1] 0.0005337582</code></pre>
-<pre><code>## [1] 2.061589e-05</code></pre>
+<pre><code>## [1] 0.06451799</code></pre>
+<pre><code>## [1] 0.06710988</code></pre>
 <pre class="r"><code>Bias2.GM &gt; Bias2.ISM</code></pre>
-<pre><code>## [1] TRUE</code></pre>
+<pre><code>## [1] FALSE</code></pre>
 </div>
 <div id="case2-5" class="section level4">
 <h4>Case2-5)</h4>
@@ -865,18 +865,18 @@ res3_5 &lt;- data.frame(mean=c(GM,ISM),variance=c(GV,ISV),method=c(rep(&quot;Sam
 <li>MSE, Variance, Bias^2 에 대한 추정량 비교</li>
 </ul>
 <pre class="r"><code>(MSE.GM &lt;- mean((res3_5$mean[res3_5$method==&quot;Sampling&quot;]-400)^2)) ; (MSE.ISM &lt;- mean((res3_5$mean[res3_5$method==&quot;Importance Sampling&quot;]-400)^2))</code></pre>
-<pre><code>## [1] 41.65771</code></pre>
-<pre><code>## [1] 43.68164</code></pre>
+<pre><code>## [1] 39.78134</code></pre>
+<pre><code>## [1] 41.38036</code></pre>
 <pre class="r"><code>MSE.GM &gt; MSE.ISM</code></pre>
 <pre><code>## [1] FALSE</code></pre>
 <pre class="r"><code>(Var.GM &lt;- mean((res3_5$mean[res3_5$method==&quot;Sampling&quot;]-mean(res3_5$mean[res3_5$method==&quot;Sampling&quot;]))^2)) ; (Var.ISM &lt;- mean((res3_5$mean[res3_5$method==&quot;Importance Sampling&quot;]-mean(res3_5$mean[res3_5$method==&quot;Importance Sampling&quot;]))^2))</code></pre>
-<pre><code>## [1] 41.65567</code></pre>
-<pre><code>## [1] 43.68117</code></pre>
+<pre><code>## [1] 39.6998</code></pre>
+<pre><code>## [1] 41.30443</code></pre>
 <pre class="r"><code>Var.GM &gt; Var.ISM</code></pre>
 <pre><code>## [1] FALSE</code></pre>
 <pre class="r"><code>(Bias2.GM &lt;- (mean(res3_5$mean[res3_5$method==&quot;Sampling&quot;])-400)^2) ; (Bias2.ISM &lt;- (mean(res3_5$mean[res3_5$method==&quot;Importance Sampling&quot;])-400)^2)</code></pre>
-<pre><code>## [1] 0.002046253</code></pre>
-<pre><code>## [1] 0.0004697789</code></pre>
+<pre><code>## [1] 0.08153954</code></pre>
+<pre><code>## [1] 0.07592997</code></pre>
 <pre class="r"><code>Bias2.GM &gt; Bias2.ISM</code></pre>
 <pre><code>## [1] TRUE</code></pre>
 </div>
