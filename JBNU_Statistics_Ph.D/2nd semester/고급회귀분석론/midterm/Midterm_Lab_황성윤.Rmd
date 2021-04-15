@@ -1,0 +1,156 @@
+---
+title: "Mid-term (Lab)"
+author: "Hwang Seong-Yun"
+date: '2021 4 22 '
+output: html_document
+---
+
+#### Loading data
+
+```{r}
+library(MPV)
+data(table.b1)
+```
+
+---
+
+#### Problem 3.1
+
+- 3.1 Consider the National Football League data in Table B.1.
+
+- a) Fit a multiple linear regression model relating the number of games won to the team's passing yardage($x_2$), the percentage of rushing plays($x_7$), and the opponent's yards rushing($x_8$).
+- model expression : $y_i=\beta_{0}+\beta_{2}x_{2i}+\beta_{7}x_{7i}+\beta_{8}x_{8i}+\epsilon_{i}$, $i=1,2,\dots,28$ (Assume $\epsilon_{i} \sim i.i.d N(0,\sigma^2)$)
+```{r}
+model1 <- lm(y~x2+x7+x8, data=table.b1)
+summary(model1)
+```
+- $\hat{y}=-1.8083+0.0036x_{2}+0.1940x_{7}-0.0048x_{8}$ 
+
+- b) Construct the AVOVA table and test for significance of regression.
+$H_{0} : \beta_{2}=\beta_{7}=\beta_{8}=0$ vs $H_{1} : not H_{0}$
+```{r}
+model0 <- lm(y~1, data=table.b1) 
+anova(model1)
+anova(model0, model1)
+```
+- Refer to the above result, $F_{0}=29.437$ and $p-value=3.273*10^{-8} < \alpha=0.05$. So, we can reject $H_{0}$, that means this multiple linear regression model is statistically effective.
+
+- c) Calculate $t$ statistics for testing the hypotheses $H_0 : \beta_2=0$, $H_0 : \beta_7=0$, and $H_0 : \beta_8=0$. What conclusions can you draw about the roles the variables $x_2$, $x_7$, and $x_8$ play in the model?
+```{r}
+summary(model1)
+```
+- Refer to the above result, three hypotheses are rejected. That means Passing yards($x_2$), Percent rushing($x_7$) and Opponents' rushing yards($x_8$) have statistically effect to Games won in a 14 game season($y$).
+
+- d) Calculate $R^2$ and $R_{Adj}^2$ for this model.
+- $R^2=\frac{SSR}{SST}$, $R_{Adj}^2=1-\frac{SSE/(n-k-1)}{SST/(n-1)}$
+```{r}
+anova(model1)
+anova(model0, model1)
+SSR=76.193+139.501+41.400 ; SSE=69.870 ; SST=SSR+SSE ; n=28 ; k=3
+(R2 <- SSR/SST)
+(Adjusted_R2 <- 1-((SSE/(n-k-1))/(SST/(n-1))))
+```
+
+- e) Using the partial $F$ test, determine the contribution of $x_7$ to the model. How is this partial $F$ statistic related to the $t$ test for $\beta_7$ calculated in part c above?
+- $H_{0} : \beta_{7}=0$ vs $H_{1} : not H_{0}$
+```{r}
+model_full <- lm(y~x2+x7+x8, data=table.b1)
+model_reduced <- lm(y~x2+x8, data=table.b1)
+anova(model_reduced, model_full)
+```
+- Refer to the above result, $F_{0}=4.8324$ and $p-value=0.03782 < \alpha=0.05$. So, we can reject $H_{0}$, that means Percent rushing($x_7$) has statistically effect to Games won in a 14 game season($y$). This partial $F$ statistic is square of the $t$ test for $\beta_7$ calculated in part c above.
+
+---
+
+#### Problem 3.2
+
+- 3.2 Using the results of Problem 3.1, show numerically that the square of the simple correlation coefficient between the observed values $y_i$ and the fitted values $\hat{y_i}$ equals $R^2$.
+```{r}
+anova(model1)
+anova(model0, model1)
+SSR=76.193+139.501+41.400 ; SSE=69.870 ; SST=SSR+SSE ; n=28 ; k=3
+y_hat <- predict(model1, table.b1)
+y <- table.b1$y
+cor(y,y_hat)^2 # the square of the simple correlation coefficient between the observed values and the fitted values
+(R2 <- SSR/SST) # R squared
+```
+
+---
+
+#### Problem 3.3
+
+- 3.3 Refer to Problem 3.1.
+
+- a) Find a $95$% CI on $\beta_7$.
+```{r}
+model1 <- lm(y~x2+x7+x8, data=table.b1)
+summary(model1)
+c(0.193960-qt(0.975,28-3-1)*0.088233,0.193960+qt(0.975,28-3-1)*0.088233) # 95% CI on beta7
+2*qt(0.975,28-3-1)*0.088233 # length of CI
+```
+
+- b) Find a $95$% CI on the mean number of games won by a team when $x_2=2300$, $x_7=56.0$, and $x_8=2100$.
+```{r}
+x0 <- matrix(c(1,2300,56,2100),4,1)
+beta_hat <- matrix(model1$coefficients,4,1)
+X <- as.matrix(cbind(rep(1,28),table.b1[,c(3,8,9)]))
+anova(model1)
+anova(model0, model1)
+SSR=76.193+139.501+41.400 ; SSE=69.870 ; SST=SSR+SSE ; n=28 ; k=3
+MSE=SSE/(n-k-1)
+# CI on the mean number of games won by a team
+c(t(x0)%*%beta_hat-qt(0.975,n-k-1)*sqrt(MSE*(t(x0)%*%solve(t(X)%*%X)%*%x0)),t(x0)%*%beta_hat+qt(0.975,n-k-1)*sqrt(MSE*(t(x0)%*%solve(t(X)%*%X)%*%x0)))
+2*qt(0.975,n-k-1)*sqrt(MSE*(t(x0)%*%solve(t(X)%*%X)%*%x0)) # length of CI
+```
+
+---
+
+#### Problem 3.4
+
+- 3.4 Reconsider the National Football League data from Problem 3.1. Fit a model to these data using only $x_7$ and $x_8$ as the regressors.
+
+- a) Test for significance of regression.
+- model expression : $y_i=\beta_{0}+\beta_{7}x_{7i}+\beta_{8}x_{8i}+\epsilon_{i}$, $i=1,2,\dots,28$ (Assume $\epsilon_{i} \sim i.i.d N(0,\sigma^2)$)
+```{r}
+model2 <- lm(y~x7+x8, data=table.b1)
+summary(model2)
+```
+- $\hat{y}=-17.9443+0.0484x_{7}-0.0065x_{8}$ 
+- $H_{0} : \beta_{7}=\beta_{8}=0$ vs $H_{1} : not H_{0}$
+- Refer to the above result, $F_{0}=15.13$ and $p-value=4.935*10^{-5} < \alpha=0.05$. So, we can reject $H_{0}$, that means this multiple linear regression model is statistically effective.
+
+- b) Calculate $R^2$ and $R_{Adj}^2$. How do these quantities compare to the values computes for the model in Problem 3.1, which included an additional regressor $x_2$?
+```{r}
+model0 <- lm(y~1, data=table.b1) 
+anova(model2)
+anova(model0, model2)
+SSR=97.238+81.828 ; SSE=147.898 ; SST=SSR+SSE ; n=28 ; k=2
+(R2 <- SSR/SST)
+(Adjusted_R2 <- 1-((SSE/(n-k-1))/(SST/(n-1))))
+```
+- Compare to the model1(Problem 3.1), quantities of $R^2$ and $R_{Adj}^2$ for model2(Problem 3.4) are small. 
+
+- c) Calculate a $95$% CI on $\beta_7$. Also find a $95$% CI on the mean number of games won by a team when $x_7=56.0$, and $x_8=2100$. Compare the lengths of these CIs to the lengths of the corresponding CIs from Problem 3.3.
+```{r}
+model2 <- lm(y~x7+x8, data=table.b1)
+summary(model2)
+c(0.048371-qt(0.975,28-2-1)*0.119219,0.048371+qt(0.975,28-2-1)*0.119219) # 95% CI on beta7
+2*qt(0.975,28-2-1)*0.119219 # length of CI
+x0 <- matrix(c(1,56,2100),3,1)
+beta_hat <- matrix(model2$coefficients,3,1)
+X <- as.matrix(cbind(rep(1,28),table.b1[,c(8,9)]))
+anova(model2)
+anova(model0, model2)
+SSR=97.238+81.828 ; SSE=147.898 ; SST=SSR+SSE ; n=28 ; k=2
+MSE=SSE/(n-k-1)
+# CI on the mean number of games won by a team
+c(t(x0)%*%beta_hat-qt(0.975,n-k-1)*sqrt(MSE*(t(x0)%*%solve(t(X)%*%X)%*%x0)),t(x0)%*%beta_hat+qt(0.975,n-k-1)*sqrt(MSE*(t(x0)%*%solve(t(X)%*%X)%*%x0)))
+2*qt(0.975,n-k-1)*sqrt(MSE*(t(x0)%*%solve(t(X)%*%X)%*%x0)) # length of CI
+```
+- Compare to the model1(Problem 3.1), lengths of the corresponding CIs from model2(Problem 3.4) are long. 
+
+- d) What conclusions can you draw from this problem about the consequences of omitting an important regressor from a model?
+- When omit an important regressor from a model, it makes many problems such as statistical meaning of model, interpretation ability of model, confidence of model etc. 
+
+
+
