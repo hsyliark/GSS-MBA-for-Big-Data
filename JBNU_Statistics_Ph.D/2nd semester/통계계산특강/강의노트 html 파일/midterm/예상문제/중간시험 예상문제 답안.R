@@ -149,6 +149,10 @@ Gamma6 <- apply(Exp,2,sum)
 
 # Making Samples (Beta(2,6))
 Beta26 <- Gamma2/(Gamma2+Gamma6)
+par(mfrow=c(1,2))
+hist(Beta26,freq=F) 
+hist(rbeta(10000,shape1=2,shape2=6),freq=F) # compare histogram
+par(mfrow=c(1,1))
 
 # Acceptance/Rejection Sampling
 Y <- Beta26
