@@ -127,11 +127,11 @@ hist(Y)
 x <- 1:9999/10000
 f <- function(x) {
   alpha=2.7 ; beta=6.3
-  (gamma(alpha+beta)/(gamma(alpha)*gamma(beta)))*(x)^(alpha-1)*(1-x)^(beta-1)
+  gamma(alpha+beta)/gamma(alpha)/gamma(beta) * x^(alpha-1) * (1-x)^(beta-1)
 }
 g <- function(x) {
   alpha=2 ; beta=6
-  (gamma(alpha+beta)/(gamma(alpha)*gamma(beta)))*(x)^(alpha-1)*(1-x)^(beta-1)
+  gamma(alpha+beta)/gamma(alpha)/gamma(beta) * x^(alpha-1) * (1-x)^(beta-1)
 }
 M <- 1/min(g(x)/f(x))
 
