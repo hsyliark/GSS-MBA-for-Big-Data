@@ -51,8 +51,8 @@ U <- runif(n)
 Finv <- function(x) 1-log(x)/log(0.7)
 (bernoulli <- as.numeric(Finv(U)>0)) # answer
 par(mfrow=c(1,2))
-hist(bernoulli,freq=T) 
-hist(rbinom(100,1,0.3)) # compare histogram
+hist(bernoulli,freq=F) 
+hist(rbinom(100,1,0.3),freq=F) # compare histogram
 par(mfrow=c(1,1))
 
 # (b)
@@ -63,8 +63,8 @@ X <- as.numeric(Finv(U)>0)
 dim(X)<-c(10,100)
 (binomial <- apply(X,2,sum)) # answer
 par(mfrow=c(1,2))
-hist(binomial,freq=T) 
-hist(rbinom(100,10,0.3)) # compare histogram
+hist(binomial,freq=F) 
+hist(rbinom(100,10,0.3),freq=F) # compare histogram
 par(mfrow=c(1,1))
 
 # (c)
@@ -73,8 +73,8 @@ U <- runif(n)
 Finv <- function(x) -(1/2.5)*log(1-x)
 (exponential <- Finv(U)) # answer
 par(mfrow=c(1,2))
-hist(exponential,freq=T) 
-hist(rexp(100,2.5)) # compare histogram
+hist(exponential,freq=F) 
+hist(rexp(100,2.5),freq=F) # compare histogram
 par(mfrow=c(1,1))
 
 # (d)
@@ -84,8 +84,8 @@ Finv <- function(x) -log(1-x)
 dim(U)<-c(10,100)
 (Gam <- apply(U,2,sum)) # answer
 par(mfrow=c(1,2))
-hist(Gam,freq=T) 
-hist(rgamma(100,shape=10,scale=1)) # compare histogram
+hist(Gam,freq=F) 
+hist(rgamma(100,shape=10,scale=1),freq=F) # compare histogram
 par(mfrow=c(1,1))
 
 
@@ -159,8 +159,8 @@ for (i in 10000) {
 }
 X <- Y[index_] # answer
 par(mfrow=c(1,2))
-hist(X,freq=T) 
-hist(rbeta(length(X),shape1=2.7,shape2=6.3)) # compare histogram
+hist(X,freq=F) 
+hist(rbeta(length(X),shape1=2.7,shape2=6.3),freq=F) # compare histogram
 par(mfrow=c(1,1))
 
 
@@ -176,7 +176,7 @@ mean(index_) # answer
 n <- 10000
 X <- rnorm(n)
 index_ <- (X > 4.5)
-mean(index_)
+mean(index_) # answer
 
 # (c)
 # -> 표준정규분포에서 생성된 난수가 4.5를 넘는 경우는 
@@ -190,12 +190,23 @@ Y <- rexp(n)+4.5
 f <- function(x) exp(-(x^2)/2)/sqrt(2*pi)
 g <- function(x) exp(-(x-4.5))
 mean(f(Y)/g(Y)) # answer
+1-pnorm(4.5)
 
 
 ## Problem 7
 
 # (a)
-n <- 10000*2
+n <- 1000*2
 Exp <- rexp(n,rate=1)
-dim(Exp) <- c(2,10000)
+dim(Exp) <- c(2,1000)
+(Gamma2 <- apply(Exp,2,sum)) # answer
+par(mfrow=c(1,2))
+hist(Gamma2,freq=F)
+hist(rgamma(1000,shape=2,scale=1),freq=F)
+par(mfrow=c(1,1))
 
+# (b)
+Y <- Gamma2
+f <- function(x) x*(x-1)*(x-2)*(x-3)*exp(-x)
+g <- function(x) x*exp(-x)
+mean(f(Y)/g(Y)) # answer
