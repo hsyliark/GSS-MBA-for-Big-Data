@@ -158,8 +158,8 @@ par(mfrow=c(1,1))
 Y <- Beta26
 U <- runif(10000)
 index_ <- c()
-for (i in 10000) {
-  index_[i] <- U[i] < f(Y[i])/(M*g(Y[i]))
+for (i in 1:10000) {
+  index_[i] <- (U[i] < f(Y[i])/(M*g(Y[i])))
 }
 X <- Y[index_] # answer
 par(mfrow=c(1,2))
