@@ -48,22 +48,20 @@ mean(g(x)/f(x)) # answer
 # (a)
 n <- 100
 U <- runif(n)
-Finv <- function(x) 1-log(x)/log(0.7)
-(bernoulli <- as.numeric(Finv(U)>0)) # answer
+(Ber <- as.numeric(U<0.3)) # answer
 par(mfrow=c(1,2))
-hist(bernoulli,freq=F) 
+hist(Ber,freq=F) 
 hist(rbinom(100,1,0.3),freq=F) # compare histogram
 par(mfrow=c(1,1))
 
 # (b)
-n <- 1000
+n <- 100*10
 U <- runif(n)
-Finv <- function(x) 1-log(x)/log(0.7)
-X <- as.numeric(Finv(U)>0)
-dim(X)<-c(10,100)
-(binomial <- apply(X,2,sum)) # answer
+Ber <- as.numeric(U<0.3)
+dim(Ber)<-c(10,100)
+(Bin <- apply(Ber,2,sum)) # answer
 par(mfrow=c(1,2))
-hist(binomial,freq=F) 
+hist(Bin,freq=F) 
 hist(rbinom(100,10,0.3),freq=F) # compare histogram
 par(mfrow=c(1,1))
 
@@ -71,18 +69,19 @@ par(mfrow=c(1,1))
 n <- 100
 U <- runif(n)
 Finv <- function(x) -(1/2.5)*log(1-x)
-(exponential <- Finv(U)) # answer
+(Exp <- Finv(U)) # answer
 par(mfrow=c(1,2))
-hist(exponential,freq=F) 
+hist(Exp,freq=F) 
 hist(rexp(100,2.5),freq=F) # compare histogram
 par(mfrow=c(1,1))
 
 # (d)
-n <- 1000
+n <- 100*10
 U <- runif(n)
 Finv <- function(x) -log(1-x)
-dim(U)<-c(10,100)
-(Gam <- apply(U,2,sum)) # answer
+Exp <- Finv(U)
+dim(Exp)<-c(10,100)
+(Gam <- apply(Exp,2,sum)) # answer
 par(mfrow=c(1,2))
 hist(Gam,freq=F) 
 hist(rgamma(100,shape=10,scale=1),freq=F) # compare histogram
