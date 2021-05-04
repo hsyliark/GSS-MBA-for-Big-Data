@@ -1,0 +1,69 @@
+---
+title: "Cure model in Survival Analysis"
+author: "Hwang Seong-Yun"
+date: '2021 5 4 '
+output: html_document
+---
+
+## Mixture cure model
+
+### Loading packages
+- Fit semiparametric PH mixture cure model or AFT mixture cure model by the EM algorithm
+
+```{r}
+library(smcure)
+```
+
+### Mixture cure model
+- $S_{pop}(t|x,z)=1-p(x)+p(x)S_{u}(t|z)$  
+- $S_{pop}(t|x,z)=P(T>t|X=x,Z=z)$ : The survival function 
+- $p(x)=P(B=1|X=x)$ : The probability of being susceptible (often called the incidence of the model) 
+- $S_{u}(t|z)=P(T>t|Z=z,B=1)$ : The (proper) conditional survival function of the susceptibles (often called the latency of the model)
+- $B=I(T<\infty)$ : The latent binary variable indicating whether someone is cured or not 
+
+### Fit PH(Proportional Hazard) mixture cure model
+
+#### Eastern Cooperative Oncology Group (ECOG) data
+- The melanoma data from the Eastern Cooperative Oncology Group (ECOG) phase III clinical trial e1684 which is used for modeling semicure PH mixture cure model (Kirkwood, et al., 1996)
+- TRT : 0=control group, 1=IFN treatment group 
+- FAILTIME : observed relapse-free time
+- FAILCENS : censoring indicator, 1=event of interest happens, and 0=censoring
+- AGE : continuous variable, which is centered to the mean
+- SEX : 0 for male, 1 for female
+
+```{r}
+data(e1684)
+```
+
+#### Fit logistic/Cox PH mixture cure model
+- $p(x)=[exp(\gamma^{T}x)]/[1+exp(\gamma^{T}x)]$
+- $S_{u}(t|z)=S_{0}(t)^{exp(\beta^{T}z)}$
+
+```{r}
+# fit logistic/Cox PH mixture cure model
+pd <- smcure(Surv(FAILTIME,FAILCENS)~TRT+SEX+AGE,cureform=~TRT+SEX+AGE,data=e1684,model="ph",link="logit",Var=FALSE)
+printsmcure(pd,Var=FALSE)
+```
+
+```{r}
+# plot predicted survival curves for male with median centered age by treatment groups
+predm <- predictsmcure(pd,newX=cbind(c(1,0),c(0,0),c(0.579,0.579)),
+     newZ=cbind(c(1,0),c(0,0),c(0.579,0.579)),model="ph")
+plotpredictsmcure(predm,model="ph")
+```
+
+#### Fit logistic/semiparametric AFT models
+- $log(T)=\beta^{T}Z+\epsilon$
+
+```{r}
+# fit AFT mixture cure model
+bmtfit <- smcure(formula=Surv(Time,Status)~TRT,cureform=~TRT,data=bmt,model="aft",Var=FALSE)
+printsmcure(bmtfit,Var=FALSE)
+```
+
+```{r}
+# plot predicted Survival curves by treatment groups
+predbmt=predictsmcure(bmtfit,newX=c(0,1),newZ=c(0,1),model="aft")
+plotpredictsmcure(predbmt,model="aft")
+```
+
