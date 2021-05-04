@@ -42,6 +42,7 @@ data(e1684)
 ```{r}
 # fit logistic/Cox PH mixture cure model
 pd <- smcure(Surv(FAILTIME,FAILCENS)~TRT+SEX+AGE,cureform=~TRT+SEX+AGE,data=e1684,model="ph",link="logit",Var=FALSE)
+pd
 printsmcure(pd,Var=FALSE)
 ```
 
@@ -50,6 +51,16 @@ printsmcure(pd,Var=FALSE)
 predm <- predictsmcure(pd,newX=cbind(c(1,0),c(0,0),c(0.579,0.579)),
      newZ=cbind(c(1,0),c(0,0),c(0.579,0.579)),model="ph")
 plotpredictsmcure(predm,model="ph")
+```
+
+#### Bone marrow transplant study data
+- Bone marrow transplant study for the refractory acute lymphoblastic leukemia patients which is widely used in the AFTMC model (Kersey, et al., 1987)
+- Time : time to death
+- Status : censoring indicator, 1=event of interest happens, and 0=censoring
+- TRT : 1 for autologous treatment group; 0 for allogeneic treatment group
+
+```{r}
+data(bmt)
 ```
 
 #### Fit logistic/semiparametric AFT models
