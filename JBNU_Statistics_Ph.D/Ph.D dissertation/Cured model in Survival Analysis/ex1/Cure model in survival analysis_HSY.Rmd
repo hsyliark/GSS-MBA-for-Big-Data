@@ -15,7 +15,7 @@ library(smcure)
 ```
 
 ### Mixture cure model
-- $S_{pop}(t|x,z)=1-p(x)+p(x)S_{u}(t|z)$  
+- $S_{pop}(t|x,z)=p(x)+[1-p(x)]S_{u}(t|z)$  
 - $S_{pop}(t|x,z)=P(T>t|X=x,Z=z)$ : The survival function 
 - $p(x)=P(B=1|X=x)$ : The probability of being susceptible (often called the incidence of the model) 
 - $S_{u}(t|z)=P(T>t|Z=z,B=1)$ : The (proper) conditional survival function of the susceptibles (often called the latency of the model)
@@ -46,10 +46,13 @@ pd
 printsmcure(pd,Var=FALSE)
 ```
 
+- Predicted population survival function can be calculated by the following equation
+- ${\hat{S}}_{pop}(t|x,z)={\hat{p}}(x)+[1-{\hat{p}}(x)]{\hat{S}} _{u}(t|z)$
+
 ```{r}
 # plot predicted survival curves for male with median centered age by treatment groups
-predm <- predictsmcure(pd,newX=cbind(c(1,0),c(0,0),c(0.579,0.579)),
-     newZ=cbind(c(1,0),c(0,0),c(0.579,0.579)),model="ph")
+predm <- predictsmcure(pd,newX=cbind(c(1,0,1),c(0,0,1),c(0.579,0.613,0.786)),newZ=cbind(c(1,0,1),c(0,0,1),c(0.579,0.613,0.786)),model="ph")
+predm
 plotpredictsmcure(predm,model="ph")
 ```
 
@@ -76,5 +79,15 @@ printsmcure(bmtfit,Var=FALSE)
 # plot predicted Survival curves by treatment groups
 predbmt=predictsmcure(bmtfit,newX=c(0,1),newZ=c(0,1),model="aft")
 plotpredictsmcure(predbmt,model="aft")
+```
+
+
+## Promotion time cure model
+
+### Loading packages
+- Fits Semiparametric Promotion Time Cure Models, taking into account (using a corrected score approach or the SIMEX algorithm) or not the measurement error in the covariates, using a backfitting approach to maximize the likelihood. 
+
+```{r}
+library(miCoPTCM)
 ```
 
