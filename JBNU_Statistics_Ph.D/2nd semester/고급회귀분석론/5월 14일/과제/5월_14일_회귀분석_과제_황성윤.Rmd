@@ -1,0 +1,57 @@
+---
+title: "Homework(5/14)"
+author: "Hwang Seong-Yun"
+date: '2021 5 14 '
+output: html_document
+---
+
+## Delivery time data에 대하여
+
+```{r}
+data(delivery, package="robustbase")
+delivery
+```
+
+### (1) residual, standardized residual, studentized residual, press residual을 각각 계산하여라.
+
+```{r}
+# Fit multiple linear regression model
+mod1 <- lm(delTime~.,data=delivery)
+summary(mod1)
+# Calculate 4 types of residuals
+PRESS <- function(linear.model) {
+    pr <- residuals(linear.model)/(1-lm.influence(linear.model)$hat)
+    return(pr) }
+Resid <- data.frame(residual=resid(mod1), stardardized=rstandard(mod1),studentized=rstudent(mod1),press=PRESS(mod1))
+Resid
+```
+
+### (2) PRESS 통계량을 산출하여라. 예측변수를 n.prod, distance 각각 1개씩으로 했을 때와 두 예측변수를 모두 사용하였을 때 어떤 모형이 더 우수한지를 판단하여라.
+
+```{r}
+# independent variables : n.prod, distance
+(press1 <- sum(PRESS(mod1)^2))
+# independent variable : n.prod
+mod2 <- lm(delTime~n.prod,data=delivery)
+(press2 <- sum(PRESS(mod2)^2))
+# independent variable : distance 
+mod3 <- lm(delTime~distance,data=delivery)
+(press3 <- sum(PRESS(mod3)^2))
+```
+
+- PRESS 통계량을 산출하여 그 값이 작은 모형을 더 우수하다고 판단할 수 있다. 따라서 위의 결과를 통해 두 예측변수를 모두 사용한 모형이 가장 우수하다고 판단할 수 있다.
+
+### (3),(4) 잔차도를 통하여 (2)에서 우수한 것으로 판단된 모형의 선형모형 가정을 검증하여라. 가정이 잘 만족되는가? 만족되지 않는다면 어떤 식으로 해결할지 구체적으로 기술하여 보아라.
+
+```{r}
+par(mfrow=c(2,2))
+plot(mod1)
+par(mfrow=c(1,1))
+```
+
+- 4가지의 plot을 통해 다중선형회귀모형의 가정인 정규성, 등분산성, 독립성, 그리고 선형성을 다음과 같이 점검할 수 있다.
+- 정규성 : Normal Q-Q plot이 이론적 분위수와 관련된 직선에 근접하지 않고 있으므로 위배되었다고 판단됨. 자료를 변환하거나 정규분포 이외의 다른 분포를 가정해볼 수 있음. plot을 보면 양쪽 끝에서 잔차의 절대값이 커지는 경향을 보이므로 t분포나 Cauchy분포 등을 생각해볼 수 있음.
+- 등분산성, 독립성, 선형성 : Residuals vs Fitted plot을 보면 잔차의 분포가 선형이 아니 다른 패턴을 보이고 있으며 고른 분포를 나타내고 있지도 않아보이기 때문에 위배되었다고 판단됨. 변수변환이나 비선형모형 가정, 일반화회귀모형 가정 등의 방법을 적용하는 것을 생각해볼 수 있음. 필자가 생각했을 때 가장 간단하게 직관적으로 생각해볼 수 있는 방법은 분산이 팽창하는 것을 보완하기 위한 log 변환, 또는 잔차 plot을 통해 잔차가 2차식의 형태를 보이는 것으로 판단하여 실시하는 예측변수들을 제곱한 2차식 변환 등이 있음.
+- 추가적으로 Residuals vs Leverage plot을 통해 9번째 관측치가 이상치(outlier)인 것으로 판단됨. 따라서 이 관측치에 대한 삭제 여부를 확인해야할 필요성이 있음. 단, 이 관측치가 중요한 정보를 담고 있다고 한다면 삭제하는 것은 피해야 한다고 보여짐.  
+
+
