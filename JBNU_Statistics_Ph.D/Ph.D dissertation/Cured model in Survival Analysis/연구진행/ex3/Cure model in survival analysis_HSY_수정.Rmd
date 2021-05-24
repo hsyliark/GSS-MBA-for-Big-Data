@@ -1,7 +1,7 @@
 ---
 title: "Cure model in Survival Analysis"
 author: "Hwang Seong-Yun"
-date: '2021 5 17 '
+date: '2021 5 24 '
 output: html_document
 ---
 
@@ -146,6 +146,7 @@ Dat <- data.frame(Tobs,d,V,Xc)
 fm <- formula(Surv(Tobs,d)~V+Xc)
 resMY <- PTCMestimBF(fm,Dat,varCov=varCov,init=rnorm(3))
 summary(resMY)
+str(resMY)
 ```
 
 ```{r}
@@ -162,5 +163,6 @@ plot(t,1-resMY[["estimCDF"]],type="l",main="Survival Function of Promotion Time 
 fm <- formula(Surv(Tobs,d)~V+Xc)
 resSimex <- PTCMestimSIMEX(fm,Dat,errorDistEstim="normal",varCov=varCov,nBack=10000,eps=1e-8,Nu=c(0,0.5,1,1.5,2),B=50,init=rnorm(3),orderExtrap=1:3,multMaxTime=2)
 summary(resSimex)
+str(resSimex)
 ```
 
