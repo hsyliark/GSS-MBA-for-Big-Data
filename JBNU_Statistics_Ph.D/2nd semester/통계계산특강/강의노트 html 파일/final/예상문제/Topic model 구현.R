@@ -16,15 +16,15 @@ word <- c('손흥민','골','골','박지성','패스',
 doc <- c(rep(1,doclen),rep(2,doclen),rep(3,doclen),
          rep(4,doclen),rep(5,doclen),rep(6,doclen),
          rep(7,doclen),rep(8,doclen),rep(9,doclen))
-topic <- c(2,1,1,3,2,
+topic <- c(2,1,2,3,2,
            1,2,3,2,2,
            1,2,3,2,2,
            1,2,1,3,2,
-           3,2,3,2,2,
+           3,2,3,2,1,
            1,2,2,2,3,
            3,2,3,1,2,
            3,2,1,3,2,
-           3,1,1,3,2)
+           1,1,1,3,2)
 topicdata <- tibble(word=word,doc=doc,topic=topic)
 topicdata
 
@@ -55,14 +55,19 @@ D <- max(topicdata$doc) # 다큐먼트의 수
 doclen <- dim(filter(topicdata,doc==D))[1] # 다큐먼트의 길이
 K <- 3 # 토픽의 수 
 W <- length(unique(topicdata$word))
-for(t in 1:30){
+for(t in 1:100){
   for(d in 1:D){
     for(w in 1:doclen){
       i <- (d-1)*doclen+w 
-      topicdata[i,]$topic <- which(topicprob(topicdata[-i,],d,w)==max(topicprob(topicdata[-i,],d,w)))
+      prob_res <- cumsum(c(0,topicprob(topicdata[-i,],d,w)))
+      topic_res <- c()
+      U <- runif(1)
+      for(j in 1:K){
+        topic_res[j] <- j*(U>=prob_res[j] & U<prob_res[j+1])
+      }
+      topicdata[i,]$topic <- sum(topic_res)
     }
   }
 }
 topicdata
 
-  
