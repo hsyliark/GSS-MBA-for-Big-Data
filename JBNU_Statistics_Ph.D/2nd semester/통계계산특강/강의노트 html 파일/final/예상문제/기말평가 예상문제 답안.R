@@ -37,7 +37,7 @@ for(m in 1:D){
 doclen <- c(0,doclen)
 
 # method 1
-for(t in 1:100) {
+for(t in 1:200) {
   for(d in 1:D) {
     len <- dim(filter(topicdata,doc==d))[1] 
     for(w in 1:len) {
