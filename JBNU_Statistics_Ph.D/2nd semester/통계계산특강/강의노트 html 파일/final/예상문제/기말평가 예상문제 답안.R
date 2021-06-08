@@ -16,7 +16,7 @@ word_topic  <-  function(topicdata,w,k,d,alpha=0.1) {
   word_ = filter(topicdata,doc==d)$word[w]
   count_ = dim(filter(topicdata,topic==k,word==word_))[1] + alpha
   total_ = dim(filter(topicdata,topic==k))[1] + alpha * W  # W=length(unique(data$word))
-  count_ / total_ 
+  count_ / total_  
 }
 
 topicprob <- function(topicdata,d,w) {
@@ -37,7 +37,7 @@ for(m in 1:D){
 doclen <- c(0,doclen)
 
 # method 1
-for(t in 1:200) {
+for(t in 1:400) {
   for(d in 1:D) {
     len <- dim(filter(topicdata,doc==d))[1] 
     for(w in 1:len) {
@@ -64,6 +64,25 @@ for(t in 1:100) {
       topic_res <- c()
       for(j in 1:K) {
         topic_res[j] <- j*(prob_res[j]==max(prob_res))
+      }
+      topicdata[i,]$topic <- sum(topic_res)
+    }
+  }
+}
+topicdata
+
+# method 3
+for(t in 1:500) {
+  i <- 0
+  for(d in 1:D) {
+    len <- dim(filter(topicdata,doc==d))[1] 
+    for(w in 1:len) {
+      i <- i+1
+      prob_res <- cumsum(c(0,topicprob(topicdata[-i,],d,w)))
+      topic_res <- c()
+      U <- runif(1)
+      for(j in 1:K) {
+        topic_res[j] <- j*(U>=prob_res[j] & U<prob_res[j+1])
       }
       topicdata[i,]$topic <- sum(topic_res)
     }
