@@ -1,0 +1,78 @@
+---
+title: "Final"
+author: "Hwang Seong-Yun"
+date: '2021 6 18 '
+output: html_document
+---
+
+### Loading packages
+
+```{r}
+library(MPV)
+```
+
+### 4.16) Consider the clathrate formation data in Table B.8.
+
+```{r}
+data(table.b8)
+force(table.b8)
+```
+
+#### a. Construct a normality plot of the residuals from the full model. Does there seem to be any problem with the normality assumption?
+#### b. Construct and interpret a plot of the residuals versus the predicted response.
+
+```{r}
+full_model1 <- lm(y~x1+x2,data=table.b8)
+summary(full_model1)
+par(mfrow=c(2,2))
+plot(full_model1)
+par(mfrow=c(1,1))
+```
+
+- full model에 대한 검증 plot을 그려본 결과, Normal Q-Q plot에서 정규성이 의심되는 특징(이론적 분위수를 나타내는 직선에서 떨어져 있는 점 존재)을 보이고 있고, 잔차그림을 통해서 이상치(outlier)도 존재하고 있는 것으로 판단된다.
+- 또한 Residuals versus Fitted values plot을 살펴봤을 때 붉은색의 선이 평평하지 않고 약간 증가하고 있는 경향이 있는 것으로 보여지고 있기 때문에 독립성의 가정을 의심해볼 수 있겠다. 이 외에 등분산성의 경우는 plot의 퍼짐 정도가 그래도 고른 편이기 때문에 가정을 크게 위배하지는 않는다고 여겨진다. 
+
+
+### 5.10) Consider the pressure drop data in Table B.9.
+
+```{r}
+data(table.b9)
+force(table.b9)
+```
+
+#### a. Perform a thorough residual analysis of these data.
+
+```{r}
+full_model2 <- lm(y~x1+x2+x3+x4,data=table.b9)
+summary(full_model2)
+library(MASS)
+fit.step <- stepAIC(full_model2,direction="both",trace=TRUE)
+summary(fit.step)
+par(mfrow=c(2,2))
+plot(fit.step)
+par(mfrow=c(1,1))
+par(mfrow=c(2,2))
+plot(table.b9$x1,table.b9$y)
+plot(table.b9$x2,table.b9$y)
+plot(table.b9$x3,table.b9$y)
+plot(table.b9$x4,table.b9$y)
+par(mfrow=c(1,1))
+```
+
+- full model에 대하여 AIC 기준을 통해 변수를 선택한 모형인 fit.step에 대한 잔차 plot을 통해 잔차의 분포가 고르지 않고 붉은색 선이 곡선모양을 나타내며 물결치고 있는 것으로 보아 등분산성 및 독립성의 가정이 의심된다. 이에 따라 Boxcox transformation을 적용해보도록 한다.
+- 그리고 반응변수 y와 4개의 설명변수에 대한 plot을 통해 변수 x1,x2,x3에 대해서는 log 변환을, 변수 x4에 대해서는 square root 변환을 적용하여 분산을 좀 더 안정화시킬 수 있을 것이라 보여진다.
+
+#### b. Identify the most appropriate transformation for these data. Fit the transformation model and repeat the residual analysis.
+
+```{r}
+library(EnvStats)
+(l1 <- boxcox(fit.step,optimize=T))
+table.b9$y_trans <- (table.b9$y^l1$lambda-1)/l1$lambda
+fit.boxcox <- lm(y_trans~log(x1)+log(x2)+log(x3)+sqrt(x4),data=table.b9)
+summary(fit.boxcox)
+par(mfrow=c(2,2))
+plot(fit.boxcox)
+par(mfrow=c(1,1))
+```
+
+- 변환을 통해 모형의 안정성이 어느정도 확보된 것으로 보인다. 하지만, 이상치가 여전히 존재하는 것을 확인할 수 있고, 이에 대해서는 해당변수들에 대한 사전지식을 통해 또다른 해결점을 찾아야할 것으로 보여진다.
