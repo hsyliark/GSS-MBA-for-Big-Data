@@ -1,0 +1,23 @@
+Data, Model and Loss function
+Tree and Random forests
+Survival Tree (Random Forests)
+XGBoosting : Need Likelihood
+Survival analysis : estimate hazard function
+
+Tree
+Sequentially selesting variable and splitting to minimize the criteria.
+Applicable in high-dimensional features.
+Most critical point is the rule of splitting.
+Pruning (deleting nodes) to avoid the over-fitting.
+Non-parametric prediction
+
+Random forests
+Making many trees (bootstrap sampling and subset selection of feature dimensions)
+As independent as possible
+Final prediction is a voting.
+Survival Tree : criteria rule
+Constraints : mtry(size of random subset in splitting)-trying subset size of feature, nodesize(number of nodes), splitrules (integration of Nelson-Aalen statistic?) for censored data
+OOB : out-of-bag
+
+XGBoosting
+Basic concept is to use the Taylor series expansions and gradient boosting.
