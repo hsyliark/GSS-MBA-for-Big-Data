@@ -105,6 +105,8 @@ LTRCIT.fit <- LTRCIT(Surv(tstart, tstop, death) ~ age + transplant, data = sdata
 
 ## results
 Cox.fit
+prp(LTRCART.fit, roundint=FALSE)
+plot(LTRCIT.fit)
 
 library(interval)
 
