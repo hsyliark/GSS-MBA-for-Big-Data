@@ -124,9 +124,9 @@ my.ridge.regression <- function(y, X, lambda) {
   
   y <- as.matrix(y) ; X <-as.matrix(X)
   
-  beta.hat <- solve(t(X)%*%X + lambda*diag(x=1, nrow=length(y), ncol=length(y)))%*%t(X)%*%y
+  beta.hat <- solve(t(X)%*%X + lambda*diag(x=1, nrow=ncol(X), ncol=ncol(X)))%*%t(X)%*%y
   
-  y.hat <- K%*%beta.hat
+  y.hat <- X%*%beta.hat
   
   return(list(beta.hat=beta.hat, y.hat=y.hat))
   
@@ -309,7 +309,7 @@ cv.ridge <- function(y.train, X.train, k, grid.l) {
       
       test.index <- cv.index[(1:n)%/%k==i]
       
-      X.sim.train <- X.sim[-test.index] ; X.sim.test <- X.sim[-test.index]
+      X.sim.train <- X.sim[-test.index,] ; X.sim.test <- X.sim[test.index,]
       y.sim.train <- y.sim[-test.index,] ; y.sim.test <- y.sim[test.index,]
       test.size <- length(test.index)
       
@@ -434,11 +434,12 @@ fit.ftn1 <- function(dat.sim) {
     
     # Making simulation data
     
-    train.index <- sample(1:nrow(dat.sim), round(nrow(dat.sim)/2), replace=F)
+    set.seed(i)
+    train.index <- sample(1:nrow(dat.sim), round(nrow(dat.sim)*7/10), replace=F)
     
     train.sim <- dat.sim[train.index,]
     test.sim <- dat.sim[-train.index,]
-    n.train <- round(nrow(dat.sim)/2) 
+    n.train <- round(nrow(dat.sim)*7/10) 
     
     
     # 5-fold crossvalidation
@@ -482,11 +483,12 @@ fit.ftn1 <- function(dat.sim) {
     
     # Making simulation data
     
-    train.index <- sample(1:nrow(dat.sim), round(nrow(dat.sim)/2), replace=F)
+    set.seed(i)
+    train.index <- sample(1:nrow(dat.sim), round(nrow(dat.sim)*7/10), replace=F)
     
     train.sim <- dat.sim[train.index,]
     test.sim <- dat.sim[-train.index,]
-    n.train <- round(nrow(dat.sim)/2) 
+    n.train <- round(nrow(dat.sim)*7/10) 
     
     
     # 5-fold crossvalidation
@@ -531,11 +533,12 @@ fit.ftn1 <- function(dat.sim) {
     
     # Making simulation data
     
-    train.index <- sample(1:nrow(dat.sim), round(nrow(dat.sim)/2), replace=F)
+    set.seed(i)
+    train.index <- sample(1:nrow(dat.sim), round(nrow(dat.sim)*7/10), replace=F)
     
     train.sim <- dat.sim[train.index,]
     test.sim <- dat.sim[-train.index,]
-    n.train <- round(nrow(dat.sim)/2)
+    n.train <- round(nrow(dat.sim)*7/10)
     
     u <- my.kernel.matrix(train.sim, test.sim)
     K.train <- u$K.train ; y.train <- u$y.train 
@@ -609,12 +612,13 @@ fit.ftn1 <- function(dat.sim) {
     
     # Making simulation data
     
-    train.index <- sample(1:nrow(dat.sim), round(nrow(dat.sim)/2), replace=F)
+    set.seed(s)
+    train.index <- sample(1:nrow(dat.sim), round(nrow(dat.sim)*7/10), replace=F)
     
     train.sim <- dat.sim[train.index,]
     test.sim <- dat.sim[-train.index,]
     test.sim.y <- test.sim[,1] 
-    n.train <- round(nrow(dat.sim)/2)
+    n.train <- round(nrow(dat.sim)*7/10)
     
     u <- my.kernel.matrix(train.sim, test.sim)
     K.train <- u$K.train 
@@ -702,11 +706,12 @@ fit.ftn1 <- function(dat.sim) {
     
     # Making simulation data
     
-    train.index <- sample(1:nrow(dat.sim), round(nrow(dat.sim)/2), replace=F)
+    set.seed(s)
+    train.index <- sample(1:nrow(dat.sim), round(nrow(dat.sim)*7/10), replace=F)
     
     train.sim <- dat.sim[train.index,]
     test.sim <- dat.sim[-train.index,]
-    n.train <- round(nrow(dat.sim)/2)
+    n.train <- round(nrow(dat.sim)*7/10)
     train.sim.y <- train.sim[,1] ; test.sim.y <- test.sim[,1]
     train.sim.X <- train.sim[,-1] ; test.sim.X <- test.sim[,-1]
     
@@ -813,11 +818,12 @@ fit.ftn <- function(dat.sim) {
     
     # Making simulation data
     
-    train.index <- sample(1:nrow(dat.sim), round(nrow(dat.sim)/2), replace=F)
+    set.seed(i)
+    train.index <- sample(1:nrow(dat.sim), round(nrow(dat.sim)*7/10), replace=F)
     
     train.sim <- dat.sim[train.index,]
     test.sim <- dat.sim[-train.index,]
-    n.train <- round(nrow(dat.sim)/2)
+    n.train <- round(nrow(dat.sim)*7/10)
     
     
     # 5-fold crossvalidation
@@ -861,11 +867,12 @@ fit.ftn <- function(dat.sim) {
     
     # Making simulation data
     
-    train.index <- sample(1:nrow(dat.sim), round(nrow(dat.sim)/2), replace=F)
+    set.seed(i)
+    train.index <- sample(1:nrow(dat.sim), round(nrow(dat.sim)*7/10), replace=F)
     
     train.sim <- dat.sim[train.index,]
     test.sim <- dat.sim[-train.index,]
-    n.train <- round(nrow(dat.sim)/2)
+    n.train <- round(nrow(dat.sim)*7/10)
     
     
     # 5-fold crossvalidation
@@ -911,11 +918,12 @@ fit.ftn <- function(dat.sim) {
     
     # Making simulation data
     
-    train.index <- sample(1:nrow(dat.sim), round(nrow(dat.sim)/2), replace=F)
+    set.seed(i)
+    train.index <- sample(1:nrow(dat.sim), round(nrow(dat.sim)*7/10), replace=F)
     
     train.sim <- dat.sim[train.index,]
     test.sim <- dat.sim[-train.index,]
-    n.train <- round(nrow(dat.sim)/2)
+    n.train <- round(nrow(dat.sim)*7/10)
     
     u <- my.kernel.matrix(train.sim, test.sim)
     K.train <- u$K.train ; y.train <- u$y.train 
@@ -990,12 +998,13 @@ fit.ftn <- function(dat.sim) {
     
     # Making simulation data
     
-    train.index <- sample(1:nrow(dat.sim), round(nrow(dat.sim)/2), replace=F)
+    set.seed(s)
+    train.index <- sample(1:nrow(dat.sim), round(nrow(dat.sim)*7/10), replace=F)
     
     train.sim <- dat.sim[train.index,]
     test.sim <- dat.sim[-train.index,]
     test.sim.y <- test.sim[,1] 
-    n.train <- round(nrow(dat.sim)/2)
+    n.train <- round(nrow(dat.sim)*7/10)
     
     u <- my.kernel.matrix(train.sim, test.sim)
     K.train <- u$K.train 
@@ -1084,11 +1093,12 @@ fit.ftn <- function(dat.sim) {
     
     # Making simulation data
     
-    train.index <- sample(1:nrow(dat.sim), round(nrow(dat.sim)/2), replace=F)
+    set.seed(s)
+    train.index <- sample(1:nrow(dat.sim), round(nrow(dat.sim)*7/10), replace=F)
     
     train.sim <- dat.sim[train.index,]
     test.sim <- dat.sim[-train.index,]
-    n.train <- round(nrow(dat.sim)/2)
+    n.train <- round(nrow(dat.sim)*7/10)
     train.sim.y <- train.sim[,1] ; test.sim.y <- test.sim[,1]
     train.sim.X <- train.sim[,-1] ; test.sim.X <- test.sim[,-1]
     
@@ -1185,4 +1195,13 @@ dat.res1 <- fit.ftn1(dat.sim)
 dat.res2 <- fit.ftn(dat.sim)
 ggplot(dat.res, aes(x = method, y = RMSE, fill = method)) + geom_boxplot()  
 
-
+mean(dat.res2$RMSE[dat.res2$method=="1.RR"])
+sd(dat.res2$RMSE[dat.res2$method=="1.RR"])
+mean(dat.res2$RMSE[dat.res2$method=="2.KR"])
+sd(dat.res2$RMSE[dat.res2$method=="2.KR"])
+mean(dat.res2$RMSE[dat.res2$method=="3.KRS"])
+sd(dat.res2$RMSE[dat.res2$method=="3.KRS"])
+mean(dat.res2$RMSE[dat.res2$method=="4.KRB"])
+sd(dat.res2$RMSE[dat.res2$method=="4.KRB"])
+mean(dat.res2$RMSE[dat.res2$method=="5.KRR"])
+sd(dat.res2$RMSE[dat.res2$method=="5.KRR"])

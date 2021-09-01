@@ -52,12 +52,37 @@ dat1 <- data.frame(y=y.i, ys=y.i.10, c=cen.10, d=delta.10, yp=pred.value, x1=x1.
 dat.sim <- data.frame(ys=y.i.10, x1=x1.i, x2=x2.i, x3=x3.i, x4=x4.i, x5=x5.i, yp=pred.value)
 
 
+
 #------------------------#------------------------#------------------------#------------------------
 
 
 
 ### 1. Making kernel matrix
 
+
+my.matrix <- function(dat.train, dat.test) {
+  
+  # dat.train : Data frame for training with a response variable is appeared in the first column...
+  # dat.test : Data frame for testing with a response variable is appeared in the first column...
+  
+  data1 <- as.data.frame(dat.train)
+  data2 <- as.data.frame(dat.test)
+  n <- nrow(data1)
+  
+  # Training data
+  X.train <- as.matrix(data1[,c(-1,-ncol(data1))])
+  y.train <- as.matrix(data1[,1])
+  y.train.pred <- as.matrix(data1[,ncol(data1)])
+  
+  # Test data
+  X.test <- as.matrix(data2[,c(-1,-ncol(data2))])
+  y.test <- as.matrix(data2[,1])
+  y.test.pred <- as.matrix(data2[,ncol(data2)])
+  
+  return(list(X.train=X.train, X.test=X.test, y.train=y.train, y.test=y.test,
+              y.train.pred=y.train.pred, y.test.pred=y.test.pred))
+  
+}
 
 
 
@@ -103,7 +128,24 @@ my.kernel.matrix <- function(dat.train, dat.test) {
 ### 2. Calculate coefficients using theory
 
 
-
+my.ridge.regression <- function(y, X, lambda) {
+  
+  # y : response variable
+  # X : matrix from explanatory variables
+  # lambda : penalty parameter
+  
+  if(lambda <= 0) 
+    stop("Lambda is non-positive value. Please insert positive value of lambda.")
+  
+  y <- as.matrix(y) ; X <-as.matrix(X)
+  
+  beta.hat <- solve(t(X)%*%X + lambda*diag(x=1, nrow=ncol(X), ncol=ncol(X)))%*%t(X)%*%y
+  
+  y.hat <- X%*%beta.hat
+  
+  return(list(beta.hat=beta.hat, y.hat=y.hat))
+  
+}
 
 
 
@@ -133,6 +175,32 @@ my.kernel.regression <- function(y, K, lambda) {
 ### 3. Making function for fitting
 
 
+fit.ridge <- function(y.train, y.train.pred, X.train, lambda) {
+  
+  # y.train : Dependent variable of training data
+  # y.train.pred : Real theoretical variable
+  # X.train : Matrix from training data 
+  # lambda : penalty parameter
+  
+  if(lambda <= 0) 
+    stop("Lambda is non-positive value. Please insert positive value of lambda.")
+  
+  
+  y.train <- as.matrix(y.train)
+  y.train.pred <- as.matrix(y.train.pred)
+  X.train <- as.matrix(X.train) 
+  
+  g <- my.ridge.regression(y.train, X.train, lambda)
+  
+  beta.hat <- g$beta.hat
+  y.pred <- g$y.hat
+  
+  # rmse <- sqrt(sum((y.train - y.pred)^2)/length(y.train))
+  rmse <- sqrt(sum((y.train.pred - y.pred)^2)/length(y.train.pred))
+  
+  return(list(beta.hat=beta.hat, y.train=y.train, y.pred=y.pred, rmse=rmse))
+  
+}
 
 
 
@@ -172,7 +240,28 @@ fit.kernel <- function(y.train, y.train.pred, K.train, lambda) {
 ### 4. Making function for predict
 
 
-
+pred.ridge <- function(y.test, y.test.pred, X.test, beta.hat) {
+  
+  # y.test : Dependent variable of test data
+  # y.test.pred : Real theoretical variable
+  # X.test : Matrix from test data 
+  # beta.hat : Estimator of vector beta from training data
+  
+  
+  y.test <- as.matrix(y.test) 
+  y.test.pred <- as.matrix(y.test.pred)
+  X.test <- as.matrix(X.test)
+  beta.hat <- as.matrix(beta.hat)
+  
+  
+  y.hat <- X.test%*%beta.hat
+  
+  # rmse <- sqrt(sum((y.test - y.hat)^2)/length(y.test))
+  rmse <- sqrt(sum((y.test.pred - y.hat)^2)/length(y.test.pred))
+  
+  return(list(y.test=y.test, rmse=rmse, y.hat=y.hat))
+  
+}
 
 
 
@@ -207,7 +296,75 @@ pred.kernel <- function(y.test, y.test.pred, K.test, d.hat) {
 ### 5. Making function for K-fold crossvalidation
 
 
-
+cv.ridge <- function(y.train, y.train.pred, X.train, k, grid.l) {
+  
+  # y.train : Dependent variable of training data
+  # X.train : Matrix from training data 
+  # k : number of criterion for K-fold crossvalidation
+  # grid.l : The row of penalty parameter lambda
+  
+  check <- (grid.l > 0)
+  n.check <- length(check)
+  
+  if(sum(check) != n.check)
+    stop("Some of lambda's values are non-positive.
+         Please insert positive values of lambda vector...","\n")
+  
+  
+  lambda <- grid.l
+  r <- length(lambda)
+  
+  
+  X.sim <- as.matrix(X.train)
+  y.sim <- as.matrix(y.train)
+  y.sim.pred <- as.matrix(y.train.pred)
+  n <- nrow(X.sim)
+  
+  cv.index <- sample(1:n,n,replace=F)  
+  cv.rmse <- NULL   
+  
+  cat("K-fold crossvalidation is start...","\n")
+  
+  
+  for (j in 1:r) {
+    
+    rmse <- NULL # Root mean squared error
+    
+    
+    for (i in 0:(k-1)) {
+      
+      
+      test.index <- cv.index[(1:n)%/%k==i]
+      
+      X.sim.train <- X.sim[-test.index,] ; X.sim.test <- X.sim[test.index,]
+      y.sim.train <- y.sim[-test.index,] ; y.sim.test <- y.sim[test.index,]
+      y.sim.train.pred <- y.sim.pred[-test.index,] ; y.sim.test.pred <- y.sim.pred[test.index,]
+      test.size <- length(test.index)
+      
+      
+      a1 <- fit.ridge(y.sim.train, y.sim.train.pred, X.sim.train, lambda[j])
+      train.beta.hat <- a1$beta.hat
+      
+      a2 <- pred.ridge(y.sim.test, y.sim.test.pred, X.sim.test, train.beta.hat)
+      test.y.hat <- a2$y.hat      
+      
+      
+      # rmse <- c(rmse, sqrt(sum((y.sim.test - test.y.hat)^2)/length(y.sim.test)) )
+      rmse <- c(rmse, sqrt(sum((y.sim.test.pred - test.y.hat)^2)/length(y.sim.test.pred)) )
+      
+    }
+    
+    cv.rmse <- rbind(cv.rmse, rmse)
+    cat(j, ",")
+  }
+  
+  cat("\n","K-fold crossvalidation complete...")
+  
+  
+  return(list(lambda=grid.l, cv.rmse=cv.rmse))
+  
+  
+}
 
 
 
@@ -304,7 +461,59 @@ fit.ftn1 <- function(dat.sim) {
   
   
   
-  ### 1. Kernel ridge regression (KR)
+  ### 1. Ridge regression (RR)
+  
+  RR <- c(rep(0,100))
+  
+  for (i in 1:100) {
+    
+    
+    # Making simulation data
+    
+    set.seed(i)
+    train.index <- sample(1:nrow(dat.sim), round(nrow(dat.sim)*7/10), replace=F)
+    
+    train.sim <- dat.sim[train.index,]
+    test.sim <- dat.sim[-train.index,]
+    n.train <- round(nrow(dat.sim)*7/10)
+    
+    
+    # 5-fold crossvalidation
+    
+    u <- my.matrix(train.sim, test.sim)
+    X.train <- u$X.train ; X.test <- u$X.test  
+    y.train <- u$y.train ; y.test <- u$y.test
+    y.train.pred <- u$y.train.pred ; y.test.pred <- u$y.test.pred
+    
+    grid.l <- 10^seq(-3,2,length=10)
+    
+    h <- cv.ridge(y.train, y.train.pred, X.train, 5, grid.l) 
+    
+    # Fitting 
+    
+    mean.rmse <- rowMeans(h$cv.rmse)
+    idx <- which.min(mean.rmse)
+    best.lam <- max(h$lambda[ mean.rmse == mean.rmse[idx] ])
+    
+    h1 <- fit.ridge(y.train, y.train.pred, X.train, best.lam)
+    
+    # Calculate test RMSE
+    
+    sim.beta.hat <- h1$beta.hat
+    
+    h2 <- pred.ridge(y.test, y.test.pred, X.test, sim.beta.hat)
+    RR[i] <- h2$rmse
+    
+  }
+  
+  RR
+  boxplot(RR)
+  dat1 <- data.frame(RMSE=RR, method=rep("1.RR",100), number=as.character(rep(n.train,100)))
+  
+  
+  
+  
+  ### 2. Kernel ridge regression (KR)
   
   KR <- c(rep(0,100))
   
@@ -350,12 +559,12 @@ fit.ftn1 <- function(dat.sim) {
   
   KR
   boxplot(KR)
-  dat1 <- data.frame(RMSE=KR, method=rep("1.KR",100), number=as.character(rep(n.train,100)))
+  dat2 <- data.frame(RMSE=KR, method=rep("2.KR",100), number=as.character(rep(n.train,100)))
   
   
   
   
-  ### 2. Kernel ridge regression using Sub-sampling (KRS)
+  ### 3. Kernel ridge regression using Sub-sampling (KRS)
   
   KRS <- c(rep(0,100))
   
@@ -432,12 +641,12 @@ fit.ftn1 <- function(dat.sim) {
   
   KRS
   boxplot(KRS)
-  dat2 <- data.frame(RMSE=KRS, method=rep("2.KRS",100), number=as.character(rep(n.train,100)))
+  dat3 <- data.frame(RMSE=KRS, method=rep("3.KRS",100), number=as.character(rep(n.train,100)))
   
   
   
   
-  ### 3. Kernel ridge regression using Bagging (KRB)
+  ### 4. Kernel ridge regression using Bagging (KRB)
   
   KRB <- c(rep(0,100))
   
@@ -529,13 +738,13 @@ fit.ftn1 <- function(dat.sim) {
   
   KRB
   boxplot(KRB)
-  dat3 <- data.frame(RMSE=KRB, method=rep("3.KRB",100), number=as.character(rep(n.train,100)))
+  dat4 <- data.frame(RMSE=KRB, method=rep("4.KRB",100), number=as.character(rep(n.train,100)))
   
   
   
   
   
-  ### 4. Kernel ridge regression using Random Forest (KRR)
+  ### 5. Kernel ridge regression using Random Forest (KRR)
   
   KRR <- c(rep(0,100))
   
@@ -637,13 +846,13 @@ fit.ftn1 <- function(dat.sim) {
   
   KRR
   boxplot(KRR)
-  dat4 <- data.frame(RMSE=KRR, method=rep("4.KRR",100), number=as.character(rep(n.train,100)))
+  dat5 <- data.frame(RMSE=KRR, method=rep("5.KRR",100), number=as.character(rep(n.train,100)))
   
   
   
   # Final result
   
-  dat.res <- rbind(dat1, dat2, dat3, dat4)
+  dat.res <- rbind(dat1, dat2, dat3, dat4, dat5)
   
   return(dat.res)
   
@@ -658,9 +867,58 @@ fit.ftn1 <- function(dat.sim) {
 fit.ftn <- function(dat.sim) {
   
   
+  ### 1. Ridge regression (RR)
+  
+  RR <- c(rep(0,100))
+  
+  for (i in 1:100) {
+    
+    # Making simulation data
+    
+    set.seed(i)
+    train.index <- sample(1:nrow(dat.sim), round(nrow(dat.sim)*7/10), replace=F)
+    
+    train.sim <- dat.sim[train.index,]
+    test.sim <- dat.sim[-train.index,]
+    n.train <- round(nrow(dat.sim)*7/10) 
+    
+    
+    # 5-fold crossvalidation
+    
+    u <- my.matrix(train.sim, test.sim)
+    X.train <- u$X.train ; X.test <- u$X.test  
+    y.train <- u$y.train ; y.test <- u$y.test
+    y.train.pred <- u$y.train.pred ; y.test.pred <- u$y.test.pred
+    
+    grid.l <- 10^seq(-3,2,length=10)
+    
+    h <- cv.ridge(y.train, y.train.pred, X.train, 5, grid.l) 
+    
+    # Fitting 
+    
+    mean.rmse <- rowMeans(h$cv.rmse)
+    idx <- which.min(mean.rmse)
+    best.lam <- max(h$lambda[ mean.rmse == mean.rmse[idx] ])
+    
+    h1 <- fit.ridge(y.train, y.train.pred, X.train, best.lam)
+    
+    # Calculate test RMSE
+    
+    sim.beta.hat <- h1$beta.hat
+    
+    h2 <- pred.ridge(y.test, y.test.pred, X.test, sim.beta.hat)
+    RR[i] <- h2$rmse
+    
+  }
+  
+  RR
+  boxplot(RR)
+  dat1 <- data.frame(RMSE=RR, method=rep("1.RR",100), number=as.character(rep(n.train,100)))
   
   
-  ### 1. Kernel ridge regression (KR)
+  
+  
+  ### 2. Kernel ridge regression (KR)
   
   KR <- c(rep(0,100))
   
@@ -706,12 +964,12 @@ fit.ftn <- function(dat.sim) {
   
   KR
   boxplot(KR)
-  dat1 <- data.frame(RMSE=KR, method=rep("1.KR",100), number=as.character(rep(n.train,100)))
+  dat2 <- data.frame(RMSE=KR, method=rep("2.KR",100), number=as.character(rep(n.train,100)))
   
   
   
   
-  ### 2. Kernel ridge regression using Sub-sampling (KRS)
+  ### 3. Kernel ridge regression using Sub-sampling (KRS)
   
   KRS <- c(rep(0,100))
   
@@ -788,12 +1046,12 @@ fit.ftn <- function(dat.sim) {
   
   KRS
   boxplot(KRS)
-  dat2 <- data.frame(RMSE=KRS, method=rep("2.KRS",100), number=as.character(rep(n.train,100)))
+  dat3 <- data.frame(RMSE=KRS, method=rep("3.KRS",100), number=as.character(rep(n.train,100)))
   
   
   
   
-  ### 3. Kernel ridge regression using Bagging (KRB)
+  ### 4. Kernel ridge regression using Bagging (KRB)
   
   KRB <- c(rep(0,100))
   
@@ -885,13 +1143,13 @@ fit.ftn <- function(dat.sim) {
   
   KRB
   boxplot(KRB)
-  dat3 <- data.frame(RMSE=KRB, method=rep("3.KRB",100), number=as.character(rep(n.train,100)))
+  dat4 <- data.frame(RMSE=KRB, method=rep("4.KRB",100), number=as.character(rep(n.train,100)))
   
   
   
   
   
-  ### 4. Kernel ridge regression using Random Forest (KRR)
+  ### 5. Kernel ridge regression using Random Forest (KRR)
   
   KRR <- c(rep(0,100))
   
@@ -993,13 +1251,13 @@ fit.ftn <- function(dat.sim) {
   
   KRR
   boxplot(KRR)
-  dat4 <- data.frame(RMSE=KRR, method=rep("4.KRR",100), number=as.character(rep(n.train,100)))
+  dat5 <- data.frame(RMSE=KRR, method=rep("5.KRR",100), number=as.character(rep(n.train,100)))
   
   
   
   # Final result
   
-  dat.res <- rbind(dat1, dat2, dat3, dat4)
+  dat.res <- rbind(dat1, dat2, dat3, dat4, dat5)
   
   return(dat.res)
   
@@ -1012,12 +1270,13 @@ dat.res1 <- fit.ftn1(dat.sim)
 dat.res2 <- fit.ftn(dat.sim)
 ggplot(dat.res2, aes(x = method, y = RMSE, fill = method)) + geom_boxplot()  
 
-mean(dat.res2$RMSE[dat.res2$method=="1.KR"])
-sd(dat.res2$RMSE[dat.res2$method=="1.KR"])
-mean(dat.res2$RMSE[dat.res2$method=="2.KRS"])
-sd(dat.res2$RMSE[dat.res2$method=="2.KRS"])
-mean(dat.res2$RMSE[dat.res2$method=="3.KRB"])
-sd(dat.res2$RMSE[dat.res2$method=="3.KRB"])
-mean(dat.res2$RMSE[dat.res2$method=="4.KRR"])
-sd(dat.res2$RMSE[dat.res2$method=="4.KRR"])
-
+mean(dat.res2$RMSE[dat.res2$method=="1.RR"])
+sd(dat.res2$RMSE[dat.res2$method=="1.RR"])
+mean(dat.res2$RMSE[dat.res2$method=="2.KR"])
+sd(dat.res2$RMSE[dat.res2$method=="2.KR"])
+mean(dat.res2$RMSE[dat.res2$method=="3.KRS"])
+sd(dat.res2$RMSE[dat.res2$method=="3.KRS"])
+mean(dat.res2$RMSE[dat.res2$method=="4.KRB"])
+sd(dat.res2$RMSE[dat.res2$method=="4.KRB"])
+mean(dat.res2$RMSE[dat.res2$method=="5.KRR"])
+sd(dat.res2$RMSE[dat.res2$method=="5.KRR"])
