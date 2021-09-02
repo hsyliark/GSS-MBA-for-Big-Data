@@ -46,7 +46,7 @@ cen.10 <-rnorm(100, mean=sin(2*pi*x1.i*x2.i*x3.i*x4.i*x5.i)+0.84^2, sd=1) # cens
 pre.T.10 <- pmin(y.i, cen.10)
 delta.10 <- (y.i <= cen.10) * 1
 g.10 <- km.surv(pre.T.10, delta.10)
-y.i.10 <- ifelse(pre.T.10 <= quantile(pre.T.10, probs=0.98), pre.T.10*delta.10/g.10, 0)
+y.i.10 <- ifelse(pre.T.10 <= quantile(pre.T.10, probs=0.98), pre.T.10*delta.10/g.10, 0) # synthetic response
 
 dat1 <- data.frame(y=y.i, ys=y.i.10, c=cen.10, d=delta.10, yp=pred.value, x1=x1.i, x2=x2.i, x3=x3.i, x4=x4.i, x5=x5.i)
 dat.sim <- data.frame(ys=y.i.10, x1=x1.i, x2=x2.i, x3=x3.i, x4=x4.i, x5=x5.i, yp=pred.value)
