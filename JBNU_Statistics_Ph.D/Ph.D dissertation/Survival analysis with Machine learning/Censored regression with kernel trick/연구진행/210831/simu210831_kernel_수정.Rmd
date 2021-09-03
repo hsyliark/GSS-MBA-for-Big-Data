@@ -47,16 +47,16 @@ km.surv <- function(time, cens) {
 # x3.i <- seq(0, 1, length.out=500)
 # x4.i <- seq(0, 1, length.out=500)
 # x5.i <- seq(0, 1, length.out=500)
-x1.i <- runif(500,-1,1)
-x2.i <- runif(500,-1,1)
-x3.i <- runif(500,-1,1)
-x4.i <- runif(500,-1,1)
-x5.i <- runif(500,-1,1)
-e.i <- rnorm(500, mean=0, sd=1)
+x1.i <- runif(200,-1,1)
+x2.i <- runif(200,-1,1)
+x3.i <- runif(200,-1,1)
+x4.i <- runif(200,-1,1)
+x5.i <- runif(200,-1,1)
+e.i <- rnorm(200, mean=0, sd=1)
 y.i <- sin(2*pi*x1.i*x2.i)+cos(2*pi*x3.i*x4.i*x5.i)+e.i
 # pred.value <-  sin(2*pi*seq(0,1,length.out=500)^2)+cos(2*pi*seq(0,1,length.out=500)^3)
 pred.value <- sin(2*pi*x1.i*x2.i)+cos(2*pi*x3.i*x4.i*x5.i)
-cen.10 <-rnorm(500, mean=sin(2*pi*x1.i*x2.i)+cos(2*pi*x3.i*x4.i*x5.i)+0.84^2, sd=1) # censoring values
+cen.10 <-rnorm(200, mean=sin(2*pi*x1.i*x2.i)+cos(2*pi*x3.i*x4.i*x5.i)+0.84^2, sd=1) # censoring values
 pre.T.10 <- pmin(y.i, cen.10)
 delta.10 <- (y.i <= cen.10) * 1
 g.10 <- km.surv(pre.T.10, delta.10)
