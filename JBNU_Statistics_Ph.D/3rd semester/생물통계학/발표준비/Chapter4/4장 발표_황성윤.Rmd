@@ -1,0 +1,376 @@
+---
+title: "Ch4 presentation"
+author: "Hwang Seong-Yun"
+date: '2021 10 26'
+output: html_document
+---
+
+# Chapter 4 Treatment Comparisons in Clinical Trials with Covariates
+
+## 1. Analysis of Covariance (ANCOVA)
+
+- Combination of analysis of variance and regression
+
+### Analysis of Variance (ANOVA)
+
+#### One-way ANOVA
+- $y _{ij} = \mu + \alpha  _{i} + \epsilon  _{ij}$ 
+- $i=1,\dots,I$ // $j=1,\dots,n_{j}$
+- $H_{0}$ : $\alpha_{i}=0, i=1,\dots,I$
+- $H_{1}$ : At least one of the $\alpha_{i}$ is not zero 
+
+#### Multiple Comparisons (Tukey's honest significant difference(HSD))
+- ${\hat{\alpha }} _{i} - {\hat{\alpha }} _{j} \pm \frac {q _{\alpha ,df _{1} ,df _{2}}} {\sqrt {2}} se( {\hat{\alpha }} _{i} - {\hat{\alpha }} _{j} )$ ($df_{1}=I, df_{2}=\sum _{i=1} ^{I} n _{i} -I$)
+
+#### Multi-Way ANOVA
+- $y_{ijk} = \mu + \alpha_{i} + \beta_{j} + (\alpha\beta)_{ij} + \epsilon_{ijk}$
+- $i=1,\dots,I$ // $j=1,\dots,J$ // $k=1,\dots,n_{ij}$
+
+#### Multivariate Analysis of Variance (MANOVA)
+- Wilk's Lambda
+- Hotelling-Lawley's trace
+- Pillai-Bartlett's criterion
+- Roy's greatest root
+
+### Regression Analysis
+
+#### Linear Regression model
+- $y = X\beta + \epsilon$
+
+#### Logistic Regression model
+- $Y \sim B(n,p)$ 
+  - $P(Y=y)=$ ${n} \choose {x}$ $p^{y}(1-p)^{n-y}$, $y=0,1,\dots,n$
+- $\log_ {} \frac {p} {1-p}$$= \beta_{0} + \beta_{1} x_{1} + \dots + \beta_{q} x_{q} = X\beta$
+
+#### Poisson Regression model
+- $Y \sim Poisson(\mu)$ 
+  - $P(Y=y)=$ $\frac {e^{-\mu}\mu^{y}} {y!}$, $y=0,1,\dots$
+- $log_ {} {\mu_{i}} = X\beta$
+
+#### Overdispersion in generalized linear regression
+- If the deviance from the fitted model is too large...
+  - 1. Estimate and Adjust the Dispersion Parameter
+  - 2. Using Quasi-Likelihood
+  - 3. Fit Negative Binomial Regression 
+  - $N \sim NB(k,p)$ 
+  - $P(N=n)=$ ${n-1} \choose {k-1}$ $p^{k}(1-p)^{n-k}$, $n=k,k+1,\dots$
+
+## 2. Data Analysis in R
+
+### 2.1 Analysis of diastolic blood pressure(DBP) trial
+- 이완기 혈압 측정과 관련한 데이터
+-  treatment A (new drug), treatment B (placebo)
+- 약물을 투여했을 때 이완기 혈압이 유의하게 낮아지는지 확인하고자 함.
+- DBP1 ~ DBP5 : 최초에 DBP1을 측정하고 이후 4주간 주마다 DBP 측정
+- 4주 이후 측정된 DBP5와 최초 측정된 DPB1의 차이를 분석
+
+#### 2.1.1 Analysis of Baseline data
+
+```{r}
+###################################################
+### code chunk number 2: R4ANCOVA.rnw:334-337
+###################################################
+dat = read.csv("C:/Users/HSY/Desktop/DBP.csv",header=T,sep=",")
+# creat the difference
+dat$diff = dat$DBP5-dat$DBP1
+dat
+```
+
+```{r}
+###################################################
+### code chunk number 3: ANCOVA.BaseDBP
+###################################################
+boxplot(DBP1~TRT, dat, las=1, 
+	xlab="Treatment", ylab="DBP at Baseline")
+```
+
+- 최초 측정된 이완기 혈압에 대한 boxplot을 통해 아직 약물 처리 여부에 따른 혈압의 차이가 거의 없다고 보여진다. 이에 대한 통계적인 분석을 t-test를 통해 수행하면 다음과 같다. 
+
+```{r}
+###################################################
+### code chunk number 5: R4ANCOVA.rnw:360-361
+###################################################
+t.test(DBP1~TRT, dat)
+```
+
+- 검정결과 유의확률 p-value의 값이 0.7601로서 유의수준 0.05보다 매우 큰 값이다. 이에 따라 최초 측정된 이완기 혈압의 경우 약물 처리 여부에 따른 혈압의 차이가 없다는 귀무가설을 받아들이게 된다. 그러므로 본 실험을 통해 약물 처리 여부의 효과를 가려내기에 충분하다고 판단할 수 있다.
+- 다음으로 DBP 데이터에 있는 40명의 피실험자에 대한 약물 처리 여부, 성별에 따른 2*2 테이블을 살펴보고 이에 대한 비율검정을 실시한다. 이에 대한 결과는 다음과 같다.
+
+```{r}
+###################################################
+### code chunk number 6: R4ANCOVA.rnw:368-374
+###################################################
+# call function table to make the 2 by 2 table 
+SexbyTRT = table(dat$TRT,dat$Sex)
+# print it
+SexbyTRT
+# call prop.test to test the difference
+prop.test(SexbyTRT)
+```
+
+- 2*2 테이블을 통해 약물처리그룹 A는 8명의 여자와 12명의 남자로(여자비율 40%), 대조그룹 B는 남자와 여자 모두 각각 10명(여자비율 50%)으로 구성되어 있다.
+- 이에 대해 비율검정을 실시한 결과 유의확률 p-value의 값이 0.7506으로서 유의수준 0.05보다 매우 큼을 알 수 있다. 이에 따라 두 그룹의 여자비율의 차이가 없다는 귀무가설을 받아들이게 된다. 즉, 두 그룹이 성별 기준으로 균형되게 구성되어 있다고 판단할 수 있다.
+- 이제 최초 측정 혈압 DBP1과 공변량 Sex, Age 사이의 관계를 확인해보기 위한 회귀모형을 구축해보도록 한다.
+
+```{r}
+###################################################
+### code chunk number 7: R4ANCOVA.rnw:381-385
+###################################################
+# Fit the main effect model on "Sex" and "Age"
+bm1=lm(DBP1~Sex+Age, dat)
+# Show the result
+summary(bm1)
+```
+
+- 분석결과 성별과 나이 모두 유의수준 0.05 하에서 최초 측정 이완기 혈압과 유의미한 관계가 있다고 보여진다. 이에 대한 결과를 그래프로 표현해보면 다음과 같다.
+
+```{r}
+###################################################
+### code chunk number 8: ANCOVA.fig4Baseline
+###################################################
+# plot the ``Age" to ``DBP1"
+plot(DBP1~Age,las=1,pch=as.character(Sex), dat, 
+	xlab="Age", ylab="Baseline DBP")
+# add the regression lines using ``abline"
+abline(bm1$coef[1], bm1$coef[3],lwd=2, lty=1)
+abline(bm1$coef[1]+bm1$coef[2], bm1$coef[3],lwd=2, lty=4)
+```
+
+- 위의 그래프에서 직선은 여자, 점선은 남자와 관련이 있다. 즉 나이에 따라 측정 혈압이 높아지는 경향이 있고 남자보다 여자가 측정 혈압이 높다고 판단할 수 있다.
+
+#### 2.1.2 ANCOVA of DBP Change from Baseline
+
+- 이제부터는 공변량분석(ANCOVA)를 통해 약물 처리 여부(TRT)에 따른 이완기 혈압의 차이(diff)에 대한 분석을 실시해보겠다. 우선 데이터 내의 모든 공변량인 TRT, Age, Sex를 모두 포함하고 이들의 교호작용(interactions)까지 포함한 full model을 구축하고, stepwise model selection을 통해 복잡한 모형을 단순화할 것이다.
+
+```{r}
+###################################################
+### code chunk number 10: R4ANCOVA.rnw:415-421
+###################################################
+# start with full model
+m0 = lm(diff~TRT*Age*Sex, dat)
+# stepwise model selection
+m1 = step(m0)
+# output the ANOVA
+anova(m1)
+```
+
+- stepwise model selection을 통해 모형을 선택한 결과를 보면 두가지 교호작용 TRT:Age, Age:Sex 가 포함되어 있다. 하지만 이 두가지 교호작용은 유의수준 0.05 하에서 통계적으로 유의미하지 않으며 이는 주효과(main effect)인 성별(Sex)도 마찬가지이다. 이에 따라 이들을 모두 포함하지 않는 reduced model을 구축하면 다음과 같다.
+
+```{r}
+###################################################
+### code chunk number 11: R4ANCOVA.rnw:425-431
+###################################################
+# fit the reduced model
+m2 = lm(diff~TRT+Age, dat)
+# output the anova
+anova(m2)
+# output the model fit
+summary(m2)
+```
+
+- reduced model을 구축한 결과 TRT와 Age에 대한 효과가 유의수준 0.05 하에서 모두 통계적으로 의미가 있음을 알 수 있다. 이 모형에 대한 F 통계량 p-value는 $4.24 \times 10^{-5}$, 결정계수는 $R^{2} = 0.8328$로서 모형이 의미있게 구축되었음을 확인 가능하다. 
+- final model : $DBP Change = − 6.78 − 0.173 × Age + 10.132 × TRT$
+- 이 모형에 대한 그래프를 그려보면 다음과 같다.
+
+```{r}
+###################################################
+### code chunk number 12: ANCOVA.fig4diff
+###################################################
+plot(diff~Age,las=1,pch=as.character(TRT), dat, 
+xlab="Age", ylab="DBP Change")
+abline(m2$coef[1], m2$coef[3],lwd=2, lty=1)
+abline(m2$coef[1]+m2$coef[2], m2$coef[3],lwd=2, lty=4)
+```
+
+- 그래프를 통해 약물을 투여한 경우(A) 그렇지 않은 경우(B)에 비해 혈압이 약 10mmHg 더 떨어지고, 두 그룹 모두 나이가 많을수록 혈압의 변화가 더 커짐을 확인 가능하다.
+
+#### 2.1.3 MANCOVA for DBP Change from Baseline 
+
+- 다음으로 다변량 공변량분석(MANCOVA)를 통해 1주후, 2주후, 3주후, 4주후의 이완기 혈압의 차이가 약물 처리 여부(TRT)와 나이(Age)에 따라 전체적으로 유의미한 차이가 있는지 분석해보도록 한다. 분석은 다음의 4가지 기준을 모두 살펴볼 것이다. 
+  - Wilk's Lambda
+  - Hotelling-Lawley's trace
+  - Pillai-Bartlett's criterion
+  - Roy's greatest root
+ 
+```{r}
+###################################################
+### code chunk number 14: R4ANCOVA.rnw:466-473
+###################################################
+# attached the data into this R session
+attach(dat)
+# create the changes from baseline
+diff2to1 = DBP2-DBP1
+diff3to1 = DBP3-DBP1
+diff4to1 = DBP4-DBP1
+diff5to1 = DBP5-DBP1
+
+###################################################
+### code chunk number 15: R4ANCOVA.rnw:479-490
+###################################################
+# call "manova" to fit a manova adjusting for "Age"
+macov1=manova(cbind(diff2to1,diff3to1,diff4to1,
+			diff5to1)~TRT+Age,dat)
+# then F-test with Pillai (default in R)
+summary(macov1)
+# F-test with Hotelling-Lawley
+summary(macov1, test="Hotelling-Lawley")
+# F-test with Wilks
+summary(macov1, test="Wilks")
+# F-test with Roy
+summary(macov1, test="Roy")
+```
+
+- 분석결과 4가지 기준 모두 유의수준 0.05 하에서 TRT와 Age 모두 혈압의 변화에 유의미한 영향력이 있음을 알 수 있다.
+
+### 2.2 Analysis of Betablocker Trial
+- 22곳의 치료센터에서 측정된 사망률과 관련한 데이터
+- 베타차단제가 심근경색증으로 인한 사망률을 효과적으로 낮추는지에 대한 연구가 주된 목적임
+
+```{r}
+###################################################
+### code chunk number 16: R4ANCOVA.rnw:502-506
+###################################################
+library(flexmix)
+betablocker = read.csv("C:/Users/HSY/Desktop/betablocker.csv",header=T,sep=",")
+betablocker$Center = as.factor(betablocker$Center)
+betablocker
+```
+
+- 먼저 본 데이터에 대해 logistic regression model을 구축해보도록 한다.
+
+```{r}
+###################################################
+### code chunk number 18: beta.glm
+###################################################
+# fit a logistic regression using glm
+beta.glm = glm(cbind(Deaths,Total-Deaths)~Treatment+Center,
+		family=binomial,data=betablocker)
+# print the model fitting
+anova(beta.glm)
+###################################################
+### code chunk number 19: R4ANCOVA.rnw:522-523
+###################################################
+summary(beta.glm)
+```
+
+- 모형을 구축해본 결과, Treatment와 Center 모두 유의수준 0.05 하에서 환자의 사망률에 유의미한 영향력이 있음을 알 수 있다. 그리고 residual deviance는 자유도 21에 23.621로서 모형이 유의미하게 구축되었고 overdispersion의 위험은 적은 것으로 보여진다. 만약 overdispersion의 위험이 있다고 가정했을 때 Pearson residual을 통해 dispersion parameter를 추정하면 다음과 같다. 
+
+```{r}
+###################################################
+### code chunk number 20: R4ANCOVA.rnw:529-531
+###################################################
+est.dp = sum(resid(beta.glm, type="pearson")^2)/beta.glm$df.res
+est.dp
+```
+
+- 위의 결과를 통해 dispersion parameter의 추정값은 약 1.122임을 알 수 있다. 이를 바탕으로 모형을 다시 구축하면 다음과 같다.
+
+```{r}
+###################################################
+### code chunk number 21: R4ANCOVA.rnw:535-536
+###################################################
+summary(beta.glm, dispersion=est.dp)
+```
+
+- 다시 구축한 모형도 원래의 모형과 같음을 확인 가능하다. 이 두가지 절차를 quasi-likelihood의 방법을 적용한다면 한번에 해결할 수 있다.
+
+```{r}
+###################################################
+### code chunk number 22: R4ANCOVA.rnw:540-545
+###################################################
+# fit quasi-likelihood for binomial data
+beta.glm2 = glm(cbind(Deaths,Total- Deaths)~Treatment+Center,
+	family=quasibinomial,data=betablocker)
+# print the model fit
+summary(beta.glm2)
+```
+
+- 위의 결과를 통해 추정된 dispersion parameter는 약 1.122이다. 주효과 Treatment에 대한 p-value의 값이 이전에 구축된 모형과 비교했을 때 약간의 차이만 있을뿐 결과는 동일함을 확인할 수 있다.
+
+### 2.3 Analysis of Data from Familial Adenomatous Ployposis Trial
+- non-steroidal anti-inflammatory drug (NSAID) in treating familial adenomatous polyposis (FAP) 의 치료효과를 알아보기 위한 데이터
+
+```{r}
+###################################################
+### code chunk number 23: R4ANCOVA.rnw:554-556
+###################################################
+library(HSAUR)
+data(polyps)
+polyps
+```
+
+- 본 데이터의 변수 number는 환자의 수로서 counting variable이다. 이에 따라 Poisson Regression model을 적용하면 다음과 같다.
+
+```{r}
+###################################################
+### code chunk number 25: R4ANCOVA.rnw:566-570
+###################################################
+# Poisson Regression
+m0.polyps = glm(number~treat*age, polyps, family=poisson())
+# print the model fit
+summary(m0.polyps)
+```
+
+- 모형을 구축한 결과 표면적으로 주효과 treatment와 age는 number에 대해 통계적으로 유의미한 영향력이 있다. 하지만 residual deviance는 자유도 16에 대해 179.49로 산출되어 overdispersion의 위험성이 크다고 판단된다. 
+
+```{r}
+###################################################
+### code chunk number 26: R4ANCOVA.rnw:574-576
+###################################################
+est.dp = sum(resid(m0.polyps, type="pearson")^2)/m0.polyps$df.res
+est.dp
+```
+
+- Pearson residual을 통해 추정된 dispersion parameter는 약 11.375이다. 이를 이용하여 모형을 다시 구축하면 다음과 같다.
+
+```{r}
+###################################################
+### code chunk number 27: R4ANCOVA.rnw:579-580
+###################################################
+summary(m0.polyps, dispersion=est.dp)
+```
+
+- 새로 구축한 모형에서는 treatment와 age도 모두 유의한 영향력이 없다는 결과를 보여주고 있다. 하지만, 교호작용은 처음 구축한 모형에서도 유의성이 없었으므로 이를 제외하고 모형을 구축해보도록 한다.
+
+```{r}
+###################################################
+### code chunk number 28: R4ANCOVA.rnw:584-592
+###################################################
+# refit the model without interaction
+m1.polyps = glm(number~treat+age, polyps, family=poisson())
+# estimate the dispersion parameter
+est.dp = sum(resid(m1.polyps, type="pearson")^2)/m1.polyps$df.res
+# print the estimated dispersion parameter
+est.dp
+# print the model fit adjusting the over dispersion
+summary(m1.polyps, dispersion=est.dp)
+```
+
+- 모형을 구축한 결과 추정된 dispersion parameter는 약 10.728이고 treatment와 age 모두 유의미한 영향력이 있다는 결론을 주고 있다. quasi-likelihood의 방법을 적용하면 dispersion parameter를 추정하는 과정까지 한번에 해결할 수 있다.
+
+```{r}
+###################################################
+### code chunk number 29: R4ANCOVA.rnw:597-601
+###################################################
+# fit the quasi Poisson
+m2.polyps = glm(number~treat+age, polyps, family=quasipoisson())
+# print the model fit
+summary(m2.polyps)
+```
+
+- 분석결과 age에 대한 p-value의 값이 약 0.062로서 유의수준 0.05보다 크기는 하지만 영향력이 없다고 보기에는 무리가 있다. 결과적으로 두가지 단계를 모두 거치는 과정과 비교했을 때 동일한 결과를 주고 있음을 알 수 있다.
+- 또다른 접근법으로서 negative binomial model을 다음과 같이 구축할 수 있다.
+
+```{r}
+###################################################
+### code chunk number 30: R4ANCOVA.rnw:607-613
+###################################################
+# load the MASS library
+library(MASS)
+# fit the negative binomial model
+m3.polyps = glm.nb(number~treat+age, polyps)
+# print the model fit
+summary(m3.polyps)
+```
+
+- 모형을 구축한 결과 음이항분포에 대한 모수의 추정값은 $k=1.719$이고 이에 대한 표준오차는 $0.607$이다. 그리고 주효과 treatment에 대한 p-value의 값은 약 0.0002로서 유의수준 0.05 하에서 매우 유의미한 영향력이 있음을 확인 가능하다. 이 결과는 Poisson regression model에 대한 quasi-likelihood 접근법을 적용한 경우와 거의 비슷하다.
