@@ -1,0 +1,9 @@
+anaconda prompt 켠 다음
+(base) 있는상태에서 conda create -n dv2021 python=3.8
+이후 conda env list 실행해서 가상환경 만들어졌는지 확인
+conda activate dv2021
+conda install -c conda-forge jupyterlab
+
+--> 새로 만들어진 가상환경에서 작업을 하고 싶다면
+---> anaconda prompt 실행 후 conda activate dv2021 입력 + enter
+---> jupyter lab 또는 jupyter notebook --notebook-dir="작업환경주소"
