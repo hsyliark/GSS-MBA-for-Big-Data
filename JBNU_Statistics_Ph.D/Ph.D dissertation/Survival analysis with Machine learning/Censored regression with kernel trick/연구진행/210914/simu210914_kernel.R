@@ -33,16 +33,16 @@ km.surv <- function(time, cens) {
 # x3.i <- seq(0, 1, length.out=500)
 # x4.i <- seq(0, 1, length.out=500)
 # x5.i <- seq(0, 1, length.out=500)
-x1.i <- runif(100,-1,1)
-x2.i <- runif(100,-1,1)
-x3.i <- runif(100,-1,1)
-x4.i <- runif(100,-1,1)
-x5.i <- runif(100,-1,1)
-e.i <- rnorm(100, mean=0, sd=1)
+x1.i <- runif(200,-1,1)
+x2.i <- runif(200,-1,1)
+x3.i <- runif(200,-1,1)
+x4.i <- runif(200,-1,1)
+x5.i <- runif(200,-1,1)
+e.i <- rnorm(200, mean=0, sd=1)
 y.i <- sin(2*pi*x1.i*x2.i)+cos(2*pi*x3.i*x4.i*x5.i)+e.i
 # pred.value <-  sin(2*pi*seq(0,1,length.out=500)^2)+cos(2*pi*seq(0,1,length.out=500)^3)
 pred.value <- sin(2*pi*x1.i*x2.i)+cos(2*pi*x3.i*x4.i*x5.i)
-cen.10 <-rnorm(100, mean=sin(2*pi*x1.i*x2.i)+cos(2*pi*x3.i*x4.i*x5.i)+0.84^2, sd=1) # censoring values
+cen.10 <-rnorm(200, mean=sin(2*pi*x1.i*x2.i)+cos(2*pi*x3.i*x4.i*x5.i)+0.84^2, sd=1) # censoring values
 pre.T.10 <- pmin(y.i, cen.10)
 delta.10 <- (y.i <= cen.10) * 1
 g.10 <- km.surv(pre.T.10, delta.10)
@@ -242,15 +242,16 @@ cv.kernel <- function(y.train.s, y.train, K.train, k, grid.l) {
   n <- nrow(K.sim)
   
   cv.index <- sample(1:n,n,replace=F)  
-  cv.rmse <- NULL   
+  cv.rmse1 <- NULL  
+  cv.rmse2 <- NULL
   
   cat("K-fold crossvalidation is start...","\n")
   
   
   for (j in 1:r) {
     
-    cv.rmse1 <- NULL # Root mean squared error with synthetic response
-    cv.rmse2 <- NULL # Root mean squared error with original response
+    rmse1 <- NULL # Root mean squared error with synthetic response
+    rmse2 <- NULL # Root mean squared error with original response
     
     
     for (i in 0:(k-1)) {
@@ -409,10 +410,11 @@ fit.ftn1 <- function(dat.sim) {
     for (j in 1:50) {
       
       n <- nrow(train.sim)
-      index.Kc <- sample(1:n, round(0.7*n), replace=F)
-      Kc.train <- K.train[index.Kc,index.Kc] ; Kc.test <- K.train[index.Kc,-index.Kc]
-      yc.train.s <- y.train.s[index.Kc] ; yc.test.s <- y.train.s[-index.Kc]
-      yc.train <- y.train[index.Kc] ; yc.test <- y.train[-index.Kc]
+      index1.Kc <- sample(1:n, round(0.7*n), replace=F)
+      index2.Kc <- index1.Kc
+      Kc.train <- K.train[index1.Kc,index1.Kc] ; Kc.test <- K.train[index1.Kc,-index1.Kc]
+      yc.train.s <- y.train.s[index1.Kc] ; yc.test.s <- y.train.s[-index1.Kc]
+      yc.train <- y.train[index1.Kc] ; yc.test <- y.train[-index1.Kc]
       
       grid.l <- 10^seq(-3,2,length=10)
       
@@ -432,6 +434,7 @@ fit.ftn1 <- function(dat.sim) {
       
       res.rmse1.c <- c(res.rmse1.c, rmse1.c)
       res.lam1.c <- c(res.lam1.c, best.lam1.c)
+      res.index1.c <- cbind(res.index1.c, index1.Kc)
       
       # original
       mean.rmse2.c <- rowMeans(hc$cv.rmse2)
@@ -447,8 +450,8 @@ fit.ftn1 <- function(dat.sim) {
       
       res.rmse2.c <- c(res.rmse2.c, rmse2.c)
       res.lam2.c <- c(res.lam2.c, best.lam2.c)
+      res.index2.c <- cbind(res.index2.c, index2.Kc)
       
-      res.index.c <- cbind(res.index.c, index.Kc)
       
     }
     
@@ -456,7 +459,7 @@ fit.ftn1 <- function(dat.sim) {
     
     # synthetic
     res.lambda1 <- res.lam1.c[which.min(res.rmse1.c)]
-    res.index1 <- res.index.c[, which.min(res.rmse1.c)]
+    res.index1 <- res.index1.c[, which.min(res.rmse1.c)]
     res.K.train1 <- K[res.index1, res.index1]
     res.y.train.s1 <- y.train[res.index1]
     res.y.train1 <- y.train[res.index1]
@@ -468,12 +471,12 @@ fit.ftn1 <- function(dat.sim) {
     
     # Calculate test mean square error
     
-    h2_1 <- pred.kernel(y.test.s, y.test, K.test, res.d.hat1)
+    h2_1 <- pred.kernel(y.test.s, y.test, K.test1, res.d.hat1)
     KRS1[i] <- h2_1$rmse1
     
     # original
     res.lambda2 <- res.lam2.c[which.min(res.rmse2.c)]
-    res.index2 <- res.index.c[, which.min(res.rmse2.c)]
+    res.index2 <- res.index2.c[, which.min(res.rmse2.c)]
     res.K.train2 <- K[res.index2, res.index2]
     res.y.train.s2 <- y.train[res.index2]
     res.y.train2 <- y.train[res.index2]
@@ -485,7 +488,7 @@ fit.ftn1 <- function(dat.sim) {
     
     # Calculate test mean square error
     
-    h2_2 <- pred.kernel(y.test.s, y.test, K.test, res.d.hat2)
+    h2_2 <- pred.kernel(y.test.s, y.test, K.test2, res.d.hat2)
     KRS2[i] <- h2_2$rmse2
     
   }
@@ -865,10 +868,11 @@ fit.ftn <- function(dat.sim) {
     for (j in 1:50) {
       
       n <- nrow(train.sim)
-      index.Kc <- sample(1:n, round(0.7*n), replace=F)
-      Kc.train <- K.train[index.Kc,index.Kc] ; Kc.test <- K.train[index.Kc,-index.Kc]
-      yc.train.s <- y.train.s[index.Kc] ; yc.test.s <- y.train.s[-index.Kc]
-      yc.train <- y.train[index.Kc] ; yc.test <- y.train[-index.Kc]
+      index1.Kc <- sample(1:n, round(0.7*n), replace=F)
+      index2.Kc <- index1.Kc
+      Kc.train <- K.train[index1.Kc,index1.Kc] ; Kc.test <- K.train[index1.Kc,-index1.Kc]
+      yc.train.s <- y.train.s[index1.Kc] ; yc.test.s <- y.train.s[-index1.Kc]
+      yc.train <- y.train[index1.Kc] ; yc.test <- y.train[-index1.Kc]
       
       grid.l <- 10^seq(-3,2,length=10)
       
@@ -888,6 +892,7 @@ fit.ftn <- function(dat.sim) {
       
       res.rmse1.c <- c(res.rmse1.c, rmse1.c)
       res.lam1.c <- c(res.lam1.c, best.lam1.c)
+      res.index1.c <- cbind(res.index1.c, index1.Kc)
       
       # original
       mean.rmse2.c <- rowMeans(hc$cv.rmse2)
@@ -903,8 +908,8 @@ fit.ftn <- function(dat.sim) {
       
       res.rmse2.c <- c(res.rmse2.c, rmse2.c)
       res.lam2.c <- c(res.lam2.c, best.lam2.c)
+      res.index2.c <- cbind(res.index2.c, index2.Kc)
       
-      res.index.c <- cbind(res.index.c, index.Kc)
       
     }
     
@@ -912,7 +917,7 @@ fit.ftn <- function(dat.sim) {
     
     # synthetic
     res.lambda1 <- res.lam1.c[which.min(res.rmse1.c)]
-    res.index1 <- res.index.c[, which.min(res.rmse1.c)]
+    res.index1 <- res.index1.c[, which.min(res.rmse1.c)]
     res.K.train1 <- K[res.index1, res.index1]
     res.y.train.s1 <- y.train[res.index1]
     res.y.train1 <- y.train[res.index1]
@@ -924,12 +929,12 @@ fit.ftn <- function(dat.sim) {
     
     # Calculate test mean square error
     
-    h2_1 <- pred.kernel(y.test.s, y.test, K.test, res.d.hat1)
+    h2_1 <- pred.kernel(y.test.s, y.test, K.test1, res.d.hat1)
     KRS1[i] <- h2_1$rmse1
     
     # original
     res.lambda2 <- res.lam2.c[which.min(res.rmse2.c)]
-    res.index2 <- res.index.c[, which.min(res.rmse2.c)]
+    res.index2 <- res.index2.c[, which.min(res.rmse2.c)]
     res.K.train2 <- K[res.index2, res.index2]
     res.y.train.s2 <- y.train[res.index2]
     res.y.train2 <- y.train[res.index2]
@@ -941,7 +946,7 @@ fit.ftn <- function(dat.sim) {
     
     # Calculate test mean square error
     
-    h2_2 <- pred.kernel(y.test.s, y.test, K.test, res.d.hat2)
+    h2_2 <- pred.kernel(y.test.s, y.test, K.test2, res.d.hat2)
     KRS2[i] <- h2_2$rmse2
     
   }
