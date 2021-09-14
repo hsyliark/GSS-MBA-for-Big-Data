@@ -249,8 +249,8 @@ cv.kernel <- function(y.train.s, y.train, K.train, k, grid.l) {
   
   for (j in 1:r) {
     
-    rmse1 <- NULL # Root mean squared error with synthetic response
-    rmse2 <- NULL # Root mean squared error with original response
+    cv.rmse1 <- NULL # Root mean squared error with synthetic response
+    cv.rmse2 <- NULL # Root mean squared error with original response
     
     
     for (i in 0:(k-1)) {
