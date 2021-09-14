@@ -1233,5 +1233,5 @@ sd(dat.res2$RMSE[dat.res2$method=="6.KRB2"])
 mean(dat.res2$RMSE[dat.res2$method=="7.KRR1"])
 sd(dat.res2$RMSE[dat.res2$method=="7.KRR1"])
 mean(dat.res2$RMSE[dat.res2$method=="8.KRR2"])
-sd(dat.res2$RMSE[dat.res2$method=="2.KRR2"])
+sd(dat.res2$RMSE[dat.res2$method=="8.KRR2"])
 
