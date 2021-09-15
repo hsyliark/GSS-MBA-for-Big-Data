@@ -1,0 +1,8 @@
+KR1 : Kernel Regression with Synthetic Response Y*
+KR2 : Kernel Regression with Generated(Original) Response Y
+KRS1 : Kernel Regression with Sub-sampling and Synthetic Response Y*
+KRS2 : Kernel Regression with Sub-sampling and Generated(Original) Response Y
+KRB1 : Kernel Regression with Bagging and Synthetic Response Y*
+KRB2 : Kernel Regression with Bagging and Generated(Original) Response Y
+KRR1 : Kernel Regression with Random Forest and Synthetic Response Y*
+KRR2 : Kernel Regression with Random Forest and Generated(Original) Response Y

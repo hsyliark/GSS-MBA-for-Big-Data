@@ -1,0 +1,27 @@
+KR1 : Linear Kernel Regression with Synthetic Response Y*
+KR2 : Linear Kernel Regression with Generated(Original) Response Y
+KR3 : Laplace Kernel Regression with Synthetic Response Y*
+KR4 : Laplace Kernel Regression with Generated(Original) Response Y
+KR5 : Gaussian Kernel Regression with Synthetic Response Y*
+KR6 : Gaussian Kernel Regression with Generated(Original) Response Y 
+
+KRS1 : Linear Kernel Regression with Sub-sampling and Synthetic Response Y*
+KRS2 : Linear Kernel Regression with Sub-sampling and Generated(Original) Response Y
+KRS3 : Laplace Kernel Regression with Sub-sampling and Synthetic Response Y*
+KRS4 : Laplace Kernel Regression with Sub-sampling and Generated(Original) Response Y
+KRS5 : Gaussian Kernel Regression with Sub-sampling and Synthetic Response Y*
+KRS6 : Gaussian Kernel Regression with Sub-sampling and Generated(Original) Response Y
+
+KRB1 : Linear Kernel Regression with Bagging and Synthetic Response Y*
+KRB2 : Linear Kernel Regression with Bagging and Generated(Original) Response Y
+KRB3 : Laplace Kernel Regression with Bagging and Synthetic Response Y*
+KRB4 : Laplace Kernel Regression with Bagging and Generated(Original) Response Y
+KRB5 : Gaussian Kernel Regression with Bagging and Synthetic Response Y*
+KRB6 : Gaussian Kernel Regression with Bagging and Generated(Original) Response Y
+
+KRR1 : Linear Kernel Regression with Random Forest and Synthetic Response Y*
+KRR2 : Linear Kernel Regression with Random Forest and Generated(Original) Response Y
+KRR3 : Laplace Kernel Regression with Random Forest and Synthetic Response Y*
+KRR4 : Laplace Kernel Regression with Random Forest and Generated(Original) Response Y
+KRR5 : Gaussian Kernel Regression with Random Forest and Synthetic Response Y*
+KRR6 : Gaussian Kernel Regression with Random Forest and Generated(Original) Response Y
