@@ -31,6 +31,49 @@ km.surv <- function(time, cens) {
 
 ### Function for data generating
 
+## 3 explanatory variables
+# censoring --> (0% : 10 / 10% : 3  / 30% : 1.76 / 50% : 0.94 )
+dat.gen <- function(n, a, seed=NULL){
+  if(!is.null(seed)) set.seed(seed)
+  x1.i <- runif(n,-10,10)
+  x2.i <- runif(n,-10,10)
+  x3.i <- runif(n,-10,10)
+  # e.i <- rnorm(n, mean=0, sd=1)
+  y.i <- rnorm(n, mean=(x1.i/10)^2+(x2.i/10)^2+(x3.i/10)^2, sd=1)
+  # pred.value <- sin(2*pi*(x1.i*x2.i*x3.i*x4.i*x5.i))+cos(2*pi*(x6.i*x7.i*x8.i*x9.i*x10.i))
+  cen <- rnorm(n, mean=a, sd=1) # censoring values
+  pre.T <- pmin(y.i, cen)
+  delta <- (y.i <= cen) * 1
+  g <- km.surv(pre.T, delta)
+  y.i.s <- ifelse(pre.T <= quantile(pre.T, probs=0.98), pre.T*delta/g, 0) # synthetic response (KSV)
+  dat.sim <- data.frame(ys=y.i.s, x1=x1.i, x2=x2.i, x3=x3.i, y=y.i)
+  return( dat.sim )
+}
+
+## 5 explanatory variables
+# censoring --> (0% :  / 10% :  / 30% :  / 50% : )
+dat.gen <- function(n, a, seed=NULL){
+  if(!is.null(seed)) set.seed(seed)
+  x1.i <- runif(n,-10,10)
+  x2.i <- runif(n,-10,10)
+  x3.i <- runif(n,-10,10)
+  x4.i <- runif(n,-10,10)
+  x5.i <- runif(n,-10,10)
+  # e.i <- rnorm(n, mean=0, sd=1)
+  y.i <- rnorm(n, mean=(x1.i/10)^2+(x2.i/10)^2+(x3.i/10)^2+(x4.i/10)^2+(x5.i/10)^2,
+               sd=1)
+  # pred.value <- sin(2*pi*(x1.i*x2.i*x3.i*x4.i*x5.i))+cos(2*pi*(x6.i*x7.i*x8.i*x9.i*x10.i))
+  cen <- rnorm(n, mean=a, sd=1) # censoring values
+  pre.T <- pmin(y.i, cen)
+  delta <- (y.i <= cen) * 1
+  g <- km.surv(pre.T, delta)
+  y.i.s <- ifelse(pre.T <= quantile(pre.T, probs=0.98), pre.T*delta/g, 0) # synthetic response (KSV)
+  dat.sim <- data.frame(ys=y.i.s, x1=x1.i, x2=x2.i, x3=x3.i, x4=x4.i, x5=x5.i, y=y.i)
+  return( dat.sim )
+}
+
+## 10 explanatory variables
+# censoring --> (0% : 10 / 10% : 5.5 / 30% : 4.2 / 50% : 3.31)
 dat.gen <- function(n, a, seed=NULL){
   if(!is.null(seed)) set.seed(seed)
   x1.i <- runif(n,-10,10)
@@ -44,10 +87,11 @@ dat.gen <- function(n, a, seed=NULL){
   x9.i <- runif(n,-10,10)
   x10.i <- runif(n,-10,10)
   # e.i <- rnorm(n, mean=0, sd=1)
-  y.i <- rnorm(n, mean=(x1.i/10)^2+(x2.i/10)^2+(x3.i/10)^2+(x4.i/10)^2+(x5.i/10)^2+(x6.i/10)^2+(x7.i/10)^2+(x8.i/10)^2+(x9.i/10)^2+(x10.i/10)^2,
+  y.i <- rnorm(n, mean=(x1.i/10)^2+(x2.i/10)^2+(x3.i/10)^2+(x4.i/10)^2+(x5.i/10)^2+
+                 (x6.i/10)^2+(x7.i/10)^2+(x8.i/10)^2+(x9.i/10)^2+(x10.i/10)^2,
                sd=1)
   # pred.value <- sin(2*pi*(x1.i*x2.i*x3.i*x4.i*x5.i))+cos(2*pi*(x6.i*x7.i*x8.i*x9.i*x10.i))
-  cen <-rnorm(n, mean=a, sd=1) # censoring values
+  cen <- rnorm(n, mean=a, sd=1) # censoring values
   pre.T <- pmin(y.i, cen)
   delta <- (y.i <= cen) * 1
   g <- km.surv(pre.T, delta)
@@ -56,6 +100,50 @@ dat.gen <- function(n, a, seed=NULL){
                         x6=x6.i, x7=x7.i, x8=x8.i, x9=x9.i, x10=x10.i, y=y.i)
   return( dat.sim )
 }
+
+# 20 explanatory variables
+# censoring --> (0% :  / 10% :  / 30% :  / 50% : )
+dat.gen <- function(n, a, seed=NULL){
+  if(!is.null(seed)) set.seed(seed)
+  x1.i <- runif(n,-10,10)
+  x2.i <- runif(n,-10,10)
+  x3.i <- runif(n,-10,10)
+  x4.i <- runif(n,-10,10)
+  x5.i <- runif(n,-10,10)
+  x6.i <- runif(n,-10,10)
+  x7.i <- runif(n,-10,10)
+  x8.i <- runif(n,-10,10)
+  x9.i <- runif(n,-10,10)
+  x10.i <- runif(n,-10,10)
+  x11.i <- runif(n,-10,10)
+  x12.i <- runif(n,-10,10)
+  x13.i <- runif(n,-10,10)
+  x14.i <- runif(n,-10,10)
+  x15.i <- runif(n,-10,10)
+  x16.i <- runif(n,-10,10)
+  x17.i <- runif(n,-10,10)
+  x18.i <- runif(n,-10,10)
+  x19.i <- runif(n,-10,10)
+  x20.i <- runif(n,-10,10)
+  # e.i <- rnorm(n, mean=0, sd=1)
+  y.i <- rnorm(n, mean=(x1.i/10)^2+(x2.i/10)^2+(x3.i/10)^2+(x4.i/10)^2+(x5.i/10)^2+
+                 (x6.i/10)^2+(x7.i/10)^2+(x8.i/10)^2+(x9.i/10)^2+(x10.i/10)^2+
+                 (x11.i/10)^2+(x12.i/10)^2+(x13.i/10)^2+(x14.i/10)^2+(x15.i/10)^2+
+                 (x16.i/10)^2+(x17.i/10)^2+(x18.i/10)^2+(x19.i/10)^2+(x20.i/10)^2,
+               sd=1)
+  # pred.value <- sin(2*pi*(x1.i*x2.i*x3.i*x4.i*x5.i))+cos(2*pi*(x6.i*x7.i*x8.i*x9.i*x10.i))
+  cen <- rnorm(n, mean=a, sd=1) # censoring values
+  pre.T <- pmin(y.i, cen)
+  delta <- (y.i <= cen) * 1
+  g <- km.surv(pre.T, delta)
+  y.i.s <- ifelse(pre.T <= quantile(pre.T, probs=0.98), pre.T*delta/g, 0) # synthetic response (KSV)
+  dat.sim <- data.frame(ys=y.i.s, x1=x1.i, x2=x2.i, x3=x3.i, x4=x4.i, x5=x5.i,
+                        x6=x6.i, x7=x7.i, x8=x8.i, x9=x9.i, x10=x10.i,
+                        x11=x11.i, x12=x12.i, x13=x13.i, x14=x14.i, x15=x15.i,
+                        x16=x16.i, x17=x17.i, x18=x18.i, x19=x19.i, x20=x20.i, y=y.i)
+  return( dat.sim )
+}
+
 
 
 
@@ -2080,9 +2168,9 @@ library(ggplot2)
 
 # dat.res1 <- fit.ftn1(dat.sim)
 dat.res2 <- fit.ftn(50, 1000, 10) # censoring 0%
-dat.res2 <- fit.ftn(50, 1000, 5.5) # censoring 10%
-dat.res2 <- fit.ftn(50, 1000, 4.2) # censoring 30%
-dat.res2 <- fit.ftn(50, 1000, 3.31) # censoring 50%
+dat.res2 <- fit.ftn(50, 1000, 3) # censoring 10%
+dat.res2 <- fit.ftn(50, 1000, 1.76) # censoring 30%
+dat.res2 <- fit.ftn(50, 1000, 0.94) # censoring 50%
 ggplot(dat.res2, aes(x = method, y = RMSE, fill = method)) + geom_boxplot()  
 
 mean(dat.res2$RMSE[dat.res2$method=="a.KR1"])
