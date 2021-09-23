@@ -71,7 +71,7 @@ output: html_document
 ### code chunk number 2: R4ANCOVA.rnw:334-337
 ###################################################
 dat = read.csv("C:/Users/HSY/Desktop/DBP.csv",header=T,sep=",")
-# creat the difference
+# create the difference
 dat$diff = dat$DBP5-dat$DBP1
 dat
 ```
