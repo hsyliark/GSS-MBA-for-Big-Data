@@ -14,8 +14,8 @@ setwd("C:\\R-Project\\DAT\\Time Series Data")
 ##### 국내 총인구 
 ####################################################
 
-z <- scan("population.txt") 
-pop = round(z/10000)
+z <- scan("D:/Workplace/GSS_MBA_for_Big_Data/JBNU_Statistics_Ph.D/3rd semester/고급시계열분석/프로그램자료모음/제5판 시계열분석 data/population.txt") 
+pop <- round(z/10000)
 plot(1:length(z), pop, type='l')
 
 
@@ -221,7 +221,7 @@ plot(x,y, type='l', col='steelblue', lwd=2,
 abline(h=0, lty=2)
 abline(v= seq(0, 24, by=12), lty=2)
 
-
+par(mfrow=c(1,1))
 
 ###############################
 
@@ -264,7 +264,7 @@ grid.arrange(p1, p2, p3, nrow = 3)
 ##### 백화점 매출액 - 지시함수
 ####################################################
 
-z <-scan("depart.txt") 
+z <-scan("D:/Workplace/GSS_MBA_for_Big_Data/JBNU_Statistics_Ph.D/3rd semester/고급시계열분석/프로그램자료모음/제5판 시계열분석 data/depart.txt") 
 
 dep <- ts(z, frequency=12, start=c(1984,1))
 
