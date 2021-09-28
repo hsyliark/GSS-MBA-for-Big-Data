@@ -358,7 +358,7 @@ ggplot(tmp.data_sub, aes(day, res)) + geom_line(col='skyblue') +
 ####################################################
 ##### 국내 총인구 
 ####################################################
-z<- scan("catv.txt")
+z<- scan("D:/Workplace/GSS_MBA_for_Big_Data/JBNU_Statistics_Ph.D/3rd semester/고급시계열분석/프로그램자료모음/제5판 시계열분석 data/catv.txt")
 k = 70000000
 t <- 1:length(z)
 
