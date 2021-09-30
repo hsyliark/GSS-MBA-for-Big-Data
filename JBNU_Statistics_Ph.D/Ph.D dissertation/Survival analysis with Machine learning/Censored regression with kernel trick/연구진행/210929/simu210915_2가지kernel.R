@@ -27,7 +27,83 @@ km.surv <- function(time, cens) {
   
 }  
 
+### Synthetic response (KSV)
 
+# Censoring 0%
+x1.i <- runif(100,-1,1)
+x2.i <- runif(100,-1,1)
+x3.i <- runif(100,-1,1)
+x4.i <- runif(100,-1,1)
+x5.i <- runif(100,-1,1)
+e.i <- rnorm(100, mean=0, sd=1)
+y.i <- sin(2*pi*x1.i*x2.i)+cos(2*pi*x3.i*x4.i*x5.i)+e.i
+pred.value <- sin(2*pi*x1.i*x2.i)+cos(2*pi*x3.i*x4.i*x5.i)
+cen.0 <-rnorm(100, mean=10, sd=1) # censoring values
+pre.T.0 <- pmin(y.i, cen.0)
+delta.0 <- (y.i <= cen.0) * 1
+g.0 <- km.surv(pre.T.0, delta.0)
+y.i.0 <- ifelse(pre.T.0 <= quantile(pre.T.0, probs=0.98), pre.T.0*delta.0/g.0, 0) # synthetic response
+dat1 <- data.frame(y=y.i, ys=y.i.0, c=cen.0, d=delta.0, yp=pred.value, 
+                   x1=x1.i, x2=x2.i, x3=x3.i, x4=x4.i, x5=x5.i)
+dat.sim <- data.frame(ys=y.i.0, x1=x1.i, x2=x2.i, x3=x3.i, x4=x4.i, x5=x5.i, y=y.i)
+(sum(delta.0 == 0)/length(delta.0))*100
+
+# Censoring 10%
+x1.i <- runif(100,-1,1)
+x2.i <- runif(100,-1,1)
+x3.i <- runif(100,-1,1)
+x4.i <- runif(100,-1,1)
+x5.i <- runif(100,-1,1)
+e.i <- rnorm(100, mean=0, sd=1)
+y.i <- sin(2*pi*x1.i*x2.i)+cos(2*pi*x3.i*x4.i*x5.i)+e.i
+pred.value <- sin(2*pi*x1.i*x2.i)+cos(2*pi*x3.i*x4.i*x5.i)
+cen.10 <-rnorm(100, mean=2.5, sd=1) # censoring values
+pre.T.10 <- pmin(y.i, cen.10)
+delta.10 <- (y.i <= cen.10) * 1
+g.10 <- km.surv(pre.T.10, delta.10)
+y.i.10 <- ifelse(pre.T.10 <= quantile(pre.T.10, probs=0.98), pre.T.10*delta.10/g.10, 0) # synthetic response
+dat1 <- data.frame(y=y.i, ys=y.i.10, c=cen.10, d=delta.10, yp=pred.value, 
+                   x1=x1.i, x2=x2.i, x3=x3.i, x4=x4.i, x5=x5.i)
+dat.sim <- data.frame(ys=y.i.10, x1=x1.i, x2=x2.i, x3=x3.i, x4=x4.i, x5=x5.i, y=y.i)
+(sum(delta.10 == 0)/length(delta.10))*100
+
+# Censoring 30%
+x1.i <- runif(100,-1,1)
+x2.i <- runif(100,-1,1)
+x3.i <- runif(100,-1,1)
+x4.i <- runif(100,-1,1)
+x5.i <- runif(100,-1,1)
+e.i <- rnorm(100, mean=0, sd=1)
+y.i <- sin(2*pi*x1.i*x2.i)+cos(2*pi*x3.i*x4.i*x5.i)+e.i
+pred.value <- sin(2*pi*x1.i*x2.i)+cos(2*pi*x3.i*x4.i*x5.i)
+cen.30 <-rnorm(100, mean=1.5, sd=1) # censoring values
+pre.T.30 <- pmin(y.i, cen.30)
+delta.30 <- (y.i <= cen.30) * 1
+g.30 <- km.surv(pre.T.30, delta.30)
+y.i.30 <- ifelse(pre.T.30 <= quantile(pre.T.30, probs=0.98), pre.T.30*delta.30/g.30, 0) # synthetic response
+dat1 <- data.frame(y=y.i, ys=y.i.30, c=cen.30, d=delta.30, yp=pred.value, 
+                   x1=x1.i, x2=x2.i, x3=x3.i, x4=x4.i, x5=x5.i)
+dat.sim <- data.frame(ys=y.i.30, x1=x1.i, x2=x2.i, x3=x3.i, x4=x4.i, x5=x5.i, y=y.i)
+(sum(delta.30 == 0)/length(delta.30))*100
+
+# Censoring 50%
+x1.i <- runif(100,-1,1)
+x2.i <- runif(100,-1,1)
+x3.i <- runif(100,-1,1)
+x4.i <- runif(100,-1,1)
+x5.i <- runif(100,-1,1)
+e.i <- rnorm(100, mean=0, sd=1)
+y.i <- sin(2*pi*x1.i*x2.i)+cos(2*pi*x3.i*x4.i*x5.i)+e.i
+pred.value <- sin(2*pi*x1.i*x2.i)+cos(2*pi*x3.i*x4.i*x5.i)
+cen.50 <-rnorm(100, mean=0.7, sd=1) # censoring values
+pre.T.50 <- pmin(y.i, cen.50)
+delta.50 <- (y.i <= cen.50) * 1
+g.50 <- km.surv(pre.T.50, delta.50)
+y.i.50 <- ifelse(pre.T.50 <= quantile(pre.T.50, probs=0.98), pre.T.50*delta.50/g.50, 0) # synthetic response
+dat1 <- data.frame(y=y.i, ys=y.i.50, c=cen.50, d=delta.50, yp=pred.value, 
+                   x1=x1.i, x2=x2.i, x3=x3.i, x4=x4.i, x5=x5.i)
+dat.sim <- data.frame(ys=y.i.50, x1=x1.i, x2=x2.i, x3=x3.i, x4=x4.i, x5=x5.i, y=y.i)
+(sum(delta.50 == 0)/length(delta.50))*100
 
 
 
@@ -121,7 +197,7 @@ my.kernel.matrix2 <- function(dat.train, dat.test) {
 my.kernel.regression <- function(y, K, lambda) {
   
   # y : response variable
-  # K : matrix from Linear kernel or Gaussian kernel transformation
+  # K : matrix from Gaussian kernel transformation
   # lambda : penalty parameter
   
   if(lambda <= 0) 
@@ -132,7 +208,6 @@ my.kernel.regression <- function(y, K, lambda) {
   d.hat <- solve(K + lambda*diag(x=1, nrow=length(y), ncol=length(y)))%*%y
   
   y.hat <- K%*%d.hat
-  y.hat <- ifelse(y.hat<0, 0, y.hat) # non-zero of survival time
   
   return(list(d.hat=d.hat, y.hat=y.hat))
   
@@ -329,12 +404,9 @@ cv.kernel <- function(y.train.s, y.train, K.train, k, grid.l) {
 # KRR4 : Gaussian Kernel Regression with Random Forest and Generated(Original) Response Y
 
 
-
-
-
 ### Function for 1 independent variable
 
-fit.ftn1 <- function(number1, number2, a) {
+fit.ftn1 <- function(dat.sim) {
   
   
   
@@ -348,9 +420,11 @@ fit.ftn1 <- function(number1, number2, a) {
     # Making simulation data
     
     set.seed(i)
-    train.sim <- dat.gen(number1, a, seed=i)
-    test.sim <- dat.gen(number2, a, seed=i)
-    n.train <- nrow(train.sim) 
+    train.index <- sample(1:nrow(dat.sim), round(nrow(dat.sim)*7/10), replace=F)
+    
+    train.sim <- dat.sim[train.index,]
+    test.sim <- dat.sim[-train.index,]
+    n.train <- round(nrow(dat.sim)*7/10) 
     
     
     # 5-fold crossvalidation
@@ -407,9 +481,11 @@ fit.ftn1 <- function(number1, number2, a) {
     # Making simulation data
     
     set.seed(i)
-    train.sim <- dat.gen(number1, a, seed=i)
-    test.sim <- dat.gen(number2, a, seed=i)
-    n.train <- nrow(train.sim) 
+    train.index <- sample(1:nrow(dat.sim), round(nrow(dat.sim)*7/10), replace=F)
+    
+    train.sim <- dat.sim[train.index,]
+    test.sim <- dat.sim[-train.index,]
+    n.train <- round(nrow(dat.sim)*7/10) 
     
     
     # 5-fold crossvalidation
@@ -471,9 +547,11 @@ fit.ftn1 <- function(number1, number2, a) {
     # Making simulation data
     
     set.seed(i)
-    train.sim <- dat.gen(number1, a, seed=i)
-    test.sim <- dat.gen(number2, a, seed=i)
-    n.train <- nrow(train.sim)
+    train.index <- sample(1:nrow(dat.sim), round(nrow(dat.sim)*7/10), replace=F)
+    
+    train.sim <- dat.sim[train.index,]
+    test.sim <- dat.sim[-train.index,]
+    n.train <- round(nrow(dat.sim)*7/10)
     
     u <- my.kernel.matrix1(train.sim, test.sim)
     K.train <- u$K.train ; y.train.s <- u$y.train.s 
@@ -589,9 +667,11 @@ fit.ftn1 <- function(number1, number2, a) {
     # Making simulation data
     
     set.seed(i)
-    train.sim <- dat.gen(number1, a, seed=i)
-    test.sim <- dat.gen(number2, a, seed=i)
-    n.train <- nrow(train.sim)
+    train.index <- sample(1:nrow(dat.sim), round(nrow(dat.sim)*7/10), replace=F)
+    
+    train.sim <- dat.sim[train.index,]
+    test.sim <- dat.sim[-train.index,]
+    n.train <- round(nrow(dat.sim)*7/10)
     
     u <- my.kernel.matrix2(train.sim, test.sim)
     K.train <- u$K.train ; y.train.s <- u$y.train.s 
@@ -712,9 +792,12 @@ fit.ftn1 <- function(number1, number2, a) {
     # Making simulation data
     
     set.seed(s)
-    train.sim <- dat.gen(number1, a, seed=s)
-    test.sim <- dat.gen(number2, a, seed=s)
-    n.train <- nrow(train.sim) 
+    train.index <- sample(1:nrow(dat.sim), round(nrow(dat.sim)*7/10), replace=F)
+    
+    train.sim <- dat.sim[train.index,]
+    test.sim <- dat.sim[-train.index,]
+    test.sim.y <- test.sim[,1] 
+    n.train <- round(nrow(dat.sim)*7/10)
     
     u <- my.kernel.matrix1(train.sim, test.sim)
     K.train <- u$K.train ; y.train.s <- u$y.train.s 
@@ -799,9 +882,7 @@ fit.ftn1 <- function(number1, number2, a) {
     # Bagging estimate 
     
     y.hat1.bag <- rowMeans(boots.y1)
-    y.hat1.bag <- ifelse(y.hat1.bag<0, 0, y.hat1.bag)
     y.hat2.bag <- rowMeans(boots.y2)
-    y.hat2.bag <- ifelse(y.hat2.bag<0, 0, y.hat2.bag)
     
     # KRB[s] <- sqrt(sum((y.test - y.hat.bag)^2)/length(y.test))
     KRB1[s] <- sqrt(sum((y.test.s - y.hat1.bag)^2)/length(y.test.s))
@@ -825,9 +906,12 @@ fit.ftn1 <- function(number1, number2, a) {
     # Making simulation data
     
     set.seed(s)
-    train.sim <- dat.gen(number1, a, seed=s)
-    test.sim <- dat.gen(number2, a, seed=s)
-    n.train <- nrow(train.sim)
+    train.index <- sample(1:nrow(dat.sim), round(nrow(dat.sim)*7/10), replace=F)
+    
+    train.sim <- dat.sim[train.index,]
+    test.sim <- dat.sim[-train.index,]
+    test.sim.y <- test.sim[,1] 
+    n.train <- round(nrow(dat.sim)*7/10)
     
     u <- my.kernel.matrix2(train.sim, test.sim)
     K.train <- u$K.train ; y.train.s <- u$y.train.s 
@@ -912,9 +996,7 @@ fit.ftn1 <- function(number1, number2, a) {
     # Bagging estimate 
     
     y.hat1.bag <- rowMeans(boots.y1)
-    y.hat1.bag <- ifelse(y.hat1.bag<0, 0, y.hat1.bag)
     y.hat2.bag <- rowMeans(boots.y2)
-    y.hat2.bag <- ifelse(y.hat2.bag<0, 0, y.hat2.bag)
     
     # KRB[s] <- sqrt(sum((y.test - y.hat.bag)^2)/length(y.test))
     KRB3[s] <- sqrt(sum((y.test.s - y.hat1.bag)^2)/length(y.test.s))
@@ -946,10 +1028,11 @@ fit.ftn1 <- function(number1, number2, a) {
     # Making simulation data
     
     set.seed(s)
-    train.sim <- dat.gen(number1, a, seed=s)
-    test.sim <- dat.gen(number2, a, seed=s)
-    n.train <- nrow(train.sim)
+    train.index <- sample(1:nrow(dat.sim), round(nrow(dat.sim)*7/10), replace=F)
     
+    train.sim <- dat.sim[train.index,]
+    test.sim <- dat.sim[-train.index,]
+    n.train <- round(nrow(dat.sim)*7/10)
     train.sim.y.s <- train.sim[,1] ; test.sim.y.s <- test.sim[,1]
     train.sim.y <- train.sim[,ncol(train.sim)]
     test.sim.y <- test.sim[,ncol(test.sim)]
@@ -1045,9 +1128,7 @@ fit.ftn1 <- function(number1, number2, a) {
     # Random Forest estimate 
     
     y.hat1.rf <- rowMeans(boots.y1)
-    y.hat1.rf <- ifelse(y.hat1.rf<0, 0, y.hat1.rf)
     y.hat2.rf <- rowMeans(boots.y2)
-    y.hat2.rf <- ifelse(y.hat2.rf<0, 0, y.hat2.rf)
     
     # KRR[s] <- sqrt(sum((test.sim.y - y.hat.rf)^2)/length(test.sim.y))
     KRR1[s] <- sqrt(sum((test.sim.y.s - y.hat1.rf)^2)/length(test.sim.y.s))
@@ -1071,10 +1152,11 @@ fit.ftn1 <- function(number1, number2, a) {
     # Making simulation data
     
     set.seed(s)
-    train.sim <- dat.gen(number1, a, seed=s)
-    test.sim <- dat.gen(number2, a, seed=s)
-    n.train <- nrow(train.sim)
+    train.index <- sample(1:nrow(dat.sim), round(nrow(dat.sim)*7/10), replace=F)
     
+    train.sim <- dat.sim[train.index,]
+    test.sim <- dat.sim[-train.index,]
+    n.train <- round(nrow(dat.sim)*7/10)
     train.sim.y.s <- train.sim[,1] ; test.sim.y.s <- test.sim[,1]
     train.sim.y <- train.sim[,ncol(train.sim)]
     test.sim.y <- test.sim[,ncol(test.sim)]
@@ -1170,9 +1252,7 @@ fit.ftn1 <- function(number1, number2, a) {
     # Random Forest estimate 
     
     y.hat1.rf <- rowMeans(boots.y1)
-    y.hat1.rf <- ifelse(y.hat1.rf<0, 0, y.hat1.rf)
     y.hat2.rf <- rowMeans(boots.y2)
-    y.hat2.rf <- ifelse(y.hat2.rf<0, 0, y.hat2.rf)
     
     # KRR[s] <- sqrt(sum((test.sim.y - y.hat.rf)^2)/length(test.sim.y))
     KRR3[s] <- sqrt(sum((test.sim.y.s - y.hat1.rf)^2)/length(test.sim.y.s))
@@ -1205,7 +1285,7 @@ fit.ftn1 <- function(number1, number2, a) {
 
 
 
-fit.ftn <- function(number1, number2, a) {
+fit.ftn <- function(dat.sim) {
   
   
   
@@ -1220,9 +1300,11 @@ fit.ftn <- function(number1, number2, a) {
     # Making simulation data
     
     set.seed(i)
-    train.sim <- dat.gen(number1, a, seed=i)
-    test.sim <- dat.gen(number2, a, seed=i)
-    n.train <- nrow(train.sim) 
+    train.index <- sample(1:nrow(dat.sim), round(nrow(dat.sim)*7/10), replace=F)
+    
+    train.sim <- dat.sim[train.index,]
+    test.sim <- dat.sim[-train.index,]
+    n.train <- round(nrow(dat.sim)*7/10) 
     
     
     # 5-fold crossvalidation
@@ -1279,9 +1361,11 @@ fit.ftn <- function(number1, number2, a) {
     # Making simulation data
     
     set.seed(i)
-    train.sim <- dat.gen(number1, a, seed=i)
-    test.sim <- dat.gen(number2, a, seed=i)
-    n.train <- nrow(train.sim) 
+    train.index <- sample(1:nrow(dat.sim), round(nrow(dat.sim)*7/10), replace=F)
+    
+    train.sim <- dat.sim[train.index,]
+    test.sim <- dat.sim[-train.index,]
+    n.train <- round(nrow(dat.sim)*7/10) 
     
     
     # 5-fold crossvalidation
@@ -1343,9 +1427,11 @@ fit.ftn <- function(number1, number2, a) {
     # Making simulation data
     
     set.seed(i)
-    train.sim <- dat.gen(number1, a, seed=i)
-    test.sim <- dat.gen(number2, a, seed=i)
-    n.train <- nrow(train.sim)
+    train.index <- sample(1:nrow(dat.sim), round(nrow(dat.sim)*7/10), replace=F)
+    
+    train.sim <- dat.sim[train.index,]
+    test.sim <- dat.sim[-train.index,]
+    n.train <- round(nrow(dat.sim)*7/10)
     
     u <- my.kernel.matrix1(train.sim, test.sim)
     K.train <- u$K.train ; y.train.s <- u$y.train.s 
@@ -1461,9 +1547,11 @@ fit.ftn <- function(number1, number2, a) {
     # Making simulation data
     
     set.seed(i)
-    train.sim <- dat.gen(number1, a, seed=i)
-    test.sim <- dat.gen(number2, a, seed=i)
-    n.train <- nrow(train.sim)
+    train.index <- sample(1:nrow(dat.sim), round(nrow(dat.sim)*7/10), replace=F)
+    
+    train.sim <- dat.sim[train.index,]
+    test.sim <- dat.sim[-train.index,]
+    n.train <- round(nrow(dat.sim)*7/10)
     
     u <- my.kernel.matrix2(train.sim, test.sim)
     K.train <- u$K.train ; y.train.s <- u$y.train.s 
@@ -1585,9 +1673,12 @@ fit.ftn <- function(number1, number2, a) {
     # Making simulation data
     
     set.seed(s)
-    train.sim <- dat.gen(number1, a, seed=s)
-    test.sim <- dat.gen(number2, a, seed=s)
-    n.train <- nrow(train.sim)
+    train.index <- sample(1:nrow(dat.sim), round(nrow(dat.sim)*7/10), replace=F)
+    
+    train.sim <- dat.sim[train.index,]
+    test.sim <- dat.sim[-train.index,]
+    test.sim.y <- test.sim[,1] 
+    n.train <- round(nrow(dat.sim)*7/10)
     
     u <- my.kernel.matrix1(train.sim, test.sim)
     K.train <- u$K.train ; y.train.s <- u$y.train.s 
@@ -1672,9 +1763,7 @@ fit.ftn <- function(number1, number2, a) {
     # Bagging estimate 
     
     y.hat1.bag <- rowMeans(boots.y1)
-    y.hat1.bag <- ifelse(y.hat1.bag<0, 0, y.hat1.bag)
     y.hat2.bag <- rowMeans(boots.y2)
-    y.hat2.bag <- ifelse(y.hat2.bag<0, 0, y.hat2.bag)
     
     # KRB[s] <- sqrt(sum((y.test - y.hat.bag)^2)/length(y.test))
     KRB1[s] <- sqrt(sum((y.test.s - y.hat1.bag)^2)/length(y.test.s))
@@ -1698,9 +1787,12 @@ fit.ftn <- function(number1, number2, a) {
     # Making simulation data
     
     set.seed(s)
-    train.sim <- dat.gen(number1, a, seed=s)
-    test.sim <- dat.gen(number2, a, seed=s)
-    n.train <- nrow(train.sim)
+    train.index <- sample(1:nrow(dat.sim), round(nrow(dat.sim)*7/10), replace=F)
+    
+    train.sim <- dat.sim[train.index,]
+    test.sim <- dat.sim[-train.index,]
+    test.sim.y <- test.sim[,1] 
+    n.train <- round(nrow(dat.sim)*7/10)
     
     u <- my.kernel.matrix2(train.sim, test.sim)
     K.train <- u$K.train ; y.train.s <- u$y.train.s 
@@ -1785,9 +1877,7 @@ fit.ftn <- function(number1, number2, a) {
     # Bagging estimate 
     
     y.hat1.bag <- rowMeans(boots.y1)
-    y.hat1.bag <- ifelse(y.hat1.bag<0, 0, y.hat1.bag)
     y.hat2.bag <- rowMeans(boots.y2)
-    y.hat2.bag <- ifelse(y.hat2.bag<0, 0, y.hat2.bag)
     
     # KRB[s] <- sqrt(sum((y.test - y.hat.bag)^2)/length(y.test))
     KRB3[s] <- sqrt(sum((y.test.s - y.hat1.bag)^2)/length(y.test.s))
@@ -1816,10 +1906,11 @@ fit.ftn <- function(number1, number2, a) {
     # Making simulation data
     
     set.seed(s)
-    train.sim <- dat.gen(number1, a, seed=s)
-    test.sim <- dat.gen(number2, a, seed=s)
-    n.train <- nrow(train.sim)
+    train.index <- sample(1:nrow(dat.sim), round(nrow(dat.sim)*7/10), replace=F)
     
+    train.sim <- dat.sim[train.index,]
+    test.sim <- dat.sim[-train.index,]
+    n.train <- round(nrow(dat.sim)*7/10)
     train.sim.y.s <- train.sim[,1] ; test.sim.y.s <- test.sim[,1]
     train.sim.y <- train.sim[,ncol(train.sim)]
     test.sim.y <- test.sim[,ncol(test.sim)]
@@ -1912,9 +2003,7 @@ fit.ftn <- function(number1, number2, a) {
     # Random Forest estimate 
     
     y.hat1.rf <- rowMeans(boots.y1)
-    y.hat1.rf <- ifelse(y.hat1.rf<0, 0, y.hat1.rf)
     y.hat2.rf <- rowMeans(boots.y2)
-    y.hat2.rf <- ifelse(y.hat2.rf<0, 0, y.hat2.rf)
     
     # KRR[s] <- sqrt(sum((test.sim.y - y.hat.rf)^2)/length(test.sim.y))
     KRR1[s] <- sqrt(sum((test.sim.y.s - y.hat1.rf)^2)/length(test.sim.y.s))
@@ -1938,10 +2027,11 @@ fit.ftn <- function(number1, number2, a) {
     # Making simulation data
     
     set.seed(s)
-    train.sim <- dat.gen(number1, a, seed=s)
-    test.sim <- dat.gen(number2, a, seed=s)
-    n.train <- nrow(train.sim)
+    train.index <- sample(1:nrow(dat.sim), round(nrow(dat.sim)*7/10), replace=F)
     
+    train.sim <- dat.sim[train.index,]
+    test.sim <- dat.sim[-train.index,]
+    n.train <- round(nrow(dat.sim)*7/10)
     train.sim.y.s <- train.sim[,1] ; test.sim.y.s <- test.sim[,1]
     train.sim.y <- train.sim[,ncol(train.sim)]
     test.sim.y <- test.sim[,ncol(test.sim)]
@@ -2034,9 +2124,7 @@ fit.ftn <- function(number1, number2, a) {
     # Random Forest estimate 
     
     y.hat1.rf <- rowMeans(boots.y1)
-    y.hat1.rf <- ifelse(y.hat1.rf<0, 0, y.hat1.rf)
     y.hat2.rf <- rowMeans(boots.y2)
-    y.hat2.rf <- ifelse(y.hat2.rf<0, 0, y.hat2.rf)
     
     # KRR[s] <- sqrt(sum((test.sim.y - y.hat.rf)^2)/length(test.sim.y))
     KRR3[s] <- sqrt(sum((test.sim.y.s - y.hat1.rf)^2)/length(test.sim.y.s))
@@ -2067,370 +2155,42 @@ fit.ftn <- function(number1, number2, a) {
 
 library(ggplot2)
 
-# Boxplot for one dataset
-ggplot(dat.res1_1, aes(x = method, y = RMSE, fill = method)) + geom_boxplot() 
-ggplot(dat.res1_2, aes(x = method, y = RMSE, fill = method)) + geom_boxplot()
-ggplot(dat.res1_3, aes(x = method, y = RMSE, fill = method)) + geom_boxplot()
-# Boxplot for row binded dataset
-dat.res1[dat.res1$number==50,]$number <- "1(50)"
-dat.res1[dat.res1$number==100,]$number <- "2(100)"
-dat.res1[dat.res1$number==200,]$number <- "3(200)"
-ggplot(dat.res1, aes(x = number, y = RMSE, fill = number)) + geom_boxplot() +
-  facet_wrap(~ method, ncol=16) + theme(axis.text.x=element_text(angle=45, hjust=1))
+# dat.res1 <- fit.ftn1(dat.sim)
+dat.res2 <- fit.ftn(dat.sim)
+ggplot(dat.res2, aes(x = method, y = RMSE, fill = method)) + geom_boxplot()  
 
+mean(dat.res2$RMSE[dat.res2$method=="a.KR1"])
+sd(dat.res2$RMSE[dat.res2$method=="a.KR1"])
+mean(dat.res2$RMSE[dat.res2$method=="b.KR2"])
+sd(dat.res2$RMSE[dat.res2$method=="b.KR2"])
+mean(dat.res2$RMSE[dat.res2$method=="c.KR3"])
+sd(dat.res2$RMSE[dat.res2$method=="c.KR3"])
+mean(dat.res2$RMSE[dat.res2$method=="d.KR4"])
+sd(dat.res2$RMSE[dat.res2$method=="d.KR4"])
 
-# Print result
-mean(dat.res1_1$RMSE[dat.res1_1$method=="a.KR1"])
-sd(dat.res1_1$RMSE[dat.res1_1$method=="a.KR1"])
-mean(dat.res1_1$RMSE[dat.res1_1$method=="b.KR2"])
-sd(dat.res1_1$RMSE[dat.res1_1$method=="b.KR2"])
-mean(dat.res1_1$RMSE[dat.res1_1$method=="c.KR3"])
-sd(dat.res1_1$RMSE[dat.res1_1$method=="c.KR3"])
-mean(dat.res1_1$RMSE[dat.res1_1$method=="d.KR4"])
-sd(dat.res1_1$RMSE[dat.res1_1$method=="d.KR4"])
+mean(dat.res2$RMSE[dat.res2$method=="e.KRS1"])
+sd(dat.res2$RMSE[dat.res2$method=="e.KRS1"])
+mean(dat.res2$RMSE[dat.res2$method=="f.KRS2"])
+sd(dat.res2$RMSE[dat.res2$method=="f.KRS2"])
+mean(dat.res2$RMSE[dat.res2$method=="g.KRS3"])
+sd(dat.res2$RMSE[dat.res2$method=="g.KRS3"])
+mean(dat.res2$RMSE[dat.res2$method=="h.KRS4"])
+sd(dat.res2$RMSE[dat.res2$method=="h.KRS4"])
 
-mean(dat.res1_1$RMSE[dat.res1_1$method=="e.KRS1"])
-sd(dat.res1_1$RMSE[dat.res1_1$method=="e.KRS1"])
-mean(dat.res1_1$RMSE[dat.res1_1$method=="f.KRS2"])
-sd(dat.res1_1$RMSE[dat.res1_1$method=="f.KRS2"])
-mean(dat.res1_1$RMSE[dat.res1_1$method=="g.KRS3"])
-sd(dat.res1_1$RMSE[dat.res1_1$method=="g.KRS3"])
-mean(dat.res1_1$RMSE[dat.res1_1$method=="h.KRS4"])
-sd(dat.res1_1$RMSE[dat.res1_1$method=="h.KRS4"])
+mean(dat.res2$RMSE[dat.res2$method=="i.KRB1"])
+sd(dat.res2$RMSE[dat.res2$method=="i.KRB1"])
+mean(dat.res2$RMSE[dat.res2$method=="j.KRB2"])
+sd(dat.res2$RMSE[dat.res2$method=="j.KRB2"])
+mean(dat.res2$RMSE[dat.res2$method=="k.KRB3"])
+sd(dat.res2$RMSE[dat.res2$method=="k.KRB3"])
+mean(dat.res2$RMSE[dat.res2$method=="l.KRB4"])
+sd(dat.res2$RMSE[dat.res2$method=="l.KRB4"])
 
-mean(dat.res1_1$RMSE[dat.res1_1$method=="i.KRB1"])
-sd(dat.res1_1$RMSE[dat.res1_1$method=="i.KRB1"])
-mean(dat.res1_1$RMSE[dat.res1_1$method=="j.KRB2"])
-sd(dat.res1_1$RMSE[dat.res1_1$method=="j.KRB2"])
-mean(dat.res1_1$RMSE[dat.res1_1$method=="k.KRB3"])
-sd(dat.res1_1$RMSE[dat.res1_1$method=="k.KRB3"])
-mean(dat.res1_1$RMSE[dat.res1_1$method=="l.KRB4"])
-sd(dat.res1_1$RMSE[dat.res1_1$method=="l.KRB4"])
-
-mean(dat.res1_1$RMSE[dat.res1_1$method=="m.KRR1"])
-sd(dat.res1_1$RMSE[dat.res1_1$method=="m.KRR1"])
-mean(dat.res1_1$RMSE[dat.res1_1$method=="n.KRR2"])
-sd(dat.res1_1$RMSE[dat.res1_1$method=="n.KRR2"])
-mean(dat.res1_1$RMSE[dat.res1_1$method=="o.KRR3"])
-sd(dat.res1_1$RMSE[dat.res1_1$method=="o.KRR3"])
-mean(dat.res1_1$RMSE[dat.res1_1$method=="p.KRR4"])
-sd(dat.res1_1$RMSE[dat.res1_1$method=="p.KRR4"])
-#-----------------------------------------------------#
-
-mean(dat.res1_2$RMSE[dat.res1_2$method=="a.KR1"])
-sd(dat.res1_2$RMSE[dat.res1_2$method=="a.KR1"])
-mean(dat.res1_2$RMSE[dat.res1_2$method=="b.KR2"])
-sd(dat.res1_2$RMSE[dat.res1_2$method=="b.KR2"])
-mean(dat.res1_2$RMSE[dat.res1_2$method=="c.KR3"])
-sd(dat.res1_2$RMSE[dat.res1_2$method=="c.KR3"])
-mean(dat.res1_2$RMSE[dat.res1_2$method=="d.KR4"])
-sd(dat.res1_2$RMSE[dat.res1_2$method=="d.KR4"])
-
-mean(dat.res1_2$RMSE[dat.res1_2$method=="e.KRS1"])
-sd(dat.res1_2$RMSE[dat.res1_2$method=="e.KRS1"])
-mean(dat.res1_2$RMSE[dat.res1_2$method=="f.KRS2"])
-sd(dat.res1_2$RMSE[dat.res1_2$method=="f.KRS2"])
-mean(dat.res1_2$RMSE[dat.res1_2$method=="g.KRS3"])
-sd(dat.res1_2$RMSE[dat.res1_2$method=="g.KRS3"])
-mean(dat.res1_2$RMSE[dat.res1_2$method=="h.KRS4"])
-sd(dat.res1_2$RMSE[dat.res1_2$method=="h.KRS4"])
-
-mean(dat.res1_2$RMSE[dat.res1_2$method=="i.KRB1"])
-sd(dat.res1_2$RMSE[dat.res1_2$method=="i.KRB1"])
-mean(dat.res1_2$RMSE[dat.res1_2$method=="j.KRB2"])
-sd(dat.res1_2$RMSE[dat.res1_2$method=="j.KRB2"])
-mean(dat.res1_2$RMSE[dat.res1_2$method=="k.KRB3"])
-sd(dat.res1_2$RMSE[dat.res1_2$method=="k.KRB3"])
-mean(dat.res1_2$RMSE[dat.res1_2$method=="l.KRB4"])
-sd(dat.res1_2$RMSE[dat.res1_2$method=="l.KRB4"])
-
-mean(dat.res1_2$RMSE[dat.res1_2$method=="m.KRR1"])
-sd(dat.res1_2$RMSE[dat.res1_2$method=="m.KRR1"])
-mean(dat.res1_2$RMSE[dat.res1_2$method=="n.KRR2"])
-sd(dat.res1_2$RMSE[dat.res1_2$method=="n.KRR2"])
-mean(dat.res1_2$RMSE[dat.res1_2$method=="o.KRR3"])
-sd(dat.res1_2$RMSE[dat.res1_2$method=="o.KRR3"])
-mean(dat.res1_2$RMSE[dat.res1_2$method=="p.KRR4"])
-sd(dat.res1_2$RMSE[dat.res1_2$method=="p.KRR4"])
-#-----------------------------------------------------#
-
-mean(dat.res1_3$RMSE[dat.res1_3$method=="a.KR1"])
-sd(dat.res1_3$RMSE[dat.res1_3$method=="a.KR1"])
-mean(dat.res1_3$RMSE[dat.res1_3$method=="b.KR2"])
-sd(dat.res1_3$RMSE[dat.res1_3$method=="b.KR2"])
-mean(dat.res1_3$RMSE[dat.res1_3$method=="c.KR3"])
-sd(dat.res1_3$RMSE[dat.res1_3$method=="c.KR3"])
-mean(dat.res1_3$RMSE[dat.res1_3$method=="d.KR4"])
-sd(dat.res1_3$RMSE[dat.res1_3$method=="d.KR4"])
-
-mean(dat.res1_3$RMSE[dat.res1_3$method=="e.KRS1"])
-sd(dat.res1_3$RMSE[dat.res1_3$method=="e.KRS1"])
-mean(dat.res1_3$RMSE[dat.res1_3$method=="f.KRS2"])
-sd(dat.res1_3$RMSE[dat.res1_3$method=="f.KRS2"])
-mean(dat.res1_3$RMSE[dat.res1_3$method=="g.KRS3"])
-sd(dat.res1_3$RMSE[dat.res1_3$method=="g.KRS3"])
-mean(dat.res1_3$RMSE[dat.res1_3$method=="h.KRS4"])
-sd(dat.res1_3$RMSE[dat.res1_3$method=="h.KRS4"])
-
-mean(dat.res1_3$RMSE[dat.res1_3$method=="i.KRB1"])
-sd(dat.res1_3$RMSE[dat.res1_3$method=="i.KRB1"])
-mean(dat.res1_3$RMSE[dat.res1_3$method=="j.KRB2"])
-sd(dat.res1_3$RMSE[dat.res1_3$method=="j.KRB2"])
-mean(dat.res1_3$RMSE[dat.res1_3$method=="k.KRB3"])
-sd(dat.res1_3$RMSE[dat.res1_3$method=="k.KRB3"])
-mean(dat.res1_3$RMSE[dat.res1_3$method=="l.KRB4"])
-sd(dat.res1_3$RMSE[dat.res1_3$method=="l.KRB4"])
-
-mean(dat.res1_3$RMSE[dat.res1_3$method=="m.KRR1"])
-sd(dat.res1_3$RMSE[dat.res1_3$method=="m.KRR1"])
-mean(dat.res1_3$RMSE[dat.res1_3$method=="n.KRR2"])
-sd(dat.res1_3$RMSE[dat.res1_3$method=="n.KRR2"])
-mean(dat.res1_3$RMSE[dat.res1_3$method=="o.KRR3"])
-sd(dat.res1_3$RMSE[dat.res1_3$method=="o.KRR3"])
-mean(dat.res1_3$RMSE[dat.res1_3$method=="p.KRR4"])
-sd(dat.res1_3$RMSE[dat.res1_3$method=="p.KRR4"]) 
-#-----------------------------------------------------#
-
-
-
-
-#### Summary (p : number of independent variables / n : size of training data)
-## Caution -> Please use appropriate 'dat.gen' function
-
-
-### p=3
-
-## Data generating
-# 3 explanatory variables
-# censoring --> ( 0% : 20 / 10% : 13  / 30% : 11.76 / 50% : 10.94 )
-dat.gen <- function(n, a, seed=NULL){
-  if(!is.null(seed)) set.seed(seed)
-  x1.i <- runif(n,-10,10)
-  x2.i <- runif(n,-10,10)
-  x3.i <- runif(n,-10,10)
-  # e.i <- rnorm(n, mean=0, sd=1)
-  y.i <- rnorm(n, mean=10+(x1.i/10)^2+(x2.i/10)^2+(x3.i/10)^2, sd=1)
-  y.i <- ifelse(y.i<0, 0, y.i)
-  # pred.value <- sin(2*pi*(x1.i*x2.i*x3.i*x4.i*x5.i))+cos(2*pi*(x6.i*x7.i*x8.i*x9.i*x10.i))
-  cen <- rnorm(n, mean=a, sd=1) # censoring values
-  cen <- ifelse(cen<0, 0, cen)
-  pre.T <- pmin(y.i, cen)
-  delta <- (y.i <= cen) * 1
-  g <- km.surv(pre.T, delta)
-  y.i.s <- ifelse(pre.T <= quantile(pre.T, probs=0.98), pre.T*delta/g, 0) # synthetic response (KSV)
-  dat.sim <- data.frame(ys=y.i.s, x1=x1.i, x2=x2.i, x3=x3.i, y=y.i)
-  return( dat.sim )
-}
-
-## p=3, censoring 0%
-dat.res1_1 <- fit.ftn(50, 1000, 20) # n=50
-dat.res1_2 <- fit.ftn(100, 1000, 20) # n=100
-dat.res1_3 <- fit.ftn(200, 1000, 20) # n=200
-dat.res1 <- rbind(dat.res1_1, dat.res1_2, dat.res1_3)
-
-## p=3, censoring 10%
-dat.res2_1 <- fit.ftn(50, 1000, 13) # n=50
-dat.res2_2 <- fit.ftn(100, 1000, 13) # n=100
-dat.res2_3 <- fit.ftn(200, 1000, 13) # n=200
-dat.res2 <- rbind(dat.res2_1, dat.res2_2, dat.res2_3)
-
-## p=3, censoring 30%
-dat.res3_1 <- fit.ftn(50, 1000, 11.76) # n=50
-dat.res3_2 <- fit.ftn(100, 1000, 11.76) # n=100
-dat.res3_3 <- fit.ftn(200, 1000, 11.76) # n=200
-dat.res3 <- rbind(dat.res3_1, dat.res3_2, dat.res3_3)
-
-## p=3, censoring 50%
-dat.res4_1 <- fit.ftn(50, 1000, 10.94) # n=50
-dat.res4_2 <- fit.ftn(100, 1000, 10.94) # n=100
-dat.res4_3 <- fit.ftn(200, 1000, 10.94) # n=200
-dat.res4 <- rbind(dat.res4_1, dat.res4_2, dat.res4_3)
-
-
-### p=5
-
-## Data generating
-# 5 explanatory variables
-# censoring --> ( 0% : 20 / 10% : 13.65 / 30% : 12.5 / 50% : 11.61 )
-dat.gen <- function(n, a, seed=NULL){
-  if(!is.null(seed)) set.seed(seed)
-  x1.i <- runif(n,-10,10)
-  x2.i <- runif(n,-10,10)
-  x3.i <- runif(n,-10,10)
-  x4.i <- runif(n,-10,10)
-  x5.i <- runif(n,-10,10)
-  # e.i <- rnorm(n, mean=0, sd=1)
-  y.i <- rnorm(n, mean=10+(x1.i/10)^2+(x2.i/10)^2+(x3.i/10)^2+(x4.i/10)^2+(x5.i/10)^2,
-               sd=1)
-  y.i <- ifelse(y.i<0, 0, y.i)
-  # pred.value <- sin(2*pi*(x1.i*x2.i*x3.i*x4.i*x5.i))+cos(2*pi*(x6.i*x7.i*x8.i*x9.i*x10.i))
-  cen <- rnorm(n, mean=a, sd=1) # censoring values
-  cen <- ifelse(cen<0, 0, cen)
-  pre.T <- pmin(y.i, cen)
-  delta <- (y.i <= cen) * 1
-  g <- km.surv(pre.T, delta)
-  y.i.s <- ifelse(pre.T <= quantile(pre.T, probs=0.98), pre.T*delta/g, 0) # synthetic response (KSV)
-  dat.sim <- data.frame(ys=y.i.s, x1=x1.i, x2=x2.i, x3=x3.i, x4=x4.i, x5=x5.i, y=y.i)
-  return( dat.sim )
-}
-
-## p=5, censoring 0%
-dat.res5_1 <- fit.ftn(50, 1000, 20) # n=50
-dat.res5_2 <- fit.ftn(100, 1000, 20) # n=100
-dat.res5_3 <- fit.ftn(200, 1000, 20) # n=200
-dat.res5 <- rbind(dat.res5_1, dat.res5_2, dat.res5_3)
-
-## p=5, censoring 10%
-dat.res6_1 <- fit.ftn(50, 1000, 13.65) # n=50
-dat.res6_2 <- fit.ftn(100, 1000, 13.65) # n=100
-dat.res6_3 <- fit.ftn(200, 1000, 13.65) # n=200
-dat.res6 <- rbind(dat.res6_1, dat.res6_2, dat.res6_3)
-
-## p=5, censoring 30%
-dat.res7_1 <- fit.ftn(50, 1000, 12.5) # n=50
-dat.res7_2 <- fit.ftn(100, 1000, 12.5) # n=100
-dat.res7_3 <- fit.ftn(200, 1000, 12.5) # n=200
-dat.res7 <- rbind(dat.res7_1, dat.res7_2, dat.res7_3)
-
-## p=5, censoring 50%
-dat.res8_1 <- fit.ftn(50, 1000, 11.61) # n=50
-dat.res8_2 <- fit.ftn(100, 1000, 11.61) # n=100
-dat.res8_3 <- fit.ftn(200, 1000, 11.61) # n=200
-dat.res8 <- rbind(dat.res8_1, dat.res8_2, dat.res8_3)
-
-
-### p=10
-
-## Data generating
-# 10 explanatory variables
-# censoring --> ( 0% : 20 / 10% : 15.5 / 30% : 14.2 / 50% : 13.31 )
-dat.gen <- function(n, a, seed=NULL){
-  if(!is.null(seed)) set.seed(seed)
-  x1.i <- runif(n,-10,10)
-  x2.i <- runif(n,-10,10)
-  x3.i <- runif(n,-10,10)
-  x4.i <- runif(n,-10,10)
-  x5.i <- runif(n,-10,10)
-  x6.i <- runif(n,-10,10)
-  x7.i <- runif(n,-10,10)
-  x8.i <- runif(n,-10,10)
-  x9.i <- runif(n,-10,10)
-  x10.i <- runif(n,-10,10)
-  # e.i <- rnorm(n, mean=0, sd=1)
-  y.i <- rnorm(n, mean=10+(x1.i/10)^2+(x2.i/10)^2+(x3.i/10)^2+(x4.i/10)^2+(x5.i/10)^2+
-                 (x6.i/10)^2+(x7.i/10)^2+(x8.i/10)^2+(x9.i/10)^2+(x10.i/10)^2,
-               sd=1)
-  y.i <- ifelse(y.i<0, 0, y.i)
-  # pred.value <- sin(2*pi*(x1.i*x2.i*x3.i*x4.i*x5.i))+cos(2*pi*(x6.i*x7.i*x8.i*x9.i*x10.i))
-  cen <- rnorm(n, mean=a, sd=1) # censoring values
-  cen <- ifelse(cen<0, 0, cen)
-  pre.T <- pmin(y.i, cen)
-  delta <- (y.i <= cen) * 1
-  g <- km.surv(pre.T, delta)
-  y.i.s <- ifelse(pre.T <= quantile(pre.T, probs=0.98), pre.T*delta/g, 0) # synthetic response (KSV)
-  dat.sim <- data.frame(ys=y.i.s, x1=x1.i, x2=x2.i, x3=x3.i, x4=x4.i, x5=x5.i,
-                        x6=x6.i, x7=x7.i, x8=x8.i, x9=x9.i, x10=x10.i, y=y.i)
-  return( dat.sim )
-}
-
-## p=10, censoring 0%
-dat.res9_1 <- fit.ftn(50, 1000, 20) # n=50
-dat.res9_2 <- fit.ftn(100, 1000, 20) # n=100
-dat.res9_3 <- fit.ftn(200, 1000, 20) # n=200
-dat.res9 <- rbind(dat.res9_1, dat.res9_2, dat.res9_3)
-
-## p=10, censoring 10%
-dat.res10_1 <- fit.ftn(50, 1000, 15.5) # n=50
-dat.res10_2 <- fit.ftn(100, 1000, 15.5) # n=100
-dat.res10_3 <- fit.ftn(200, 1000, 15.5) # n=200
-dat.res10 <- rbind(dat.res10_1, dat.res10_2, dat.res10_3)
-
-## p=10, censoring 30%
-dat.res11_1 <- fit.ftn(50, 1000, 14.2) # n=50
-dat.res11_2 <- fit.ftn(100, 1000, 14.2) # n=100
-dat.res11_3 <- fit.ftn(200, 1000, 14.2) # n=200
-dat.res11 <- rbind(dat.res11_1, dat.res11_2, dat.res11_3)
-
-## p=10, censoring 50%
-dat.res12_1 <- fit.ftn(50, 1000, 13.31) # n=50
-dat.res12_2 <- fit.ftn(100, 1000, 13.31) # n=100
-dat.res12_3 <- fit.ftn(200, 1000, 13.31) # n=200
-dat.res12 <- rbind(dat.res12_1, dat.res12_2, dat.res12_3)
-
-
-### p=20
-
-## Data generating
-# 20 explanatory variables
-# censoring --> ( 0% : 30 / 10% : 19.1 / 30% : 17.63 / 50% : 16.64 )
-dat.gen <- function(n, a, seed=NULL){
-  if(!is.null(seed)) set.seed(seed)
-  x1.i <- runif(n,-10,10)
-  x2.i <- runif(n,-10,10)
-  x3.i <- runif(n,-10,10)
-  x4.i <- runif(n,-10,10)
-  x5.i <- runif(n,-10,10)
-  x6.i <- runif(n,-10,10)
-  x7.i <- runif(n,-10,10)
-  x8.i <- runif(n,-10,10)
-  x9.i <- runif(n,-10,10)
-  x10.i <- runif(n,-10,10)
-  x11.i <- runif(n,-10,10)
-  x12.i <- runif(n,-10,10)
-  x13.i <- runif(n,-10,10)
-  x14.i <- runif(n,-10,10)
-  x15.i <- runif(n,-10,10)
-  x16.i <- runif(n,-10,10)
-  x17.i <- runif(n,-10,10)
-  x18.i <- runif(n,-10,10)
-  x19.i <- runif(n,-10,10)
-  x20.i <- runif(n,-10,10)
-  # e.i <- rnorm(n, mean=0, sd=1)
-  y.i <- rnorm(n, mean=10+(x1.i/10)^2+(x2.i/10)^2+(x3.i/10)^2+(x4.i/10)^2+(x5.i/10)^2+
-                 (x6.i/10)^2+(x7.i/10)^2+(x8.i/10)^2+(x9.i/10)^2+(x10.i/10)^2+
-                 (x11.i/10)^2+(x12.i/10)^2+(x13.i/10)^2+(x14.i/10)^2+(x15.i/10)^2+
-                 (x16.i/10)^2+(x17.i/10)^2+(x18.i/10)^2+(x19.i/10)^2+(x20.i/10)^2,
-               sd=1)
-  y.i <- ifelse(y.i<0, 0, y.i)
-  # pred.value <- sin(2*pi*(x1.i*x2.i*x3.i*x4.i*x5.i))+cos(2*pi*(x6.i*x7.i*x8.i*x9.i*x10.i))
-  cen <- rnorm(n, mean=a, sd=1) # censoring values
-  cen <- ifelse(cen<0, 0, cen)
-  pre.T <- pmin(y.i, cen)
-  delta <- (y.i <= cen) * 1
-  g <- km.surv(pre.T, delta)
-  y.i.s <- ifelse(pre.T <= quantile(pre.T, probs=0.98), pre.T*delta/g, 0) # synthetic response (KSV)
-  dat.sim <- data.frame(ys=y.i.s, x1=x1.i, x2=x2.i, x3=x3.i, x4=x4.i, x5=x5.i,
-                        x6=x6.i, x7=x7.i, x8=x8.i, x9=x9.i, x10=x10.i,
-                        x11=x11.i, x12=x12.i, x13=x13.i, x14=x14.i, x15=x15.i,
-                        x16=x16.i, x17=x17.i, x18=x18.i, x19=x19.i, x20=x20.i, y=y.i)
-  return( dat.sim )
-}
-
-## p=20, censoring 0%
-dat.res13_1 <- fit.ftn(50, 1000, 30) # n=50
-dat.res13_2 <- fit.ftn(100, 1000, 30) # n=100
-dat.res13_3 <- fit.ftn(200, 1000, 30) # n=200
-dat.res13 <- rbind(dat.res13_1, dat.res13_2, dat.res13_3)
-
-## p=20, censoring 10%
-dat.res14_1 <- fit.ftn(50, 1000, 19.1) # n=50
-dat.res14_2 <- fit.ftn(100, 1000, 19.1) # n=100
-dat.res14_3 <- fit.ftn(200, 1000, 19.1) # n=200
-dat.res14 <- rbind(dat.res14_1, dat.res14_2, dat.res14_3)
-
-## p=20, censoring 30%
-dat.res15_1 <- fit.ftn(50, 1000, 17.63) # n=50
-dat.res15_2 <- fit.ftn(100, 1000, 17.63) # n=100
-dat.res15_3 <- fit.ftn(200, 1000, 17.63) # n=200
-dat.res15 <- rbind(dat.res15_1, dat.res15_2, dat.res15_3)
-
-## p=20, censoring 50%
-dat.res16_1 <- fit.ftn(50, 1000, 16.64) # n=50
-dat.res16_2 <- fit.ftn(100, 1000, 16.64) # n=100
-dat.res16_3 <- fit.ftn(200, 1000, 16.64) # n=200
-dat.res16 <- rbind(dat.res16_1, dat.res16_2, dat.res16_3)
-
-
-
-
-
+mean(dat.res2$RMSE[dat.res2$method=="m.KRR1"])
+sd(dat.res2$RMSE[dat.res2$method=="m.KRR1"])
+mean(dat.res2$RMSE[dat.res2$method=="n.KRR2"])
+sd(dat.res2$RMSE[dat.res2$method=="n.KRR2"])
+mean(dat.res2$RMSE[dat.res2$method=="o.KRR3"])
+sd(dat.res2$RMSE[dat.res2$method=="o.KRR3"])
+mean(dat.res2$RMSE[dat.res2$method=="p.KRR4"])
+sd(dat.res2$RMSE[dat.res2$method=="p.KRR4"])

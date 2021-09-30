@@ -427,7 +427,7 @@ legend("bottomleft", legend=c("Radiotherapy Only","Radiotherapy+Chemotherapy"),
    col=c("red","blue"),lwd=2)
 ```
 
--
+- 위의 그래프에서 짙은 그림자 모양의 직사각형은 구간중도절단 데이터에서 나타나는 구간의 차이를 나타내고, 나머지는 직접 함수를 만들어서 분석한 결과와 동일하다.
 
 #### 2-3) Fitting Parametric Models
 - 다음으로는 구간중도절단 데이터에 대해 모수적 모형을 적합해보고자 한다. 이를 위해 데이터를 다음과 같이 바꾸도록 한다. 이는 survreg 함수가 구간의 왼쪽값이 0인 경우를 처리하지 못하기 때문이다.
@@ -462,7 +462,52 @@ summary(fit.Weibull)
 - 분석결과, 두 모형 모두 치료방법에 따라 생존시간에 유의미한 영향을 준다는 결론을 주고 있다.
 
 #### 2-4) Testing Treatment Effect Using Semiparametric Estimation : IntCox
-- 치료방법의 효과에 대해 검증할 경우에는 다음과 같은 방법으로 실시할 수 있다. 
+- 치료방법의 효과에 대해 검증할 경우에는 다음과 같은 방법으로 실시할 수 있다.
+
+```{r}
+library(intcox)
+fit.IntCox = intcox(Surv(tL,tU,type="interval2")~TRT,data=dat)
+fit.IntCox
+```
+
+- 
+
+```{r}
+set.seed(12345678)
+# number of bootstrapping=1000
+num.boot = 1000
+boot.intcox = numeric(num.boot)
+# the for-loop
+for(b in 1:num.boot){
+#sample with replacement
+boot.ID=sample(1:dim(dat)[1],replace=T)
+# fit intcox for the bootstrap sample
+boot.fit = intcox(Surv(tL,tU,type="interval2")~TRT,
+dat[boot.ID,],no.warnings = TRUE)
+# keep track the coefficient
+boot.intcox[b] = coef(boot.fit)
+} # end of b-loop
+```
+
+```{r}
+bias.IntCox =c(mean.bias=coef(fit.IntCox)-mean(boot.intcox),
+median.bias=coef(fit.IntCox)-median(boot.intcox))
+bias.IntCox
+```
+
+```{r}
+# Histogram from bootstrap sample
+hist(boot.intcox,prob=T,las=1,
+xlab="Treatment Difference",ylab="Prob", main="")
+# put vertical lines for
+abline(v=c(Boot.CI[1],fit.IntCox$coef,mean(boot.intcox),
+median(boot.intcox),Boot.CI[2]), lwd=c(2,3,3,3,2),
+lty=c(4,1,2,3,4))
+
+```
+
+#### 2-5) Testing Treatment Effect Using Semiparametric Estimation : ictest
+- IntCox 이외의 방법으로는 함수 ictest를 이용하는 방법이 있다.
 
 ```{r}
 ###################################################
@@ -474,4 +519,4 @@ test.Int = ictest(Surv(tL,tU,type="interval2")~TRT,data=dat)
 test.Int
 ```
 
-- 
+- 결과적으로 유의확률의 값이 매우 작기 때문에 치료방법에 따른 생존시간의 차이는 유의미하다는 통계적인 근거가 있음을 다시한번 확인할 수 있다. 
