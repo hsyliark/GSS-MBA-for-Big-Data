@@ -149,7 +149,7 @@ my.kernel.regression <- function(y, K, lambda) {
 fit.kernel <- function(y.train.s, y.train, K.train, lambda) {
   
   # y.train.s : Synthetic response Y* of training data
-  # y.train : Original response T of training data
+  # y.train : Original response Y of training data
   # K.train : Kernel matrix from training data 
   # lambda : penalty parameter
   
@@ -187,7 +187,7 @@ fit.kernel <- function(y.train.s, y.train, K.train, lambda) {
 pred.kernel <- function(y.test.s, y.test, K.test, d.hat) {
   
   # y.test : Synthetic response Y* of test data
-  # y.test.pred : Original response T of training data
+  # y.test.pred : Original response Y of training data
   # K.test : Kernel matrix from test data 
   # d.hat : Estimator of vector d from training data
   
@@ -222,7 +222,7 @@ cv.kernel <- function(y.train.s, y.train, K.train, k, grid.l) {
   
   
   # y.train.s : Synthetic response Y* of training data
-  # y.train : Original response T of training data
+  # y.train : Original response Y of training data
   # K.train : Kernel matrix from training data 
   # k : number of criterion for K-fold crossvalidation
   # grid.l : The row of penalty parameter lambda
@@ -309,24 +309,24 @@ cv.kernel <- function(y.train.s, y.train, K.train, k, grid.l) {
 #### 4 method simulation
 
 # KR1 : Linear Kernel Regression with Synthetic Response Y*
-# KR2 : Linear Kernel Regression with Generated(Original) Response T
+# KR2 : Linear Kernel Regression with Generated(Original) Response Y
 # KR3 : Gaussian Kernel Regression with Synthetic Response Y*
-# KR4 : Gaussian Kernel Regression with Generated(Original) Response T 
+# KR4 : Gaussian Kernel Regression with Generated(Original) Response Y 
 
 # KRS1 : Linear Kernel Regression with Sub-sampling and Synthetic Response Y*
-# KRS2 : Linear Kernel Regression with Sub-sampling and Generated(Original) Response T
+# KRS2 : Linear Kernel Regression with Sub-sampling and Generated(Original) Response Y
 # KRS3 : Gaussian Kernel Regression with Sub-sampling and Synthetic Response Y*
-# KRS4 : Gaussian Kernel Regression with Sub-sampling and Generated(Original) Response T
+# KRS4 : Gaussian Kernel Regression with Sub-sampling and Generated(Original) Response Y
 
 # KRB1 : Linear Kernel Regression with Bagging and Synthetic Response Y*
-# KRB2 : Linear Kernel Regression with Bagging and Generated(Original) Response T
+# KRB2 : Linear Kernel Regression with Bagging and Generated(Original) Response Y
 # KRB3 : Gaussian Kernel Regression with Bagging and Synthetic Response Y*
-# KRB4 : Gaussian Kernel Regression with Bagging and Generated(Original) Response T
+# KRB4 : Gaussian Kernel Regression with Bagging and Generated(Original) Response Y
 
 # KRR1 : Linear Kernel Regression with Random Forest and Synthetic Response Y*
-# KRR2 : Linear Kernel Regression with Random Forest and Generated(Original) Response T
+# KRR2 : Linear Kernel Regression with Random Forest and Generated(Original) Response Y
 # KRR3 : Gaussian Kernel Regression with Random Forest and Synthetic Response Y*
-# KRR4 : Gaussian Kernel Regression with Random Forest and Generated(Original) Response T
+# KRR4 : Gaussian Kernel Regression with Random Forest and Generated(Original) Response Y
 
 
 
@@ -2218,7 +2218,7 @@ dat.gen <- function(n, a, seed=NULL){
   delta <- (y.i <= cen) * 1
   g <- km.surv(pre.T, delta)
   y.i.s <- ifelse(pre.T <= quantile(pre.T, probs=0.98), pre.T*delta/g, 0) # synthetic response (KSV)
-  dat.sim <- data.frame(ys=y.i.s, x1=x1.i, x2=x2.i, x3=x3.i, y=pre.T)
+  dat.sim <- data.frame(ys=y.i.s, x1=x1.i, x2=x2.i, x3=x3.i, y=y.i)
   return( dat.sim )
 }
 
@@ -2270,7 +2270,7 @@ dat.gen <- function(n, a, seed=NULL){
   delta <- (y.i <= cen) * 1
   g <- km.surv(pre.T, delta)
   y.i.s <- ifelse(pre.T <= quantile(pre.T, probs=0.98), pre.T*delta/g, 0) # synthetic response (KSV)
-  dat.sim <- data.frame(ys=y.i.s, x1=x1.i, x2=x2.i, x3=x3.i, x4=x4.i, x5=x5.i, y=pre.T)
+  dat.sim <- data.frame(ys=y.i.s, x1=x1.i, x2=x2.i, x3=x3.i, x4=x4.i, x5=x5.i, y=y.i)
   return( dat.sim )
 }
 
@@ -2329,7 +2329,7 @@ dat.gen <- function(n, a, seed=NULL){
   g <- km.surv(pre.T, delta)
   y.i.s <- ifelse(pre.T <= quantile(pre.T, probs=0.98), pre.T*delta/g, 0) # synthetic response (KSV)
   dat.sim <- data.frame(ys=y.i.s, x1=x1.i, x2=x2.i, x3=x3.i, x4=x4.i, x5=x5.i,
-                        x6=x6.i, x7=x7.i, x8=x8.i, x9=x9.i, x10=x10.i, y=pre.T)
+                        x6=x6.i, x7=x7.i, x8=x8.i, x9=x9.i, x10=x10.i, y=y.i)
   return( dat.sim )
 }
 
@@ -2402,7 +2402,7 @@ dat.gen <- function(n, a, seed=NULL){
   dat.sim <- data.frame(ys=y.i.s, x1=x1.i, x2=x2.i, x3=x3.i, x4=x4.i, x5=x5.i,
                         x6=x6.i, x7=x7.i, x8=x8.i, x9=x9.i, x10=x10.i,
                         x11=x11.i, x12=x12.i, x13=x13.i, x14=x14.i, x15=x15.i,
-                        x16=x16.i, x17=x17.i, x18=x18.i, x19=x19.i, x20=x20.i, y=pre.T)
+                        x16=x16.i, x17=x17.i, x18=x18.i, x19=x19.i, x20=x20.i, y=y.i)
   return( dat.sim )
 }
 

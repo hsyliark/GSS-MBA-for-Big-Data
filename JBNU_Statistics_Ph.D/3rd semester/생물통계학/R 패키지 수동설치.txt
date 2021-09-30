@@ -1,0 +1,3 @@
+https://bluediary8.tistory.com/86
+
+https://cran.r-project.org/web/packages/stringr/
