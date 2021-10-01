@@ -3,12 +3,10 @@
 ********************************************************/
 /*read data from the path of dataset*/
 Data dat3;
-infile "your path/CTCarcinoma.csv" delimiter="," firstobs=2;
+infile "C:/Users/HSY/Desktop/CTCarcinoma.csv" delimiter="," firstobs=2;
 input TRT$ Time Status Age;
 RUN;
-
-/*print the first 3 observations*/
-PROC PRINT data= dat3(obs=3);
+PROC PRINT data= dat3;
 RUN;
 
 PROC SORT data= dat3 out= dat3;
@@ -75,7 +73,7 @@ RUN;
 ************************************************/
 /*read data from the path of dataset*/
 Data dat4;
-infile "/home/ln23040/BreastCancer.csv" delimiter="," firstobs=2;
+infile "C:/Users/HSY/Desktop/BreastCancer.csv" delimiter="," firstobs=2;
 input tL tU$ TRT Status;
 if tU= "NA" then tU= .;
 ntU= tU+0;      /* transform the type of variable "tU"
@@ -85,7 +83,17 @@ else time= (tL+ntU)/2;
 if tL= 0 then ntL= .;
 else ntL= tL;
 RUN;
-
+Data dat4;
+infile "C:/Users/HSY/Desktop/BreastCancer 1.csv" delimiter="," firstobs=2;
+input tL tU TRT Status;
+ntU=tU;
+if ntU= . then time= tL;
+else time= (tL+ntU)/2;
+if tL= 0 then ntL= .;
+else ntL= tL;
+RUN;
+proc print data=dat4;
+run;
 PROC SORT data= dat4 out= dat4;
 by descending TRT;
 RUN;
@@ -93,7 +101,7 @@ RUN;
 /*************************************************
 	Section 5.5.2.1
 **************************************************/
-/*fit Turnbull?s estimator*/
+/*fit Turnbull's estimator*/
 PROC ICLIFETEST data= dat4 impute(seed= 123) method= turnbull;
 strata TRT;
 time (tL,ntU);

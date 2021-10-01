@@ -3,7 +3,7 @@
 ********************************/
 /*read data from the path of dataset*/
 Data dat;
-infile "C:/Users/stat/Desktop/DBP.csv" delimiter="," firstobs=2;
+infile "C:/Users/HSY/Desktop/DBP.csv" delimiter="," firstobs=2;
 input Subject TRT$ DBP1 DBP2 DBP3 DBP4 DBP5 Age Sex$;
 /*create a column diff*/
 diff= DBP5-DBP1;
@@ -32,7 +32,6 @@ PROC TRANSPOSE data= freqs out= SexbyTrt(drop=_:);
    var count;
    by  Trt;
 RUN;
-
 /*print the table*/
 PROC PRINT data= SexbyTrt;
 RUN;
@@ -92,7 +91,7 @@ RUN;
 **********************************************/
 /*read data from the path of dataset*/
 Data dat1;
-infile "C:/Users/stat/Desktop/betablocker.csv" delimiter="," firstobs=2;
+infile "C:/Users/HSY/Desktop/betablocker.csv" delimiter="," firstobs=2;
 input Deaths Total Center Treatment$;
 RUN;
 proc print data=dat1;
@@ -127,7 +126,7 @@ RUN;
 /*Section 4.3.3*/
 /*read data from the path of dataset*/
 Data dat2;
-infile "C:/Users/stat/Desktop/polyps.csv" delimiter="," firstobs=2;
+infile "C:/Users/HSY/Desktop/polyps.csv" delimiter="," firstobs=2;
 input number treat$ age;
 RUN;
 proc print data=dat2;
