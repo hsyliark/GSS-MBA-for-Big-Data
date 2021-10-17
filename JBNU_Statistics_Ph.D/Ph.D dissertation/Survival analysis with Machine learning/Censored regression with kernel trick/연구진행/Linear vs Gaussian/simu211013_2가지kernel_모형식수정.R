@@ -39,7 +39,7 @@ km.surv <- function(time, cens) {
 
 
 
-# 1. Polynomial kernel
+# 1. Linear kernel
 my.kernel.matrix1 <- function(dat.train, dat.test) {
   
   # dat.train : Data frame for training with a response variable is appeared in the first column...
@@ -65,8 +65,7 @@ my.kernel.matrix1 <- function(dat.train, dat.test) {
   p <- ncol(X1)
   sigma <- 1/p
   n1 <- nrow(X1)
-  D <- as.matrix(X1%*%t(X1)) # Inner product
-  K <- (D+1)^p # polynomial kernel
+  K <- as.matrix(X1%*%t(X1)) # Inner product
   K.train <- K[1:n,1:n]
   K.test <- K[1:n,(n+1):n1]
   
@@ -308,20 +307,20 @@ cv.kernel <- function(y.train.s, y.train, K.train, k, grid.l) {
 
 #### 4 method simulation
 
-# PKR1 : Polynomial Kernel Regression with Synthetic Response Y*
-# PKRS1 : Polynomial Kernel Regression with Sub-sampling and Synthetic Response Y*
-# PKRB1 : Polynomial Kernel Regression with Bagging and Synthetic Response Y*
-# PKRR1 : Polynomial Kernel Regression with Random Forest and Synthetic Response Y*
+# LKR1 : Linear Kernel Regression with Synthetic Response Y*
+# LKRS1 : Linear Kernel Regression with Sub-sampling and Synthetic Response Y*
+# LKRB1 : Linear Kernel Regression with Bagging and Synthetic Response Y*
+# LKRR1 : Linear Kernel Regression with Random Forest and Synthetic Response Y*
   
 # GKR1 : Gaussian Kernel Regression with Synthetic Response Y*
 # GKRS1 : Gaussian Kernel Regression with Sub-sampling and Synthetic Response Y*
 # GKRB1 : Gaussian Kernel Regression with Bagging and Synthetic Response Y*
 # GKRR1 : Gaussian Kernel Regression with Random Forest and Synthetic Response Y*
 
-# PKR2 : Polynomial Kernel Regression with Generated(Original) Response Y
-# PKRS2 : Polynomial Kernel Regression with Sub-sampling and Generated(Original) Response Y
-# PKRB2 : Polynomial Kernel Regression with Bagging and Generated(Original) Response Y
-# PKRR2 : Polynomial Kernel Regression with Random Forest and Generated(Original) Response Y
+# LKR2 : Linear Kernel Regression with Generated(Original) Response Y
+# LKRS2 : Linear Kernel Regression with Sub-sampling and Generated(Original) Response Y
+# LKRB2 : Linear Kernel Regression with Bagging and Generated(Original) Response Y
+# LKRR2 : Linear Kernel Regression with Random Forest and Generated(Original) Response Y
 
 # GKR2 : Gaussian Kernel Regression with Generated(Original) Response Y 
 # GKRS2 : Gaussian Kernel Regression with Sub-sampling and Generated(Original) Response Y
@@ -340,8 +339,8 @@ fit.ftn1 <- function(number1, number2, a) {
   
   ### 1. Kernel ridge regression (KR)
   
-  PKR1 <- c(rep(0,100))
-  PKR2 <- c(rep(0,100))
+  LKR1 <- c(rep(0,100))
+  LKR2 <- c(rep(0,100))
   
   for (i in 1:100) {
     
@@ -386,17 +385,17 @@ fit.ftn1 <- function(number1, number2, a) {
     sim.d.hat2 <- h1_2$d.hat
     h2_2 <- pred.kernel(y.test.s, y.test, K.test, sim.d.hat2)
     
-    PKR1[i] <- h2_1$rmse1
-    PKR2[i] <- h2_2$rmse2
+    LKR1[i] <- h2_1$rmse1
+    LKR2[i] <- h2_2$rmse2
     
   }
   
-  PKR1
-  PKR2
-  boxplot(PKR1)
-  boxplot(PKR2)
-  dat1_1 <- data.frame(RMSE=PKR1, method=rep("a.PKR1",100), number=as.character(rep(n.train,100)))
-  dat1_2 <- data.frame(RMSE=PKR2, method=rep("i.PKR2",100), number=as.character(rep(n.train,100)))
+  LKR1
+  LKR2
+  boxplot(LKR1)
+  boxplot(LKR2)
+  dat1_1 <- data.frame(RMSE=LKR1, method=rep("a.LKR1",100), number=as.character(rep(n.train,100)))
+  dat1_2 <- data.frame(RMSE=LKR2, method=rep("i.LKR2",100), number=as.character(rep(n.train,100)))
   dat1 <- rbind(dat1_1, dat1_2)
   
   GKR1 <- c(rep(0,100))
@@ -463,8 +462,8 @@ fit.ftn1 <- function(number1, number2, a) {
   
   ### 2. Kernel ridge regression using Sub-sampling (KRS)
   
-  PKRS1 <- c(rep(0,100))
-  PKRS2 <- c(rep(0,100))
+  LKRS1 <- c(rep(0,100))
+  LKRS2 <- c(rep(0,100))
   
   for (i in 1:100) {
     
@@ -552,7 +551,7 @@ fit.ftn1 <- function(number1, number2, a) {
     # Calculate test mean square error
     
     h2_1 <- pred.kernel(y.test.s, y.test, K.test1, res.d.hat1)
-    PKRS1[i] <- h2_1$rmse1
+    LKRS1[i] <- h2_1$rmse1
     
     # original
     res.lambda2 <- res.lam2.c[which.min(res.rmse2.c)]
@@ -569,16 +568,16 @@ fit.ftn1 <- function(number1, number2, a) {
     # Calculate test mean square error
     
     h2_2 <- pred.kernel(y.test.s, y.test, K.test2, res.d.hat2)
-    PKRS2[i] <- h2_2$rmse2
+    LKRS2[i] <- h2_2$rmse2
     
   }
   
-  PKRS1
-  PKRS2
-  boxplot(PKRS1)
-  boxplot(PKRS2)
-  dat3_1 <- data.frame(RMSE=PKRS1, method=rep("b.PKRS1",100), number=as.character(rep(n.train,100)))
-  dat3_2 <- data.frame(RMSE=PKRS2, method=rep("j.PKRS2",100), number=as.character(rep(n.train,100)))
+  LKRS1
+  LKRS2
+  boxplot(LKRS1)
+  boxplot(LKRS2)
+  dat3_1 <- data.frame(RMSE=LKRS1, method=rep("b.LKRS1",100), number=as.character(rep(n.train,100)))
+  dat3_2 <- data.frame(RMSE=LKRS2, method=rep("j.LKRS2",100), number=as.character(rep(n.train,100)))
   dat3 <- rbind(dat3_1, dat3_2)
   
   GKRS1 <- c(rep(0,100))
@@ -704,8 +703,8 @@ fit.ftn1 <- function(number1, number2, a) {
   
   ### 3. Kernel ridge regression using Bagging (KRB)
   
-  PKRB1 <- c(rep(0,100))
-  PKRB2 <- c(rep(0,100))
+  LKRB1 <- c(rep(0,100))
+  LKRB2 <- c(rep(0,100))
   
   for (s in 1:100) {
     
@@ -802,17 +801,17 @@ fit.ftn1 <- function(number1, number2, a) {
     y.hat2.bag <- rowMeans(boots.y2)
     
     # KRB[s] <- sqrt(sum((y.test - y.hat.bag)^2)/length(y.test))
-    PKRB1[s] <- sqrt(sum((y.test.s - y.hat1.bag)^2)/length(y.test.s))
-    PKRB2[s] <- sqrt(sum((y.test - y.hat2.bag)^2)/length(y.test))
+    LKRB1[s] <- sqrt(sum((y.test.s - y.hat1.bag)^2)/length(y.test.s))
+    LKRB2[s] <- sqrt(sum((y.test - y.hat2.bag)^2)/length(y.test))
     
   }
   
-  PKRB1
-  PKRB2
-  boxplot(PKRB1)
-  boxplot(PKRB2)
-  dat5_1 <- data.frame(RMSE=PKRB1, method=rep("c.PKRB1",100), number=as.character(rep(n.train,100)))
-  dat5_2 <- data.frame(RMSE=PKRB2, method=rep("k.PKRB2",100), number=as.character(rep(n.train,100)))
+  LKRB1
+  LKRB2
+  boxplot(LKRB1)
+  boxplot(LKRB2)
+  dat5_1 <- data.frame(RMSE=LKRB1, method=rep("c.LKRB1",100), number=as.character(rep(n.train,100)))
+  dat5_2 <- data.frame(RMSE=LKRB2, method=rep("k.LKRB2",100), number=as.character(rep(n.train,100)))
   dat5 <- rbind(dat5_1, dat5_2)
   
   GKRB1 <- c(rep(0,100))
@@ -934,8 +933,8 @@ fit.ftn1 <- function(number1, number2, a) {
   
   ### 4. Kernel ridge regression using Random Forest (KRR)
   
-  PKRR1 <- c(rep(0,100))
-  PKRR2 <- c(rep(0,100))
+  LKRR1 <- c(rep(0,100))
+  LKRR2 <- c(rep(0,100))
   
   for (s in 1:100) {
     
@@ -1044,17 +1043,17 @@ fit.ftn1 <- function(number1, number2, a) {
     y.hat2.rf <- rowMeans(boots.y2)
     
     # KRR[s] <- sqrt(sum((test.sim.y - y.hat.rf)^2)/length(test.sim.y))
-    PKRR1[s] <- sqrt(sum((test.sim.y.s - y.hat1.rf)^2)/length(test.sim.y.s))
-    PKRR2[s] <- sqrt(sum((test.sim.y - y.hat2.rf)^2)/length(test.sim.y))
+    LKRR1[s] <- sqrt(sum((test.sim.y.s - y.hat1.rf)^2)/length(test.sim.y.s))
+    LKRR2[s] <- sqrt(sum((test.sim.y - y.hat2.rf)^2)/length(test.sim.y))
     
   }
   
-  PKRR1
-  PKRR2
-  boxplot(PKRR1)
-  boxplot(PKRR2)
-  dat7_1 <- data.frame(RMSE=PKRR1, method=rep("d.PKRR1",100), number=as.character(rep(n.train,100)))
-  dat7_2 <- data.frame(RMSE=PKRR2, method=rep("l.PKRR2",100), number=as.character(rep(n.train,100)))
+  LKRR1
+  LKRR2
+  boxplot(LKRR1)
+  boxplot(LKRR2)
+  dat7_1 <- data.frame(RMSE=LKRR1, method=rep("d.LKRR1",100), number=as.character(rep(n.train,100)))
+  dat7_2 <- data.frame(RMSE=LKRR2, method=rep("l.LKRR2",100), number=as.character(rep(n.train,100)))
   dat7 <- rbind(dat7_1, dat7_2)
   
   GKRR1 <- c(rep(0,100))
@@ -1204,8 +1203,8 @@ fit.ftn <- function(number1, number2, a) {
   
   ### 1. Kernel ridge regression (KR)
   
-  PKR1 <- c(rep(0,100))
-  PKR2 <- c(rep(0,100))
+  LKR1 <- c(rep(0,100))
+  LKR2 <- c(rep(0,100))
   
   for (i in 1:100) {
     
@@ -1250,17 +1249,17 @@ fit.ftn <- function(number1, number2, a) {
     sim.d.hat2 <- h1_2$d.hat
     h2_2 <- pred.kernel(y.test.s, y.test, K.test, sim.d.hat2)
     
-    PKR1[i] <- h2_1$rmse1
-    PKR2[i] <- h2_2$rmse2
+    LKR1[i] <- h2_1$rmse1
+    LKR2[i] <- h2_2$rmse2
     
   }
   
-  PKR1
-  PKR2
-  boxplot(PKR1)
-  boxplot(PKR2)
-  dat1_1 <- data.frame(RMSE=PKR1, method=rep("a.PKR1",100), number=as.character(rep(n.train,100)))
-  dat1_2 <- data.frame(RMSE=PKR2, method=rep("i.PKR2",100), number=as.character(rep(n.train,100)))
+  LKR1
+  LKR2
+  boxplot(LKR1)
+  boxplot(LKR2)
+  dat1_1 <- data.frame(RMSE=LKR1, method=rep("a.LKR1",100), number=as.character(rep(n.train,100)))
+  dat1_2 <- data.frame(RMSE=LKR2, method=rep("i.LKR2",100), number=as.character(rep(n.train,100)))
   dat1 <- rbind(dat1_1, dat1_2)
   
   GKR1 <- c(rep(0,100))
@@ -1327,8 +1326,8 @@ fit.ftn <- function(number1, number2, a) {
   
   ### 2. Kernel ridge regression using Sub-sampling (KRS)
   
-  PKRS1 <- c(rep(0,100))
-  PKRS2 <- c(rep(0,100))
+  LKRS1 <- c(rep(0,100))
+  LKRS2 <- c(rep(0,100))
   
   for (i in 1:100) {
     
@@ -1416,7 +1415,7 @@ fit.ftn <- function(number1, number2, a) {
     # Calculate test mean square error
     
     h2_1 <- pred.kernel(y.test.s, y.test, K.test1, res.d.hat1)
-    PKRS1[i] <- h2_1$rmse1
+    LKRS1[i] <- h2_1$rmse1
     
     # original
     res.lambda2 <- res.lam2.c[which.min(res.rmse2.c)]
@@ -1433,16 +1432,16 @@ fit.ftn <- function(number1, number2, a) {
     # Calculate test mean square error
     
     h2_2 <- pred.kernel(y.test.s, y.test, K.test2, res.d.hat2)
-    PKRS2[i] <- h2_2$rmse2
+    LKRS2[i] <- h2_2$rmse2
     
   }
   
-  PKRS1
-  PKRS2
-  boxplot(PKRS1)
-  boxplot(PKRS2)
-  dat3_1 <- data.frame(RMSE=PKRS1, method=rep("b.PKRS1",100), number=as.character(rep(n.train,100)))
-  dat3_2 <- data.frame(RMSE=PKRS2, method=rep("j.PKRS2",100), number=as.character(rep(n.train,100)))
+  LKRS1
+  LKRS2
+  boxplot(LKRS1)
+  boxplot(LKRS2)
+  dat3_1 <- data.frame(RMSE=LKRS1, method=rep("b.LKRS1",100), number=as.character(rep(n.train,100)))
+  dat3_2 <- data.frame(RMSE=LKRS2, method=rep("j.LKRS2",100), number=as.character(rep(n.train,100)))
   dat3 <- rbind(dat3_1, dat3_2)
   
   GKRS1 <- c(rep(0,100))
@@ -1569,8 +1568,8 @@ fit.ftn <- function(number1, number2, a) {
   
   ### 3. Kernel ridge regression using Bagging (KRB)
   
-  PKRB1 <- c(rep(0,100))
-  PKRB2 <- c(rep(0,100))
+  LKRB1 <- c(rep(0,100))
+  LKRB2 <- c(rep(0,100))
   
   for (s in 1:100) {
     
@@ -1667,17 +1666,17 @@ fit.ftn <- function(number1, number2, a) {
     y.hat2.bag <- rowMeans(boots.y2)
     
     # KRB[s] <- sqrt(sum((y.test - y.hat.bag)^2)/length(y.test))
-    PKRB1[s] <- sqrt(sum((y.test.s - y.hat1.bag)^2)/length(y.test.s))
-    PKRB2[s] <- sqrt(sum((y.test - y.hat2.bag)^2)/length(y.test))
+    LKRB1[s] <- sqrt(sum((y.test.s - y.hat1.bag)^2)/length(y.test.s))
+    LKRB2[s] <- sqrt(sum((y.test - y.hat2.bag)^2)/length(y.test))
     
   }
   
-  PKRB1
-  PKRB2
-  boxplot(PKRB1)
-  boxplot(PKRB2)
-  dat5_1 <- data.frame(RMSE=PKRB1, method=rep("c.PKRB1",100), number=as.character(rep(n.train,100)))
-  dat5_2 <- data.frame(RMSE=PKRB2, method=rep("k.PKRB2",100), number=as.character(rep(n.train,100)))
+  LKRB1
+  LKRB2
+  boxplot(LKRB1)
+  boxplot(LKRB2)
+  dat5_1 <- data.frame(RMSE=LKRB1, method=rep("c.LKRB1",100), number=as.character(rep(n.train,100)))
+  dat5_2 <- data.frame(RMSE=LKRB2, method=rep("k.LKRB2",100), number=as.character(rep(n.train,100)))
   dat5 <- rbind(dat5_1, dat5_2)
   
   GKRB1 <- c(rep(0,100))
@@ -1796,8 +1795,8 @@ fit.ftn <- function(number1, number2, a) {
   
   ### 4. Kernel ridge regression using Random Forest (KRR)
   
-  PKRR1 <- c(rep(0,100))
-  PKRR2 <- c(rep(0,100))
+  LKRR1 <- c(rep(0,100))
+  LKRR2 <- c(rep(0,100))
   
   for (s in 1:100) {
     
@@ -1903,17 +1902,17 @@ fit.ftn <- function(number1, number2, a) {
     y.hat2.rf <- rowMeans(boots.y2)
     
     # KRR[s] <- sqrt(sum((test.sim.y - y.hat.rf)^2)/length(test.sim.y))
-    PKRR1[s] <- sqrt(sum((test.sim.y.s - y.hat1.rf)^2)/length(test.sim.y.s))
-    PKRR2[s] <- sqrt(sum((test.sim.y - y.hat2.rf)^2)/length(test.sim.y))
+    LKRR1[s] <- sqrt(sum((test.sim.y.s - y.hat1.rf)^2)/length(test.sim.y.s))
+    LKRR2[s] <- sqrt(sum((test.sim.y - y.hat2.rf)^2)/length(test.sim.y))
     
   }
   
-  PKRR1
-  PKRR2
-  boxplot(PKRR1)
-  boxplot(PKRR2)
-  dat7_1 <- data.frame(RMSE=PKRR1, method=rep("d.PKRR1",100), number=as.character(rep(n.train,100)))
-  dat7_2 <- data.frame(RMSE=PKRR2, method=rep("l.PKRR2",100), number=as.character(rep(n.train,100)))
+  LKRR1
+  LKRR2
+  boxplot(LKRR1)
+  boxplot(LKRR2)
+  dat7_1 <- data.frame(RMSE=LKRR1, method=rep("d.LKRR1",100), number=as.character(rep(n.train,100)))
+  dat7_2 <- data.frame(RMSE=LKRR2, method=rep("l.LKRR2",100), number=as.character(rep(n.train,100)))
   dat7 <- rbind(dat7_1, dat7_2)
   
   GKRR1 <- c(rep(0,100))
@@ -2052,128 +2051,128 @@ fit.ftn <- function(number1, number2, a) {
 library(ggplot2)
 
 # Boxplot for one dataset
-ggplot(dat.res5_1, aes(x = method, y = RMSE, fill = method)) + geom_boxplot() 
-ggplot(dat.res5_2, aes(x = method, y = RMSE, fill = method)) + geom_boxplot()
-ggplot(dat.res5_3, aes(x = method, y = RMSE, fill = method)) + geom_boxplot()
+ggplot(dat.res6_1, aes(x = method, y = RMSE, fill = method)) + geom_boxplot() 
+ggplot(dat.res6_2, aes(x = method, y = RMSE, fill = method)) + geom_boxplot()
+ggplot(dat.res6_3, aes(x = method, y = RMSE, fill = method)) + geom_boxplot()
 # Boxplot for row binded dataset
-dat.res5[dat.res5$number==50,]$number <- "1(50)"
-dat.res5[dat.res5$number==100,]$number <- "2(100)"
-dat.res5[dat.res5$number==200,]$number <- "3(200)"
-ggplot(dat.res5, aes(x = number, y = RMSE, fill = number)) + geom_boxplot() +
+dat.res6[dat.res6$number==50,]$number <- "1(50)"
+dat.res6[dat.res6$number==100,]$number <- "2(100)"
+dat.res6[dat.res6$number==200,]$number <- "3(200)"
+ggplot(dat.res6, aes(x = number, y = RMSE, fill = number)) + geom_boxplot() +
   facet_wrap(~ method, ncol=16) + theme(axis.text.x=element_text(angle=45, hjust=1))
-write.csv(dat.res5, "C:/Users/Administrator/Desktop/211015/p5cen0.csv")
+write.csv(dat.res6, "C:/Users/Administrator/Desktop/Linear vs Gaussian/p5cen10.csv")
 
 
 # Print result
-mean(dat.res5_1$RMSE[dat.res5_1$method=="a.PKR1"])
-sd(dat.res5_1$RMSE[dat.res5_1$method=="a.PKR1"])
-mean(dat.res5_1$RMSE[dat.res5_1$method=="b.PKRS1"])
-sd(dat.res5_1$RMSE[dat.res5_1$method=="b.PKRS1"])
-mean(dat.res5_1$RMSE[dat.res5_1$method=="c.PKRB1"])
-sd(dat.res5_1$RMSE[dat.res5_1$method=="c.PKRB1"])
-mean(dat.res5_1$RMSE[dat.res5_1$method=="d.PKRR1"])
-sd(dat.res5_1$RMSE[dat.res5_1$method=="d.PKRR1"])
+mean(dat.res6_1$RMSE[dat.res6_1$method=="a.LKR1"])
+sd(dat.res6_1$RMSE[dat.res6_1$method=="a.LKR1"])
+mean(dat.res6_1$RMSE[dat.res6_1$method=="b.LKRS1"])
+sd(dat.res6_1$RMSE[dat.res6_1$method=="b.LKRS1"])
+mean(dat.res6_1$RMSE[dat.res6_1$method=="c.LKRB1"])
+sd(dat.res6_1$RMSE[dat.res6_1$method=="c.LKRB1"])
+mean(dat.res6_1$RMSE[dat.res6_1$method=="d.LKRR1"])
+sd(dat.res6_1$RMSE[dat.res6_1$method=="d.LKRR1"])
 
-mean(dat.res5_1$RMSE[dat.res5_1$method=="e.GKR1"])
-sd(dat.res5_1$RMSE[dat.res5_1$method=="e.GKR1"])
-mean(dat.res5_1$RMSE[dat.res5_1$method=="f.GKRS1"])
-sd(dat.res5_1$RMSE[dat.res5_1$method=="f.GKRS1"])
-mean(dat.res5_1$RMSE[dat.res5_1$method=="g.GKRB1"])
-sd(dat.res5_1$RMSE[dat.res5_1$method=="g.GKRB1"])
-mean(dat.res5_1$RMSE[dat.res5_1$method=="h.GKRR1"])
-sd(dat.res5_1$RMSE[dat.res5_1$method=="h.GKRR1"])
+mean(dat.res6_1$RMSE[dat.res6_1$method=="e.GKR1"])
+sd(dat.res6_1$RMSE[dat.res6_1$method=="e.GKR1"])
+mean(dat.res6_1$RMSE[dat.res6_1$method=="f.GKRS1"])
+sd(dat.res6_1$RMSE[dat.res6_1$method=="f.GKRS1"])
+mean(dat.res6_1$RMSE[dat.res6_1$method=="g.GKRB1"])
+sd(dat.res6_1$RMSE[dat.res6_1$method=="g.GKRB1"])
+mean(dat.res6_1$RMSE[dat.res6_1$method=="h.GKRR1"])
+sd(dat.res6_1$RMSE[dat.res6_1$method=="h.GKRR1"])
 
-mean(dat.res5_1$RMSE[dat.res5_1$method=="i.PKR2"])
-sd(dat.res5_1$RMSE[dat.res5_1$method=="i.PKR2"])
-mean(dat.res5_1$RMSE[dat.res5_1$method=="j.PKRS2"])
-sd(dat.res5_1$RMSE[dat.res5_1$method=="j.PKRS2"])
-mean(dat.res5_1$RMSE[dat.res5_1$method=="k.PKRB2"])
-sd(dat.res5_1$RMSE[dat.res5_1$method=="k.PKRB2"])
-mean(dat.res5_1$RMSE[dat.res5_1$method=="l.PKRR2"])
-sd(dat.res5_1$RMSE[dat.res5_1$method=="l.PKRR2"])
+mean(dat.res6_1$RMSE[dat.res6_1$method=="i.LKR2"])
+sd(dat.res6_1$RMSE[dat.res6_1$method=="i.LKR2"])
+mean(dat.res6_1$RMSE[dat.res6_1$method=="j.LKRS2"])
+sd(dat.res6_1$RMSE[dat.res6_1$method=="j.LKRS2"])
+mean(dat.res6_1$RMSE[dat.res6_1$method=="k.LKRB2"])
+sd(dat.res6_1$RMSE[dat.res6_1$method=="k.LKRB2"])
+mean(dat.res6_1$RMSE[dat.res6_1$method=="l.LKRR2"])
+sd(dat.res6_1$RMSE[dat.res6_1$method=="l.LKRR2"])
 
-mean(dat.res5_1$RMSE[dat.res5_1$method=="m.GKR2"])
-sd(dat.res5_1$RMSE[dat.res5_1$method=="m.GKR2"])
-mean(dat.res5_1$RMSE[dat.res5_1$method=="n.GKRS2"])
-sd(dat.res5_1$RMSE[dat.res5_1$method=="n.GKRS2"])
-mean(dat.res5_1$RMSE[dat.res5_1$method=="o.GKRB2"])
-sd(dat.res5_1$RMSE[dat.res5_1$method=="o.GKRB2"])
-mean(dat.res5_1$RMSE[dat.res5_1$method=="p.GKRR2"])
-sd(dat.res5_1$RMSE[dat.res5_1$method=="p.GKRR2"])
+mean(dat.res6_1$RMSE[dat.res6_1$method=="m.GKR2"])
+sd(dat.res6_1$RMSE[dat.res6_1$method=="m.GKR2"])
+mean(dat.res6_1$RMSE[dat.res6_1$method=="n.GKRS2"])
+sd(dat.res6_1$RMSE[dat.res6_1$method=="n.GKRS2"])
+mean(dat.res6_1$RMSE[dat.res6_1$method=="o.GKRB2"])
+sd(dat.res6_1$RMSE[dat.res6_1$method=="o.GKRB2"])
+mean(dat.res6_1$RMSE[dat.res6_1$method=="p.GKRR2"])
+sd(dat.res6_1$RMSE[dat.res6_1$method=="p.GKRR2"])
 #-----------------------------------------------------#
 
-mean(dat.res5_2$RMSE[dat.res5_2$method=="a.PKR1"])
-sd(dat.res5_2$RMSE[dat.res5_2$method=="a.PKR1"])
-mean(dat.res5_2$RMSE[dat.res5_2$method=="b.PKRS1"])
-sd(dat.res5_2$RMSE[dat.res5_2$method=="b.PKRS1"])
-mean(dat.res5_2$RMSE[dat.res5_2$method=="c.PKRB1"])
-sd(dat.res5_2$RMSE[dat.res5_2$method=="c.PKRB1"])
-mean(dat.res5_2$RMSE[dat.res5_2$method=="d.PKRR1"])
-sd(dat.res5_2$RMSE[dat.res5_2$method=="d.PKRR1"])
+mean(dat.res6_2$RMSE[dat.res6_2$method=="a.LKR1"])
+sd(dat.res6_2$RMSE[dat.res6_2$method=="a.LKR1"])
+mean(dat.res6_2$RMSE[dat.res6_2$method=="b.LKRS1"])
+sd(dat.res6_2$RMSE[dat.res6_2$method=="b.LKRS1"])
+mean(dat.res6_2$RMSE[dat.res6_2$method=="c.LKRB1"])
+sd(dat.res6_2$RMSE[dat.res6_2$method=="c.LKRB1"])
+mean(dat.res6_2$RMSE[dat.res6_2$method=="d.LKRR1"])
+sd(dat.res6_2$RMSE[dat.res6_2$method=="d.LKRR1"])
 
-mean(dat.res5_2$RMSE[dat.res5_2$method=="e.GKR1"])
-sd(dat.res5_2$RMSE[dat.res5_2$method=="e.GKR1"])
-mean(dat.res5_2$RMSE[dat.res5_2$method=="f.GKRS1"])
-sd(dat.res5_2$RMSE[dat.res5_2$method=="f.GKRS1"])
-mean(dat.res5_2$RMSE[dat.res5_2$method=="g.GKRB1"])
-sd(dat.res5_2$RMSE[dat.res5_2$method=="g.GKRB1"])
-mean(dat.res5_2$RMSE[dat.res5_2$method=="h.GKRR1"])
-sd(dat.res5_2$RMSE[dat.res5_2$method=="h.GKRR1"])
+mean(dat.res6_2$RMSE[dat.res6_2$method=="e.GKR1"])
+sd(dat.res6_2$RMSE[dat.res6_2$method=="e.GKR1"])
+mean(dat.res6_2$RMSE[dat.res6_2$method=="f.GKRS1"])
+sd(dat.res6_2$RMSE[dat.res6_2$method=="f.GKRS1"])
+mean(dat.res6_2$RMSE[dat.res6_2$method=="g.GKRB1"])
+sd(dat.res6_2$RMSE[dat.res6_2$method=="g.GKRB1"])
+mean(dat.res6_2$RMSE[dat.res6_2$method=="h.GKRR1"])
+sd(dat.res6_2$RMSE[dat.res6_2$method=="h.GKRR1"])
 
-mean(dat.res5_2$RMSE[dat.res5_2$method=="i.PKR2"])
-sd(dat.res5_2$RMSE[dat.res5_2$method=="i.PKR2"])
-mean(dat.res5_2$RMSE[dat.res5_2$method=="j.PKRS2"])
-sd(dat.res5_2$RMSE[dat.res5_2$method=="j.PKRS2"])
-mean(dat.res5_2$RMSE[dat.res5_2$method=="k.PKRB2"])
-sd(dat.res5_2$RMSE[dat.res5_2$method=="k.PKRB2"])
-mean(dat.res5_2$RMSE[dat.res5_2$method=="l.PKRR2"])
-sd(dat.res5_2$RMSE[dat.res5_2$method=="l.PKRR2"])
+mean(dat.res6_2$RMSE[dat.res6_2$method=="i.LKR2"])
+sd(dat.res6_2$RMSE[dat.res6_2$method=="i.LKR2"])
+mean(dat.res6_2$RMSE[dat.res6_2$method=="j.LKRS2"])
+sd(dat.res6_2$RMSE[dat.res6_2$method=="j.LKRS2"])
+mean(dat.res6_2$RMSE[dat.res6_2$method=="k.LKRB2"])
+sd(dat.res6_2$RMSE[dat.res6_2$method=="k.LKRB2"])
+mean(dat.res6_2$RMSE[dat.res6_2$method=="l.LKRR2"])
+sd(dat.res6_2$RMSE[dat.res6_2$method=="l.LKRR2"])
 
-mean(dat.res5_2$RMSE[dat.res5_2$method=="m.GKR2"])
-sd(dat.res5_2$RMSE[dat.res5_2$method=="m.GKR2"])
-mean(dat.res5_2$RMSE[dat.res5_2$method=="n.GKRS2"])
-sd(dat.res5_2$RMSE[dat.res5_2$method=="n.GKRS2"])
-mean(dat.res5_2$RMSE[dat.res5_2$method=="o.GKRB2"])
-sd(dat.res5_2$RMSE[dat.res5_2$method=="o.GKRB2"])
-mean(dat.res5_2$RMSE[dat.res5_2$method=="p.GKRR2"])
-sd(dat.res5_2$RMSE[dat.res5_2$method=="p.GKRR2"])
+mean(dat.res6_2$RMSE[dat.res6_2$method=="m.GKR2"])
+sd(dat.res6_2$RMSE[dat.res6_2$method=="m.GKR2"])
+mean(dat.res6_2$RMSE[dat.res6_2$method=="n.GKRS2"])
+sd(dat.res6_2$RMSE[dat.res6_2$method=="n.GKRS2"])
+mean(dat.res6_2$RMSE[dat.res6_2$method=="o.GKRB2"])
+sd(dat.res6_2$RMSE[dat.res6_2$method=="o.GKRB2"])
+mean(dat.res6_2$RMSE[dat.res6_2$method=="p.GKRR2"])
+sd(dat.res6_2$RMSE[dat.res6_2$method=="p.GKRR2"])
 #-----------------------------------------------------#
 
-mean(dat.res5_3$RMSE[dat.res5_3$method=="a.PKR1"])
-sd(dat.res5_3$RMSE[dat.res5_3$method=="a.PKR1"])
-mean(dat.res5_3$RMSE[dat.res5_3$method=="b.PKRS1"])
-sd(dat.res5_3$RMSE[dat.res5_3$method=="b.PKRS1"])
-mean(dat.res5_3$RMSE[dat.res5_3$method=="c.PKRB1"])
-sd(dat.res5_3$RMSE[dat.res5_3$method=="c.PKRB1"])
-mean(dat.res5_3$RMSE[dat.res5_3$method=="d.PKRR1"])
-sd(dat.res5_3$RMSE[dat.res5_3$method=="d.PKRR1"])
+mean(dat.res6_3$RMSE[dat.res6_3$method=="a.LKR1"])
+sd(dat.res6_3$RMSE[dat.res6_3$method=="a.LKR1"])
+mean(dat.res6_3$RMSE[dat.res6_3$method=="b.LKRS1"])
+sd(dat.res6_3$RMSE[dat.res6_3$method=="b.LKRS1"])
+mean(dat.res6_3$RMSE[dat.res6_3$method=="c.LKRB1"])
+sd(dat.res6_3$RMSE[dat.res6_3$method=="c.LKRB1"])
+mean(dat.res6_3$RMSE[dat.res6_3$method=="d.LKRR1"])
+sd(dat.res6_3$RMSE[dat.res6_3$method=="d.LKRR1"])
 
-mean(dat.res5_3$RMSE[dat.res5_3$method=="e.GKR1"])
-sd(dat.res5_3$RMSE[dat.res5_3$method=="e.GKR1"])
-mean(dat.res5_3$RMSE[dat.res5_3$method=="f.GKRS1"])
-sd(dat.res5_3$RMSE[dat.res5_3$method=="f.GKRS1"])
-mean(dat.res5_3$RMSE[dat.res5_3$method=="g.GKRB1"])
-sd(dat.res5_3$RMSE[dat.res5_3$method=="g.GKRB1"])
-mean(dat.res5_3$RMSE[dat.res5_3$method=="h.GKRR1"])
-sd(dat.res5_3$RMSE[dat.res5_3$method=="h.GKRR1"])
+mean(dat.res6_3$RMSE[dat.res6_3$method=="e.GKR1"])
+sd(dat.res6_3$RMSE[dat.res6_3$method=="e.GKR1"])
+mean(dat.res6_3$RMSE[dat.res6_3$method=="f.GKRS1"])
+sd(dat.res6_3$RMSE[dat.res6_3$method=="f.GKRS1"])
+mean(dat.res6_3$RMSE[dat.res6_3$method=="g.GKRB1"])
+sd(dat.res6_3$RMSE[dat.res6_3$method=="g.GKRB1"])
+mean(dat.res6_3$RMSE[dat.res6_3$method=="h.GKRR1"])
+sd(dat.res6_3$RMSE[dat.res6_3$method=="h.GKRR1"])
 
-mean(dat.res5_3$RMSE[dat.res5_3$method=="i.PKR2"])
-sd(dat.res5_3$RMSE[dat.res5_3$method=="i.PKR2"])
-mean(dat.res5_3$RMSE[dat.res5_3$method=="j.PKRS2"])
-sd(dat.res5_3$RMSE[dat.res5_3$method=="j.PKRS2"])
-mean(dat.res5_3$RMSE[dat.res5_3$method=="k.PKRB2"])
-sd(dat.res5_3$RMSE[dat.res5_3$method=="k.PKRB2"])
-mean(dat.res5_3$RMSE[dat.res5_3$method=="l.PKRR2"])
-sd(dat.res5_3$RMSE[dat.res5_3$method=="l.PKRR2"])
+mean(dat.res6_3$RMSE[dat.res6_3$method=="i.LKR2"])
+sd(dat.res6_3$RMSE[dat.res6_3$method=="i.LKR2"])
+mean(dat.res6_3$RMSE[dat.res6_3$method=="j.LKRS2"])
+sd(dat.res6_3$RMSE[dat.res6_3$method=="j.LKRS2"])
+mean(dat.res6_3$RMSE[dat.res6_3$method=="k.LKRB2"])
+sd(dat.res6_3$RMSE[dat.res6_3$method=="k.LKRB2"])
+mean(dat.res6_3$RMSE[dat.res6_3$method=="l.LKRR2"])
+sd(dat.res6_3$RMSE[dat.res6_3$method=="l.LKRR2"])
 
-mean(dat.res5_3$RMSE[dat.res5_3$method=="m.GKR2"])
-sd(dat.res5_3$RMSE[dat.res5_3$method=="m.GKR2"])
-mean(dat.res5_3$RMSE[dat.res5_3$method=="n.GKRS2"])
-sd(dat.res5_3$RMSE[dat.res5_3$method=="n.GKRS2"])
-mean(dat.res5_3$RMSE[dat.res5_3$method=="o.GKRB2"])
-sd(dat.res5_3$RMSE[dat.res5_3$method=="o.GKRB2"])
-mean(dat.res5_3$RMSE[dat.res5_3$method=="p.GKRR2"])
-sd(dat.res5_3$RMSE[dat.res5_3$method=="p.GKRR2"])
+mean(dat.res6_3$RMSE[dat.res6_3$method=="m.GKR2"])
+sd(dat.res6_3$RMSE[dat.res6_3$method=="m.GKR2"])
+mean(dat.res6_3$RMSE[dat.res6_3$method=="n.GKRS2"])
+sd(dat.res6_3$RMSE[dat.res6_3$method=="n.GKRS2"])
+mean(dat.res6_3$RMSE[dat.res6_3$method=="o.GKRB2"])
+sd(dat.res6_3$RMSE[dat.res6_3$method=="o.GKRB2"])
+mean(dat.res6_3$RMSE[dat.res6_3$method=="p.GKRR2"])
+sd(dat.res6_3$RMSE[dat.res6_3$method=="p.GKRR2"])
 #-----------------------------------------------------#
 
 
