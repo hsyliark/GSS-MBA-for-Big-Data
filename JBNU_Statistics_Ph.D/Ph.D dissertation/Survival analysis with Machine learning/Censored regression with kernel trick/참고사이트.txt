@@ -1,2 +1,4 @@
 참고사이트
 https://sonsnotation.blogspot.com/2020/11/11-1-kernel.html
+https://ratsgo.github.io/machine%20learning/2017/05/30/SVM3/
+https://ekdud7667.tistory.com/entry/SVM1
