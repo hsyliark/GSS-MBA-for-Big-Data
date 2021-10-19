@@ -186,8 +186,8 @@ fit.kernel <- function(y.train.s, y.train, K.train, lambda) {
 
 pred.kernel <- function(y.test.s, y.test, K.test, d.hat) {
   
-  # y.test : Synthetic response Y* of test data
-  # y.test.pred : Original response Y of training data
+  # y.test.s : Synthetic response Y* of test data
+  # y.test : Original response Y of training data
   # K.test : Kernel matrix from test data 
   # d.hat : Estimator of vector d from training data
   
@@ -1022,16 +1022,16 @@ fit.ftn1 <- function(number1, number2, a) {
       boots.y.train <- u2$y.train ; boots.y.test <- u2$y.test
       
       # synthetic
-      h1_1.boots <- fit.kernel(boots.y.train, boots.y.train.pred, boots.K.train, best.lambda1)
+      h1_1.boots <- fit.kernel(boots.y.train.s, boots.y.train, boots.K.train, best.lambda1)
       boots.d.hat1 <- h1_1.boots$d.hat
-      h2_1.boots <- pred.kernel(boots.y.test, boots.y.test.pred, boots.K.test, boots.d.hat1)
+      h2_1.boots <- pred.kernel(boots.y.test.s, boots.y.test, boots.K.test, boots.d.hat1)
       boots.y.hat1 <- h2_1.boots$y.hat
       boots.y1 <- cbind(boots.y1, boots.y.hat1)
       
       # original
-      h1_2.boots <- fit.kernel(boots.y.train, boots.y.train.pred, boots.K.train, best.lambda2)
+      h1_2.boots <- fit.kernel(boots.y.train.s, boots.y.train, boots.K.train, best.lambda2)
       boots.d.hat1 <- h1_1.boots$d.hat
-      h2_2.boots <- pred.kernel(boots.y.test, boots.y.test.pred, boots.K.test, boots.d.hat2)
+      h2_2.boots <- pred.kernel(boots.y.test.s, boots.y.test, boots.K.test, boots.d.hat2)
       boots.y.hat2 <- h2_2.boots$y.hat
       boots.y2 <- cbind(boots.y2, boots.y.hat2)
       
@@ -1145,16 +1145,16 @@ fit.ftn1 <- function(number1, number2, a) {
       boots.y.train <- u2$y.train ; boots.y.test <- u2$y.test
       
       # synthetic
-      h1_1.boots <- fit.kernel(boots.y.train, boots.y.train.pred, boots.K.train, best.lambda1)
+      h1_1.boots <- fit.kernel(boots.y.train.s, boots.y.train, boots.K.train, best.lambda1)
       boots.d.hat1 <- h1_1.boots$d.hat
-      h2_1.boots <- pred.kernel(boots.y.test, boots.y.test.pred, boots.K.test, boots.d.hat1)
+      h2_1.boots <- pred.kernel(boots.y.test.s, boots.y.test, boots.K.test, boots.d.hat1)
       boots.y.hat1 <- h2_1.boots$y.hat
       boots.y1 <- cbind(boots.y1, boots.y.hat1)
       
       # original
-      h1_2.boots <- fit.kernel(boots.y.train, boots.y.train.pred, boots.K.train, best.lambda2)
+      h1_2.boots <- fit.kernel(boots.y.train.s, boots.y.train, boots.K.train, best.lambda2)
       boots.d.hat1 <- h1_1.boots$d.hat
-      h2_2.boots <- pred.kernel(boots.y.test, boots.y.test.pred, boots.K.test, boots.d.hat2)
+      h2_2.boots <- pred.kernel(boots.y.test.s, boots.y.test, boots.K.test, boots.d.hat2)
       boots.y.hat2 <- h2_2.boots$y.hat
       boots.y2 <- cbind(boots.y2, boots.y.hat2)
       
