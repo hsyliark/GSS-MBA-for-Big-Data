@@ -308,25 +308,25 @@ cv.kernel <- function(y.train.s, y.train, K.train, k, grid.l) {
 
 #### 4 method simulation
 
-# SKR1 : Sigmoid Kernel Regression with Synthetic Response Y*
-# SKRS1 : Sigmoid Kernel Regression with Sub-sampling and Synthetic Response Y*
-# SKRB1 : Sigmoid Kernel Regression with Bagging and Synthetic Response Y*
-# SKRR1 : Sigmoid Kernel Regression with Random Forest and Synthetic Response Y*
+# SKR1 : Sigmoid Kernel Ridge Regression with Synthetic Response Y*
+# SKRS1 : Sigmoid Kernel Ridge Regression with Sub-sampling and Synthetic Response Y*
+# SKRB1 : Sigmoid Kernel Ridge Regression with Bagging and Synthetic Response Y*
+# SKRR1 : Sigmoid Kernel Ridge Regression with Random Forest and Synthetic Response Y*
   
-# GKR1 : Gaussian Kernel Regression with Synthetic Response Y*
-# GKRS1 : Gaussian Kernel Regression with Sub-sampling and Synthetic Response Y*
-# GKRB1 : Gaussian Kernel Regression with Bagging and Synthetic Response Y*
-# GKRR1 : Gaussian Kernel Regression with Random Forest and Synthetic Response Y*
+# GKR1 : Gaussian Kernel Ridge Regression with Synthetic Response Y*
+# GKRS1 : Gaussian Kernel Ridge Regression with Sub-sampling and Synthetic Response Y*
+# GKRB1 : Gaussian Kernel Ridge Regression with Bagging and Synthetic Response Y*
+# GKRR1 : Gaussian Kernel Ridge Regression with Random Forest and Synthetic Response Y*
 
-# SKR2 : Sigmoid Kernel Regression with Generated(Original) Response Y
-# SKRS2 : Sigmoid Kernel Regression with Sub-sampling and Generated(Original) Response Y
-# SKRB2 : Sigmoid Kernel Regression with Bagging and Generated(Original) Response Y
-# SKRR2 : Sigmoid Kernel Regression with Random Forest and Generated(Original) Response Y
+# SKR2 : Sigmoid Kernel Ridge Regression with Generated(Original) Response Y
+# SKRS2 : Sigmoid Kernel Ridge Regression with Sub-sampling and Generated(Original) Response Y
+# SKRB2 : Sigmoid Kernel Ridge Regression with Bagging and Generated(Original) Response Y
+# SKRR2 : Sigmoid Kernel Ridge Regression with Random Forest and Generated(Original) Response Y
 
-# GKR2 : Gaussian Kernel Regression with Generated(Original) Response Y 
-# GKRS2 : Gaussian Kernel Regression with Sub-sampling and Generated(Original) Response Y
-# GKRB2 : Gaussian Kernel Regression with Bagging and Generated(Original) Response Y
-# GKRR2 : Gaussian Kernel Regression with Random Forest and Generated(Original) Response Y
+# GKR2 : Gaussian Kernel Ridge Regression with Generated(Original) Response Y 
+# GKRS2 : Gaussian Kernel Ridge Regression with Sub-sampling and Generated(Original) Response Y
+# GKRB2 : Gaussian Kernel Ridge Regression with Bagging and Generated(Original) Response Y
+# GKRR2 : Gaussian Kernel Ridge Regression with Random Forest and Generated(Original) Response Y
 
 
 

@@ -453,20 +453,20 @@ cv.kernel <- function(y.train.s, y.train, K.train, k, grid.l) {
 # RB1 : Ridge Regression with Bagging and Synthetic Response Y*
 # RR1 : Ridge Regression with Random Forest and Synthetic Response Y*
 
-# GKR1 : Gaussian Kernel Regression with Synthetic Response Y*
-# GKRS1 : Gaussian Kernel Regression with Sub-sampling and Synthetic Response Y*
-# GKRB1 : Gaussian Kernel Regression with Bagging and Synthetic Response Y*
-# GKRR1 : Gaussian Kernel Regression with Random Forest and Synthetic Response Y*
+# GKR1 : Gaussian Kernel Ridge Regression with Synthetic Response Y*
+# GKRS1 : Gaussian Kernel Ridge Regression with Sub-sampling and Synthetic Response Y*
+# GKRB1 : Gaussian Kernel Ridge Regression with Bagging and Synthetic Response Y*
+# GKRR1 : Gaussian Kernel Ridge Regression with Random Forest and Synthetic Response Y*
 
 # RR2 : Ridge Regression with Generated(Original) Response Y
 # RS2 : Ridge Regression with Sub-sampling and Generated(Original) Response Y
 # RB2 : Ridge Regression with Bagging and Generated(Original) Response Y
 # RR2 : Ridge Regression with Random Forest and Generated(Original) Response Y
 
-# GKR2 : Gaussian Kernel Regression with Generated(Original) Response Y 
-# GKRS2 : Gaussian Kernel Regression with Sub-sampling and Generated(Original) Response Y
-# GKRB2 : Gaussian Kernel Regression with Bagging and Generated(Original) Response Y
-# GKRR2 : Gaussian Kernel Regression with Random Forest and Generated(Original) Response Y
+# GKR2 : Gaussian Kernel Ridge Regression with Generated(Original) Response Y 
+# GKRS2 : Gaussian Kernel Ridge Regression with Sub-sampling and Generated(Original) Response Y
+# GKRB2 : Gaussian Kernel Ridge Regression with Bagging and Generated(Original) Response Y
+# GKRR2 : Gaussian Kernel Ridge Regression with Random Forest and Generated(Original) Response Y
 
 
 
@@ -707,7 +707,7 @@ fit.ftn1 <- function(number1, number2, a) {
     
     # Calculate test mean square error
     
-    h2_2 <- pred.ridge(y.test.s, y.test, X.test2, res.d.hat2)
+    h2_2 <- pred.ridge(y.test.s, y.test, X.test2, res.beta.hat2)
     RS2[i] <- h2_2$rmse2
     
   }
@@ -1571,7 +1571,7 @@ fit.ftn <- function(number1, number2, a) {
     
     # Calculate test mean square error
     
-    h2_2 <- pred.ridge(y.test.s, y.test, X.test2, res.d.hat2)
+    h2_2 <- pred.ridge(y.test.s, y.test, X.test2, res.beta.hat2)
     RS2[i] <- h2_2$rmse2
     
   }
@@ -2201,7 +2201,7 @@ dat.res1[dat.res1$number==100,]$number <- "2(100)"
 dat.res1[dat.res1$number==200,]$number <- "3(200)"
 ggplot(dat.res1, aes(x = number, y = RMSE, fill = number)) + geom_boxplot() +
   facet_wrap(~ method, ncol=16) + theme(axis.text.x=element_text(angle=45, hjust=1))
-write.csv(dat.res1, "C:/Users/Administrator/Desktop/Polynomial vs Gaussian/p3cen0.csv")
+write.csv(dat.res1, "C:/Users/Administrator/Desktop/Nonkernel vs Gaussian/p3cen0.csv")
 
 
 # Print result

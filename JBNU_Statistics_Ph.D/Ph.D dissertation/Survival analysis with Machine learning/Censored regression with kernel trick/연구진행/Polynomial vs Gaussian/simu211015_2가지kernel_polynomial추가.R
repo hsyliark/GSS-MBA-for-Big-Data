@@ -306,27 +306,27 @@ cv.kernel <- function(y.train.s, y.train, K.train, k, grid.l) {
 
 
 
-#### 4 method simulation
+#### 16 method simulation
 
-# PKR1 : Polynomial Kernel Regression with Synthetic Response Y*
-# PKRS1 : Polynomial Kernel Regression with Sub-sampling and Synthetic Response Y*
-# PKRB1 : Polynomial Kernel Regression with Bagging and Synthetic Response Y*
-# PKRR1 : Polynomial Kernel Regression with Random Forest and Synthetic Response Y*
+# PKR1 : Polynomial Kernel Ridge Regression with Synthetic Response Y*
+# PKRS1 : Polynomial Kernel Ridge Regression with Sub-sampling and Synthetic Response Y*
+# PKRB1 : Polynomial Kernel Ridge Regression with Bagging and Synthetic Response Y*
+# PKRR1 : Polynomial Kernel Ridge Regression with Random Forest and Synthetic Response Y*
   
-# GKR1 : Gaussian Kernel Regression with Synthetic Response Y*
-# GKRS1 : Gaussian Kernel Regression with Sub-sampling and Synthetic Response Y*
-# GKRB1 : Gaussian Kernel Regression with Bagging and Synthetic Response Y*
-# GKRR1 : Gaussian Kernel Regression with Random Forest and Synthetic Response Y*
+# GKR1 : Gaussian Kernel Ridge Regression with Synthetic Response Y*
+# GKRS1 : Gaussian Kernel Ridge Regression with Sub-sampling and Synthetic Response Y*
+# GKRB1 : Gaussian Kernel Ridge Regression with Bagging and Synthetic Response Y*
+# GKRR1 : Gaussian Kernel Ridge Regression with Random Forest and Synthetic Response Y*
 
-# PKR2 : Polynomial Kernel Regression with Generated(Original) Response Y
-# PKRS2 : Polynomial Kernel Regression with Sub-sampling and Generated(Original) Response Y
-# PKRB2 : Polynomial Kernel Regression with Bagging and Generated(Original) Response Y
-# PKRR2 : Polynomial Kernel Regression with Random Forest and Generated(Original) Response Y
+# PKR2 : Polynomial Kernel Ridge Regression with Generated(Original) Response Y
+# PKRS2 : Polynomial Kernel Ridge Regression with Sub-sampling and Generated(Original) Response Y
+# PKRB2 : Polynomial Kernel Ridge Regression with Bagging and Generated(Original) Response Y
+# PKRR2 : Polynomial Kernel Ridge Regression with Random Forest and Generated(Original) Response Y
 
-# GKR2 : Gaussian Kernel Regression with Generated(Original) Response Y 
-# GKRS2 : Gaussian Kernel Regression with Sub-sampling and Generated(Original) Response Y
-# GKRB2 : Gaussian Kernel Regression with Bagging and Generated(Original) Response Y
-# GKRR2 : Gaussian Kernel Regression with Random Forest and Generated(Original) Response Y
+# GKR2 : Gaussian Kernel Ridge Regression with Generated(Original) Response Y 
+# GKRS2 : Gaussian Kernel Ridge Regression with Sub-sampling and Generated(Original) Response Y
+# GKRB2 : Gaussian Kernel Ridge Regression with Bagging and Generated(Original) Response Y
+# GKRR2 : Gaussian Kernel Ridge Regression with Random Forest and Generated(Original) Response Y
 
 
 
