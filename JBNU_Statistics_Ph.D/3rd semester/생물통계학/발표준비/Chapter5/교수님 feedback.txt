@@ -1,0 +1,8 @@
+"icenReg" package를 사용하면, 
+
+interval censored data의 경우 
+
+Kaplan-Meier type survival function 추정 (Turnbull estimator)와 Cox regression을 
+
+수행할 수 있습니다.  
+
