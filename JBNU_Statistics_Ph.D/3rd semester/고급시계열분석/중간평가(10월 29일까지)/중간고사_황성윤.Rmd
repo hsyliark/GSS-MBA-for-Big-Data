@@ -3,8 +3,8 @@ title: "Time Series Mid-term"
 author: "Hwang Seong-Yun"
 date: '2021 10 25 '
 output:
-  pdf_document: default
   html_document: default
+  pdf_document: default
 ---
 
 ## Time Series Mid-term
@@ -242,7 +242,7 @@ plot(stl_fit2)
 
 
 
-3. 확률과정 $Z_{t}=0.9Z_{t-1}+\epsilon_{t}$, $t=1,2,\dots,100$으로부터의 시계열 자료를 생성한 후 다음을 수행하라. 
+3. 확률과정 $Z_{t}=1+0.9Z_{t-1}+\epsilon_{t}$, $t=1,2,\dots,100$으로부터의 시계열 자료를 생성한 후 다음을 수행하라. 
 
 - 1) {$Z_{t}$}의 시계열그림을 그려라.
 
@@ -251,7 +251,20 @@ library(data.table)
 library(ggplot2)
 library(forecast)
 library(gridExtra)
-z <- arima.sim(n=100, list(order=c(1,0,0),ar=0.9))
+sim_ar <- function(n, mu, phi){
+  ### n : sample size
+  ### mu : mean
+  ### phi : p-dim coefficients
+  p <- length(phi)
+  z <- rnorm(n+100)  #epsilon ~ WN(0, sigma^2), iid N(0,1)
+  # delta <- (1-sum(phi))*mu
+  delta <- 1
+  for (k in (length(phi)+1):(n+100)){
+    z[k] <- delta + sum(z[(k-1):(k-p)]*phi) + rnorm(1)
+  }
+  return(z[-(1:100)])
+}
+z <- sim_ar(100, 0, 0.9)
 plot.ts(z)
 ```
 
@@ -269,7 +282,7 @@ SACF의 값이 지수적으로 감소하고 있다. (AR모형의 특징)
 
 ```{r}
 ggPacf(z, lag.max=10) + 
-  theme_bw() +ylim(-1,1) +
+  theme_bw() + ylim(-1,1) +
   theme(plot.title = element_blank())
 ```
 
