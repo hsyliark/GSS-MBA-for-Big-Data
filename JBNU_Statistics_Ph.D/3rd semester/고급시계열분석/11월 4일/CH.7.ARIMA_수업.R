@@ -25,6 +25,8 @@ tmp.dat <- data.table(
   Boxcox_0.15 = BoxCox(z,lambda= BoxCox.lambda(z, method='loglik')) 
 )
 
+res <- BoxCox.lambda(z, method='loglik')
+res
 
 melt.tmp <- melt(tmp.dat, id=1)
 melt.tmp
@@ -32,7 +34,7 @@ melt.tmp
 ggplot(melt.tmp, aes(t,value)) + 
   geom_line(col='steelblue', lwd=1) +
   xlab("")+ylab("")+
-  ggtitle(tit)+
+  ggtitle("Time Series")+
   theme_bw()+
   facet_wrap(.~variable, nrow = 2, scales = "free")
 
@@ -105,7 +107,7 @@ grid.arrange(p1, p2, p3, nrow = 2,
 
 
 ####################################
-z <-scan("depart.txt") 
+z <-scan("D:/Workplace/GSS_MBA_for_Big_Data/JBNU_Statistics_Ph.D/3rd semester/고급시계열분석/프로그램자료모음/제5판 시계열분석 data/depart.txt") 
 
 tmp.dat <- data.table(
   t=seq.Date(as.Date("1984-01-01"), 
@@ -215,7 +217,7 @@ p6 <- ggPacf(dt[,z]) +
   ggtitle("SPACF of ARIMA(1,1,0)")
 
 
-grid.arrange(p1, p3, p5, p2,p4, p6, nrow = 2)
+grid.arrange(p1, p3, p5, p2, p4, p6, nrow = 2)
 
 
 ####### ARIMA(0,1,1)
@@ -297,7 +299,7 @@ p3 <- ggAcf(dt[,diff(diff(z))]) +
   theme(text = element_text(size=10))+
   ggtitle("SACF of diff(MA(1))")
 
-grid.arrange(p1, p2,p3, nrow = 1)
+grid.arrange(p1, p2, p3, nrow = 1)
 
 
 
