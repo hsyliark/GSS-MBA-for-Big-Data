@@ -32,18 +32,13 @@ library(nnet)
 library(devtools)
 library(neuralnet)
 library(NeuralNetTools)
-source('https://gist.githubusercontent.com/fawda123/7471137/raw/466c1474d0a505ff044412703516c34f1a4684a5/nnet_plot_update.r')
 ```
 
-
+- 작물유무에 따라 데이터를 나누어서 사전분석을 실시한 결과 구축된 모형에 많은 차이가 있었다. 이에 따라 작물있음 데이터와 작물없음 데이터를 합친 데이터에 대해 작물유무와 다른 독립변수들간의 교호작용을 포함한 모형을 적합하여 결과를 살펴보았다.
 
 
 
 # 1. 환기율 ~ 외부기온, 외부풍속, 외부일사량, 환기창면적, 작물유무
-
-- 주어진 raw data가 작물의 유무에 따라 나누어져 있으므로 우선 작물유무별로 분석용 데이터를 따로 만들어서 분석을 실시함.
-
-
 
 ## 작물이 있는 경우
 
