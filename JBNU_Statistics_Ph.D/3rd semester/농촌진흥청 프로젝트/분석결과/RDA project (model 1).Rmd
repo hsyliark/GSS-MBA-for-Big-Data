@@ -1,5 +1,5 @@
 ---
-title: "RDA project (211004)"
+title: "RDA project (model 1)"
 author: "Hwang Seong-Yun"
 date: '2021 11 4 '
 output: html_document
@@ -40,7 +40,7 @@ library(NeuralNetTools)
 
 
 
-# 1. 환기율 ~ 외부기온, 외부풍속, 외부일사량, 환기창면적, 작물유무
+# model 1 : 환기율 ~ 외부기온, 외부풍속, 외부일사량, 환기창면적, 작물유무
 
 
 
