@@ -1,0 +1,7 @@
+211108
+다중선형회귀모형 관련 교수님 요청사항
+1. best subset selection 으로 모형선택 
+2. 4개의 교호작용 term을 하나씩만 제외한 모형들과 다 포함시킨 모형을 비교하는데 
+training:test 나누어서 test MSE 관점에서 비교
+3. 서두에 변수들간의 scatterplot matrix 그려서 제시
+참고사이트 : https://psystat.tistory.com/57
