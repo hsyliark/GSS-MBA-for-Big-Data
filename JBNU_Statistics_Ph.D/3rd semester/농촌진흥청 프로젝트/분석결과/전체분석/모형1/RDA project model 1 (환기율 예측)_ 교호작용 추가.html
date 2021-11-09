@@ -377,7 +377,7 @@ RMSE</code></pre>
 <pre><code>## [1] 449.2098</code></pre>
 <ul>
 <li>결과적으로 산출되는 RMSE는 <span class="math inline">\(RMSE=449.2098\)</span>이다.</li>
-<li>하지만 이 결과는 모형적합 후 단순히 유의한 영향력이 있는지를 확인한 것에 불과하다. 이에 따라 best subset selection 방법을 통해 모형을 다시 선택해볼 것이며, train:test=7:3 으로 데이터를 나누어서 4개의 교호작용 term을 하나씩 제외한 모형들과 모두 포함한 모형을 test RMSE의 관점에서 비교해볼 것이다.</li>
+<li>하지만 이 결과는 모형적합 후 단순히 유의한 영향력이 있는지를 확인한 것에 불과하다. 그리고 산점도행렬을 토대로 판단했을 때 환기창면적과 외부풍속 사이에도 교호작용이 존재하는 것으로 판단된다. 이에 따라 best subset selection 방법을 통해 모형을 다시 선택해볼 것이며, 최종적으로 선택된 모형에 대해 환기창면적과 외부풍속 간의 교호작용을 추가하여 모형을 적합해볼 것이다. 이후에는 train:test=7:3 으로 데이터를 나누어서 4개의 교호작용 term을 하나씩 제외한 모형들과 모두 포함한 모형, 그리고 최종적으로 선택된 모형에 대해 환기창면적과 외부풍속 간의 교호작용까지 추가한 모형을 test RMSE의 관점에서 비교해볼 것이다.</li>
 </ul>
 <div id="best-subset-selection" class="section level3">
 <h3>Best subset selection</h3>
@@ -505,12 +505,53 @@ summary(ms0.res)</code></pre>
 <li>결과적으로 Best subset selection에 따라 선택된 모형식은 다음과 같다.</li>
 <li><span class="math inline">\({\hat{y}} = -2.2977 + 0.0002x_{1} + 0.7685x_{2} + 0.0004x_{3} + 30.2437x_{4} - 1.1729x_{5} - 0.0412x_{1}x_{5} + 1.2095x_{2}x_{5} + 0.0011x_{3}x_{5} + 14.9740x_{4}x_{5}\)</span></li>
 <li><span class="math inline">\(y\)</span> : 환기율, <span class="math inline">\(x _{1}\)</span> : 외부기온, <span class="math inline">\(x _{2}\)</span> : 외부풍속, <span class="math inline">\(x_{3}\)</span> : 외부일사량, <span class="math inline">\(x_{4}\)</span> : 환기창면적, <span class="math inline">\(x _{5}\)</span> : 작물유무yes</li>
+<li>추가로 이 모형에 환기창면적과 외부풍속 간의 교호작용을 추가한 모형을 적합하면 다음과 같다.</li>
+</ul>
+<pre class="r"><code>ms0.res_plus &lt;- lm(환기율~외부기온+외부풍속+외부일사량+환기창면적+작물유무+
+                   외부기온*작물유무+외부풍속*작물유무+
+                   외부일사량*작물유무+환기창면적*작물유무+환기창면적*외부풍속,
+                data=ex1)
+summary(ms0.res_plus)</code></pre>
+<pre><code>## 
+## Call:
+## lm(formula = 환기율 ~ 외부기온 + 외부풍속 + 외부일사량 + 환기창면적 + 
+##     작물유무 + 외부기온 * 작물유무 + 외부풍속 * 작물유무 + 외부일사량 * 
+##     작물유무 + 환기창면적 * 작물유무 + 환기창면적 * 외부풍속, 
+##     data = ex1)
+## 
+## Residuals:
+##     Min      1Q  Median      3Q     Max 
+## -1.2387 -0.1822 -0.0153  0.1330  3.3386 
+## 
+## Coefficients:
+##                          Estimate Std. Error t value Pr(&gt;|t|)    
+## (Intercept)             2.226e-01  1.297e-01   1.716  0.08627 .  
+## 외부기온                1.630e-04  5.590e-03   0.029  0.97674    
+## 외부풍속               -1.620e-01  2.084e-02  -7.773 1.29e-14 ***
+## 외부일사량              3.504e-04  7.138e-05   4.908 1.00e-06 ***
+## 환기창면적              3.241e+00  5.693e-01   5.692 1.47e-08 ***
+## 작물유무yes            -1.934e+00  1.586e-01 -12.199  &lt; 2e-16 ***
+## 외부기온:작물유무yes   -2.006e-02  6.721e-03  -2.985  0.00288 ** 
+## 외부풍속:작물유무yes    7.009e-01  1.823e-02  38.445  &lt; 2e-16 ***
+## 외부일사량:작물유무yes  1.240e-03  8.639e-05  14.357  &lt; 2e-16 ***
+## 환기창면적:작물유무yes  2.512e+01  4.300e-01  58.415  &lt; 2e-16 ***
+## 외부풍속:환기창면적     9.969e+00  1.877e-01  53.117  &lt; 2e-16 ***
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+## Residual standard error: 0.3125 on 1779 degrees of freedom
+## Multiple R-squared:  0.9847, Adjusted R-squared:  0.9846 
+## F-statistic: 1.144e+04 on 10 and 1779 DF,  p-value: &lt; 2.2e-16</code></pre>
+<ul>
+<li>분석결과, 환기창면적과 외부풍속 사이에도 명백한 교호작용이 있다는 결론을 주고 있으며 모형식은 다음과 같다.</li>
+<li><span class="math inline">\({\hat{y}} = 0.2226 + 0.0002x_{1} - 0.1620x_{2} + 0.0004x_{3} + 3.2410x_{4} - 1.9340x_{5} - 0.0201x_{1}x_{5} + 0.7009x_{2}x_{5} + 0.0012x_{3}x_{5} + 25.1200x_{4}x_{5} + 9.9690x_{2}x_{4}\)</span></li>
+<li><span class="math inline">\(y\)</span> : 환기율, <span class="math inline">\(x _{1}\)</span> : 외부기온, <span class="math inline">\(x _{2}\)</span> : 외부풍속, <span class="math inline">\(x_{3}\)</span> : 외부일사량, <span class="math inline">\(x_{4}\)</span> : 환기창면적, <span class="math inline">\(x _{5}\)</span> : 작물유무yes</li>
 </ul>
 </div>
 <div id="traintest" class="section level3">
 <h3>train:test</h3>
 <ul>
-<li>지금부터는 train:test=7:3 으로 데이터를 나누어서 4개의 교호작용 term을 하나씩 제외한 모형들과 모두 포함한 모형을 test RMSE의 관점에서 비교해볼 것이다. test RMSE가 작을수록 예측을 잘하는 모형이라고 해석하면 된다.</li>
+<li>지금부터는 train:test=7:3 으로 데이터를 나누어서 4개의 교호작용 term을 하나씩 제외한 모형들과 모두 포함한 모형, 그리고 최종적으로 선택된 모형에 대해 환기창면적과 외부풍속 간의 교호작용까지 추가한 모형을 test RMSE의 관점에서 비교해볼 것이다. test RMSE가 작을수록 예측을 잘하는 모형이라고 해석하면 된다.</li>
 <li>먼저 데이터를 임의로 train:test=7:3 의 비율로 나눈다. train data는 모형구축 시, test data는 구축된 모형을 평가 시 사용한다.</li>
 </ul>
 <pre class="r"><code>set.seed(5790)
@@ -557,10 +598,18 @@ y_hat4 &lt;- predict(m4,ex1_test)
 RMSE4 &lt;- mean(sum((ex1_test$환기율-y_hat4)^2))
 RMSE4</code></pre>
 <pre><code>## [1] 161.6535</code></pre>
+<pre class="r"><code>m5 &lt;- lm(환기율~외부기온+외부풍속+외부일사량+환기창면적+작물유무+
+              외부기온*작물유무+외부풍속*작물유무+
+              외부일사량*작물유무+환기창면적*작물유무+환기창면적*외부풍속,
+            data=ex1_train) # 모든 변수 포함 + 환기창면적*외부풍속
+y_hat5 &lt;- predict(m5,ex1_test)
+RMSE5 &lt;- mean(sum((ex1_test$환기율-y_hat5)^2))
+RMSE5</code></pre>
+<pre><code>## [1] 43.32138</code></pre>
 <ul>
-<li>결과적으로 5가지 모형들 중 모든 교호작용을 다 포함한 모형에 대한 test RMSE의 값이 가장 작음을 확인할 수 있다. 이 모형식은 다음과 같다.</li>
+<li>결과적으로 6가지 모형들 중 환기창면적과 외부풍속의 교호작용까지 추가한 모형에 대한 test RMSE의 값이 가장 작음을 확인할 수 있다. 결론적으로 best subset selection을 통해 선정된 모형과 그 결과에 환기창면적과 외부풍속의 교호작용까지 추가한 모형에 대한 결과를 정리하면 다음과 같다.</li>
 </ul>
-<pre class="r"><code>summary(m0)</code></pre>
+<pre class="r"><code>summary(m0) # Best subset selection 결과</code></pre>
 <pre><code>## 
 ## Call:
 ## lm(formula = 환기율 ~ 외부기온 + 외부풍속 + 외부일사량 + 환기창면적 + 
@@ -591,6 +640,41 @@ RMSE4</code></pre>
 ## F-statistic:  3165 on 9 and 1243 DF,  p-value: &lt; 2.2e-16</code></pre>
 <ul>
 <li><span class="math inline">\({\hat{y}} = -2.3475 + 0.0034x_{1} + 0.7597x_{2} + 0.0003x_{3} + 30.4068x_{4} - 1.1008x_{5} - 0.0436x_{1}x_{5} + 1.2213x_{2}x_{5} + 0.0011x_{3}x_{5} + 14.6809x_{4}x_{5}\)</span></li>
+<li><span class="math inline">\(y\)</span> : 환기율, <span class="math inline">\(x _{1}\)</span> : 외부기온, <span class="math inline">\(x _{2}\)</span> : 외부풍속, <span class="math inline">\(x_{3}\)</span> : 외부일사량, <span class="math inline">\(x_{4}\)</span> : 환기창면적, <span class="math inline">\(x _{5}\)</span> : 작물유무yes</li>
+</ul>
+<pre class="r"><code>summary(m5) # 환기창면적*외부풍속 추가</code></pre>
+<pre><code>## 
+## Call:
+## lm(formula = 환기율 ~ 외부기온 + 외부풍속 + 외부일사량 + 환기창면적 + 
+##     작물유무 + 외부기온 * 작물유무 + 외부풍속 * 작물유무 + 외부일사량 * 
+##     작물유무 + 환기창면적 * 작물유무 + 환기창면적 * 외부풍속, 
+##     data = ex1_train)
+## 
+## Residuals:
+##     Min      1Q  Median      3Q     Max 
+## -1.2281 -0.1916 -0.0175  0.1422  3.2079 
+## 
+## Coefficients:
+##                          Estimate Std. Error t value Pr(&gt;|t|)    
+## (Intercept)             3.128e-01  1.567e-01   1.996 0.046157 *  
+## 외부기온               -8.751e-04  6.745e-03  -0.130 0.896799    
+## 외부풍속               -1.858e-01  2.556e-02  -7.271 6.31e-13 ***
+## 외부일사량              3.518e-04  8.865e-05   3.968 7.66e-05 ***
+## 환기창면적              2.579e+00  7.046e-01   3.661 0.000262 ***
+## 작물유무yes            -1.929e+00  1.930e-01  -9.996  &lt; 2e-16 ***
+## 외부기온:작물유무yes   -2.069e-02  8.153e-03  -2.538 0.011267 *  
+## 외부풍속:작물유무yes    7.079e-01  2.226e-02  31.799  &lt; 2e-16 ***
+## 외부일사량:작물유무yes  1.246e-03  1.066e-04  11.689  &lt; 2e-16 ***
+## 환기창면적:작물유무yes  2.523e+01  5.370e-01  46.975  &lt; 2e-16 ***
+## 외부풍속:환기창면적     1.021e+01  2.307e-01  44.250  &lt; 2e-16 ***
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+## Residual standard error: 0.3246 on 1242 degrees of freedom
+## Multiple R-squared:  0.9838, Adjusted R-squared:  0.9836 
+## F-statistic:  7528 on 10 and 1242 DF,  p-value: &lt; 2.2e-16</code></pre>
+<ul>
+<li><span class="math inline">\({\hat{y}} = 0.3128 - 0.0009x_{1} - 0.1858x_{2} + 0.0004x_{3} + 2.5790x_{4} - 1.9290x_{5} - 0.0207x_{1}x_{5} + 0.7079x_{2}x_{5} + 0.0012x_{3}x_{5} + 25.2300x_{4}x_{5} + 10.2100x_{2}x_{4}\)</span></li>
 <li><span class="math inline">\(y\)</span> : 환기율, <span class="math inline">\(x _{1}\)</span> : 외부기온, <span class="math inline">\(x _{2}\)</span> : 외부풍속, <span class="math inline">\(x_{3}\)</span> : 외부일사량, <span class="math inline">\(x_{4}\)</span> : 환기창면적, <span class="math inline">\(x _{5}\)</span> : 작물유무yes</li>
 </ul>
 </div>
@@ -672,7 +756,7 @@ RMSE &lt;- mean(sum((ex1_test$환기율-y_hat_ann1)^2))
 RMSE</code></pre>
 <pre><code>## [1] 52.31884</code></pre>
 <ul>
-<li>결과적으로 train data를 이용하여 ANN 모형을 적합하고 이를 이용하여 test data에 대해 계산한 RMSE의 값은 <span class="math inline">\(RMSE=52.31884\)</span>이다. 이는 다중선형회귀모형의 경우와 비교하면 작은 값이므로 ANN 모형이 다중선형회귀모형보다 예측력이 더 좋다고 말할 수 있다.</li>
+<li>결과적으로 train data를 이용하여 ANN 모형을 적합하고 이를 이용하여 test data에 대해 계산한 RMSE의 값은 <span class="math inline">\(RMSE=52.31884\)</span>이다.</li>
 </ul>
 </div>
 </div>
