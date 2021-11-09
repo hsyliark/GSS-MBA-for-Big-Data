@@ -66,7 +66,7 @@ my.kernel.matrix1 <- function(dat.train, dat.test) {
   a <- 1/(p^2) ; b <- 3
   n1 <- nrow(X1)
   D <- as.matrix(X1%*%t(X1)) # Inner product
-  K <- (D + 1)^3 # polynomial kernel
+  K <- (a*D + 1)^b # polynomial kernel
   K.train <- K[1:n,1:n]
   K.test <- K[1:n,(n+1):n1]
   
