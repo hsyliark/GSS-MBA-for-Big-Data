@@ -487,7 +487,7 @@ fit.ftn1 <- function(number1, number2, a) {
     res.rmse1.c <- NULL ; res.lam1.c <- NULL ; res.index1.c <- NULL
     res.rmse2.c <- NULL ; res.lam2.c <- NULL ; res.index2.c <- NULL
     
-    for (j in 1:50) {
+    for (j in 1:100) {
       
       n <- nrow(train.sim)
       index1.Kc <- sample(1:n, round(0.7*n), replace=F)
@@ -605,7 +605,7 @@ fit.ftn1 <- function(number1, number2, a) {
     res.rmse1.c <- NULL ; res.lam1.c <- NULL ; res.index1.c <- NULL
     res.rmse2.c <- NULL ; res.lam2.c <- NULL ; res.index2.c <- NULL
     
-    for (j in 1:50) {
+    for (j in 1:100) {
       
       n <- nrow(train.sim)
       index1.Kc <- sample(1:n, round(0.7*n), replace=F)
@@ -730,7 +730,7 @@ fit.ftn1 <- function(number1, number2, a) {
     res.rmse2 <- NULL
     grid.l <- 10^seq(-3,2,length=10)
     
-    for (i in 1:50) {
+    for (i in 1:100) {
       
       boot.index <- sample(1:n, n, replace=T)
       boot.K.train <- K.train[boot.index, boot.index]
@@ -769,7 +769,7 @@ fit.ftn1 <- function(number1, number2, a) {
     boots.y1 <- NULL
     boots.y2 <- NULL
     
-    for (r in 1:100) {
+    for (r in 1:200) {
       
       boots.index <- sample(1:n, n, replace=T)
       boots.K.train <- K[boots.index, boots.index]
@@ -841,7 +841,7 @@ fit.ftn1 <- function(number1, number2, a) {
     res.rmse2 <- NULL
     grid.l <- 10^seq(-3,2,length=10)
     
-    for (i in 1:50) {
+    for (i in 1:100) {
       
       boot.index <- sample(1:n, n, replace=T)
       boot.K.train <- K.train[boot.index, boot.index]
@@ -880,7 +880,7 @@ fit.ftn1 <- function(number1, number2, a) {
     boots.y1 <- NULL
     boots.y2 <- NULL
     
-    for (r in 1:100) {
+    for (r in 1:200) {
       
       boots.index <- sample(1:n, n, replace=T)
       boots.K.train <- K[boots.index, boots.index]
@@ -963,7 +963,7 @@ fit.ftn1 <- function(number1, number2, a) {
     res.rmse2 <- NULL
     grid.l <- 10^seq(-3,2,length=10)
     
-    for (i in 1:50) {
+    for (i in 1:100) {
       
       rf.index <- sample(1:p, round(sqrt(p)), replace=F)
       boot.index <- sample(1:n, n, replace=T)
@@ -1007,7 +1007,7 @@ fit.ftn1 <- function(number1, number2, a) {
     boots.y1 <- NULL
     boots.y2 <- NULL
     
-    for (r in 1:100) {
+    for (r in 1:200) {
       
       rfs.index <- sample(1:p, round(sqrt(p)), replace=F)
       boots.index <- sample(1:n, n, replace=T)
@@ -1086,7 +1086,7 @@ fit.ftn1 <- function(number1, number2, a) {
     res.rmse2 <- NULL
     grid.l <- 10^seq(-3,2,length=10)
     
-    for (i in 1:50) {
+    for (i in 1:100) {
       
       rf.index <- sample(1:p, round(sqrt(p)), replace=F)
       boot.index <- sample(1:n, n, replace=T)
@@ -1130,7 +1130,7 @@ fit.ftn1 <- function(number1, number2, a) {
     boots.y1 <- NULL
     boots.y2 <- NULL
     
-    for (r in 1:100) {
+    for (r in 1:200) {
       
       rfs.index <- sample(1:p, round(sqrt(p)), replace=F)
       boots.index <- sample(1:n, n, replace=T)
@@ -1351,7 +1351,7 @@ fit.ftn <- function(number1, number2, a) {
     res.rmse1.c <- NULL ; res.lam1.c <- NULL ; res.index1.c <- NULL
     res.rmse2.c <- NULL ; res.lam2.c <- NULL ; res.index2.c <- NULL
     
-    for (j in 1:50) {
+    for (j in 1:100) {
       
       n <- nrow(train.sim)
       index1.Kc <- sample(1:n, round(0.7*n), replace=F)
@@ -1469,7 +1469,7 @@ fit.ftn <- function(number1, number2, a) {
     res.rmse1.c <- NULL ; res.lam1.c <- NULL ; res.index1.c <- NULL
     res.rmse2.c <- NULL ; res.lam2.c <- NULL ; res.index2.c <- NULL
     
-    for (j in 1:50) {
+    for (j in 1:100) {
       
       n <- nrow(train.sim)
       index1.Kc <- sample(1:n, round(0.7*n), replace=F)
@@ -1595,7 +1595,7 @@ fit.ftn <- function(number1, number2, a) {
     res.rmse2 <- NULL
     grid.l <- 10^seq(-3,2,length=10)
     
-    for (i in 1:50) {
+    for (i in 1:100) {
       
       boot.index <- sample(1:n, n, replace=T)
       boot.K.train <- K.train[boot.index, boot.index]
@@ -1634,7 +1634,7 @@ fit.ftn <- function(number1, number2, a) {
     boots.y1 <- NULL
     boots.y2 <- NULL
     
-    for (r in 1:100) {
+    for (r in 1:200) {
       
       boots.index <- sample(1:n, n, replace=T)
       boots.K.train <- K[boots.index, boots.index]
@@ -1706,7 +1706,7 @@ fit.ftn <- function(number1, number2, a) {
     res.rmse2 <- NULL
     grid.l <- 10^seq(-3,2,length=10)
     
-    for (i in 1:50) {
+    for (i in 1:100) {
       
       boot.index <- sample(1:n, n, replace=T)
       boot.K.train <- K.train[boot.index, boot.index]
@@ -1745,7 +1745,7 @@ fit.ftn <- function(number1, number2, a) {
     boots.y1 <- NULL
     boots.y2 <- NULL
     
-    for (r in 1:100) {
+    for (r in 1:200) {
       
       boots.index <- sample(1:n, n, replace=T)
       boots.K.train <- K[boots.index, boots.index]
@@ -1825,7 +1825,7 @@ fit.ftn <- function(number1, number2, a) {
     res.rmse2 <- NULL
     grid.l <- 10^seq(-3,2,length=10)
     
-    for (i in 1:50) {
+    for (i in 1:100) {
       
       rf.index <- sample(1:p, round(sqrt(p)), replace=F)
       boot.index <- sample(1:n, n, replace=T)
@@ -1866,7 +1866,7 @@ fit.ftn <- function(number1, number2, a) {
     boots.y1 <- NULL
     boots.y2 <- NULL
     
-    for (r in 1:100) {
+    for (r in 1:200) {
       
       rfs.index <- sample(1:p, round(sqrt(p)), replace=F)
       boots.index <- sample(1:n, n, replace=T)
@@ -1945,7 +1945,7 @@ fit.ftn <- function(number1, number2, a) {
     res.rmse2 <- NULL
     grid.l <- 10^seq(-3,2,length=10)
     
-    for (i in 1:50) {
+    for (i in 1:100) {
       
       rf.index <- sample(1:p, round(sqrt(p)), replace=F)
       boot.index <- sample(1:n, n, replace=T)
@@ -1986,7 +1986,7 @@ fit.ftn <- function(number1, number2, a) {
     boots.y1 <- NULL
     boots.y2 <- NULL
     
-    for (r in 1:100) {
+    for (r in 1:200) {
       
       rfs.index <- sample(1:p, round(sqrt(p)), replace=F)
       boots.index <- sample(1:n, n, replace=T)
