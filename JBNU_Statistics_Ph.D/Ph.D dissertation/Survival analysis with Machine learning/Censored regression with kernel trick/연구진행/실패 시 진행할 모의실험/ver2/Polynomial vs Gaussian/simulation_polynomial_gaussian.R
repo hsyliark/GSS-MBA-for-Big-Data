@@ -2187,14 +2187,14 @@ sd(dat.res1_3$RMSE[dat.res1_3$method=="p.GKRR2"])
 
 ## Data generating
 # 3 explanatory variables
-# censoring --> ( 0% : 15 / 10% : 3.9  / 30% : 2.78 / 50% : 1.92 )
+# censoring --> ( 0% : 20 / 10% : 3.4  / 30% : 2.15 / 50% : 1.33 )
 dat.gen <- function(n, a, seed=NULL){
   if(!is.null(seed)) set.seed(seed)
   x1.i <- runif(n,-10,10)
   x2.i <- runif(n,-10,10)
   x3.i <- runif(n,-10,10)
   # e.i <- rnorm(n, mean=0, sd=1)
-  y.i <- rnorm(n, mean=1+(x1.i/10)^2+(x2.i/10)^2+(x3.i/10)^2, sd=1)
+  y.i <- rnorm(n, mean=1+(x1.i/10)^1+(x2.i/10)^2+(x3.i/10)^3, sd=1)
   # pred.value <- sin(2*pi*(x1.i*x2.i*x3.i*x4.i*x5.i))+cos(2*pi*(x6.i*x7.i*x8.i*x9.i*x10.i))
   cen <- rnorm(n, mean=a, sd=1) # censoring values
   pre.T <- pmin(y.i, cen)
@@ -2206,27 +2206,27 @@ dat.gen <- function(n, a, seed=NULL){
 }
 
 ## p=3, censoring 0%
-dat.res1_1 <- fit.ftn(50, 1000, 15) # n=50
-dat.res1_2 <- fit.ftn(100, 1000, 15) # n=100
-dat.res1_3 <- fit.ftn(200, 1000, 15) # n=200
+dat.res1_1 <- fit.ftn(50, 1000, 20) # n=50
+dat.res1_2 <- fit.ftn(100, 1000, 20) # n=100
+dat.res1_3 <- fit.ftn(200, 1000, 20) # n=200
 dat.res1 <- rbind(dat.res1_1, dat.res1_2, dat.res1_3)
 
 ## p=3, censoring 10%
-dat.res2_1 <- fit.ftn(50, 1000, 3.9) # n=50
-dat.res2_2 <- fit.ftn(100, 1000, 3.9) # n=100
-dat.res2_3 <- fit.ftn(200, 1000, 3.9) # n=200
+dat.res2_1 <- fit.ftn(50, 1000, 3.4) # n=50
+dat.res2_2 <- fit.ftn(100, 1000, 3.4) # n=100
+dat.res2_3 <- fit.ftn(200, 1000, 3.4) # n=200
 dat.res2 <- rbind(dat.res2_1, dat.res2_2, dat.res2_3)
 
 ## p=3, censoring 30%
-dat.res3_1 <- fit.ftn(50, 1000, 2.78) # n=50
-dat.res3_2 <- fit.ftn(100, 1000, 2.78) # n=100
-dat.res3_3 <- fit.ftn(200, 1000, 2.78) # n=200
+dat.res3_1 <- fit.ftn(50, 1000, 2.15) # n=50
+dat.res3_2 <- fit.ftn(100, 1000, 2.15) # n=100
+dat.res3_3 <- fit.ftn(200, 1000, 2.15) # n=200
 dat.res3 <- rbind(dat.res3_1, dat.res3_2, dat.res3_3)
 
 ## p=3, censoring 50%
-dat.res4_1 <- fit.ftn(50, 1000, 1.92) # n=50
-dat.res4_2 <- fit.ftn(100, 1000, 1.92) # n=100
-dat.res4_3 <- fit.ftn(200, 1000, 1.92) # n=200
+dat.res4_1 <- fit.ftn(50, 1000, 1.33) # n=50
+dat.res4_2 <- fit.ftn(100, 1000, 1.33) # n=100
+dat.res4_3 <- fit.ftn(200, 1000, 1.33) # n=200
 dat.res4 <- rbind(dat.res4_1, dat.res4_2, dat.res4_3)
 
 
@@ -2234,7 +2234,7 @@ dat.res4 <- rbind(dat.res4_1, dat.res4_2, dat.res4_3)
 
 ## Data generating
 # 5 explanatory variables
-# censoring --> ( 0% : 15 / 10% : 4.6 / 30% : 3.45 / 50% : 2.62 )
+# censoring --> ( 0% : 20 / 10% : 3.7 / 30% : 2.4 / 50% : 1.5 )
 dat.gen <- function(n, a, seed=NULL){
   if(!is.null(seed)) set.seed(seed)
   x1.i <- runif(n,-10,10)
@@ -2243,7 +2243,7 @@ dat.gen <- function(n, a, seed=NULL){
   x4.i <- runif(n,-10,10)
   x5.i <- runif(n,-10,10)
   # e.i <- rnorm(n, mean=0, sd=1)
-  y.i <- rnorm(n, mean=1+(x1.i/10)^2+(x2.i/10)^2+(x3.i/10)^2+(x4.i/10)^2+(x5.i/10)^2,
+  y.i <- rnorm(n, mean=1+(x1.i/10)^1+(x2.i/10)^2+(x3.i/10)^3+(x4.i/10)^4+(x5.i/10)^5,
                sd=1)
   # pred.value <- sin(2*pi*(x1.i*x2.i*x3.i*x4.i*x5.i))+cos(2*pi*(x6.i*x7.i*x8.i*x9.i*x10.i))
   cen <- rnorm(n, mean=a, sd=1) # censoring values
@@ -2256,27 +2256,27 @@ dat.gen <- function(n, a, seed=NULL){
 }
 
 ## p=5, censoring 0%
-dat.res5_1 <- fit.ftn(50, 1000, 15) # n=50
-dat.res5_2 <- fit.ftn(100, 1000, 15) # n=100
-dat.res5_3 <- fit.ftn(200, 1000, 15) # n=200
+dat.res5_1 <- fit.ftn(50, 1000, 20) # n=50
+dat.res5_2 <- fit.ftn(100, 1000, 20) # n=100
+dat.res5_3 <- fit.ftn(200, 1000, 20) # n=200
 dat.res5 <- rbind(dat.res5_1, dat.res5_2, dat.res5_3)
 
 ## p=5, censoring 10%
-dat.res6_1 <- fit.ftn(50, 1000, 4.6) # n=50
-dat.res6_2 <- fit.ftn(100, 1000, 4.6) # n=100
-dat.res6_3 <- fit.ftn(200, 1000, 4.6) # n=200
+dat.res6_1 <- fit.ftn(50, 1000, 3.7) # n=50
+dat.res6_2 <- fit.ftn(100, 1000, 3.7) # n=100
+dat.res6_3 <- fit.ftn(200, 1000, 3.7) # n=200
 dat.res6 <- rbind(dat.res6_1, dat.res6_2, dat.res6_3)
 
 ## p=5, censoring 30%
-dat.res7_1 <- fit.ftn(50, 1000, 3.45) # n=50
-dat.res7_2 <- fit.ftn(100, 1000, 3.45) # n=100
-dat.res7_3 <- fit.ftn(200, 1000, 3.45) # n=200
+dat.res7_1 <- fit.ftn(50, 1000, 2.4) # n=50
+dat.res7_2 <- fit.ftn(100, 1000, 2.4) # n=100
+dat.res7_3 <- fit.ftn(200, 1000, 2.4) # n=200
 dat.res7 <- rbind(dat.res7_1, dat.res7_2, dat.res7_3)
 
 ## p=5, censoring 50%
-dat.res8_1 <- fit.ftn(50, 1000, 2.62) # n=50
-dat.res8_2 <- fit.ftn(100, 1000, 2.62) # n=100
-dat.res8_3 <- fit.ftn(200, 1000, 2.62) # n=200
+dat.res8_1 <- fit.ftn(50, 1000, 1.5) # n=50
+dat.res8_2 <- fit.ftn(100, 1000, 1.5) # n=100
+dat.res8_3 <- fit.ftn(200, 1000, 1.5) # n=200
 dat.res8 <- rbind(dat.res8_1, dat.res8_2, dat.res8_3)
 
 
@@ -2284,7 +2284,7 @@ dat.res8 <- rbind(dat.res8_1, dat.res8_2, dat.res8_3)
 
 ## Data generating
 # 7 explanatory variables
-# censoring --> ( 0% : 20 / 10% : 5.4 / 30% : 4.15 / 50% : 3.28 )
+# censoring --> ( 0% : 30 / 10% : 3.8 / 30% : 2.55 / 50% : 1.65 )
 dat.gen <- function(n, a, seed=NULL){
   if(!is.null(seed)) set.seed(seed)
   x1.i <- runif(n,-10,10)
@@ -2295,8 +2295,8 @@ dat.gen <- function(n, a, seed=NULL){
   x6.i <- runif(n,-10,10)
   x7.i <- runif(n,-10,10)
   # e.i <- rnorm(n, mean=0, sd=1)
-  y.i <- rnorm(n, mean=1+(x1.i/10)^2+(x2.i/10)^2+(x3.i/10)^2+(x4.i/10)^2+(x5.i/10)^2+
-                 (x6.i/10)^2+(x7.i/10)^2,
+  y.i <- rnorm(n, mean=1+(x1.i/10)^1+(x2.i/10)^2+(x3.i/10)^3+(x4.i/10)^4+(x5.i/10)^5+
+                 (x6.i/10)^6+(x7.i/10)^7,
                sd=1)
   # pred.value <- sin(2*pi*(x1.i*x2.i*x3.i*x4.i*x5.i))+cos(2*pi*(x6.i*x7.i*x8.i*x9.i*x10.i))
   cen <- rnorm(n, mean=a, sd=1) # censoring values
@@ -2310,27 +2310,27 @@ dat.gen <- function(n, a, seed=NULL){
 }
 
 ## p=7, censoring 0%
-dat.res9_1 <- fit.ftn(50, 1000, 20) # n=50
-dat.res9_2 <- fit.ftn(100, 1000, 20) # n=100
-dat.res9_3 <- fit.ftn(200, 1000, 20) # n=200
+dat.res9_1 <- fit.ftn(50, 1000, 30) # n=50
+dat.res9_2 <- fit.ftn(100, 1000, 30) # n=100
+dat.res9_3 <- fit.ftn(200, 1000, 30) # n=200
 dat.res9 <- rbind(dat.res9_1, dat.res9_2, dat.res9_3)
 
 ## p=7, censoring 10%
-dat.res10_1 <- fit.ftn(50, 1000, 5.4) # n=50
-dat.res10_2 <- fit.ftn(100, 1000, 5.4) # n=100
-dat.res10_3 <- fit.ftn(200, 1000, 5.4) # n=200
+dat.res10_1 <- fit.ftn(50, 1000, 3.8) # n=50
+dat.res10_2 <- fit.ftn(100, 1000, 3.8) # n=100
+dat.res10_3 <- fit.ftn(200, 1000, 3.8) # n=200
 dat.res10 <- rbind(dat.res10_1, dat.res10_2, dat.res10_3)
 
 ## p=7, censoring 30%
-dat.res11_1 <- fit.ftn(50, 1000, 4.15) # n=50
-dat.res11_2 <- fit.ftn(100, 1000, 4.15) # n=100
-dat.res11_3 <- fit.ftn(200, 1000, 4.15) # n=200
+dat.res11_1 <- fit.ftn(50, 1000, 2.55) # n=50
+dat.res11_2 <- fit.ftn(100, 1000, 2.55) # n=100
+dat.res11_3 <- fit.ftn(200, 1000, 2.55) # n=200
 dat.res11 <- rbind(dat.res11_1, dat.res11_2, dat.res11_3)
 
 ## p=7, censoring 50%
-dat.res12_1 <- fit.ftn(50, 1000, 3.28) # n=50
-dat.res12_2 <- fit.ftn(100, 1000, 3.28) # n=100
-dat.res12_3 <- fit.ftn(200, 1000, 3.28) # n=200
+dat.res12_1 <- fit.ftn(50, 1000, 1.65) # n=50
+dat.res12_2 <- fit.ftn(100, 1000, 1.65) # n=100
+dat.res12_3 <- fit.ftn(200, 1000, 1.65) # n=200
 dat.res12 <- rbind(dat.res12_1, dat.res12_2, dat.res12_3)
 
 
@@ -2338,7 +2338,7 @@ dat.res12 <- rbind(dat.res12_1, dat.res12_2, dat.res12_3)
 
 ## Data generating
 # 9 explanatory variables
-# censoring --> ( 0% : 25 / 10% : 6.1 / 30% : 4.84 / 50% : 3.98 )
+# censoring --> ( 0% : 30 / 10% : 4 / 30% : 2.7 / 50% : 1.75 )
 dat.gen <- function(n, a, seed=NULL){
   if(!is.null(seed)) set.seed(seed)
   x1.i <- runif(n,-10,10)
@@ -2351,8 +2351,8 @@ dat.gen <- function(n, a, seed=NULL){
   x8.i <- runif(n,-10,10)
   x9.i <- runif(n,-10,10)
   # e.i <- rnorm(n, mean=0, sd=1)
-  y.i <- rnorm(n, mean=1+(x1.i/10)^2+(x2.i/10)^2+(x3.i/10)^2+(x4.i/10)^2+(x5.i/10)^2+
-                 (x6.i/10)^2+(x7.i/10)^2+(x8.i/10)^2+(x9.i/10)^2,
+  y.i <- rnorm(n, mean=1+(x1.i/10)^1+(x2.i/10)^2+(x3.i/10)^3+(x4.i/10)^4+(x5.i/10)^5+
+                 (x6.i/10)^6+(x7.i/10)^7+(x8.i/10)^8+(x9.i/10)^9,
                sd=1)
   # pred.value <- sin(2*pi*(x1.i*x2.i*x3.i*x4.i*x5.i))+cos(2*pi*(x6.i*x7.i*x8.i*x9.i*x10.i))
   cen <- rnorm(n, mean=a, sd=1) # censoring values
@@ -2366,27 +2366,27 @@ dat.gen <- function(n, a, seed=NULL){
 }
 
 ## p=9, censoring 0%
-dat.res13_1 <- fit.ftn(50, 1000, 25) # n=50
-dat.res13_2 <- fit.ftn(100, 1000, 25) # n=100
-dat.res13_3 <- fit.ftn(200, 1000, 25) # n=200
+dat.res13_1 <- fit.ftn(50, 1000, 30) # n=50
+dat.res13_2 <- fit.ftn(100, 1000, 30) # n=100
+dat.res13_3 <- fit.ftn(200, 1000, 30) # n=200
 dat.res13 <- rbind(dat.res13_1, dat.res13_2, dat.res13_3)
 
 ## p=9, censoring 10%
-dat.res14_1 <- fit.ftn(50, 1000, 6.1) # n=50
-dat.res14_2 <- fit.ftn(100, 1000, 6.1) # n=100
-dat.res14_3 <- fit.ftn(200, 1000, 6.1) # n=200
+dat.res14_1 <- fit.ftn(50, 1000, 4) # n=50
+dat.res14_2 <- fit.ftn(100, 1000, 4) # n=100
+dat.res14_3 <- fit.ftn(200, 1000, 4) # n=200
 dat.res14 <- rbind(dat.res14_1, dat.res14_2, dat.res14_3)
 
 ## p=9, censoring 30%
-dat.res15_1 <- fit.ftn(50, 1000, 4.84) # n=50
-dat.res15_2 <- fit.ftn(100, 1000, 4.84) # n=100
-dat.res15_3 <- fit.ftn(200, 1000, 4.84) # n=200
+dat.res15_1 <- fit.ftn(50, 1000, 2.7) # n=50
+dat.res15_2 <- fit.ftn(100, 1000, 2.7) # n=100
+dat.res15_3 <- fit.ftn(200, 1000, 2.7) # n=200
 dat.res15 <- rbind(dat.res15_1, dat.res15_2, dat.res15_3)
 
 ## p=9, censoring 50%
-dat.res16_1 <- fit.ftn(50, 1000, 3.98) # n=50
-dat.res16_2 <- fit.ftn(100, 1000, 3.98) # n=100
-dat.res16_3 <- fit.ftn(200, 1000, 3.98) # n=200
+dat.res16_1 <- fit.ftn(50, 1000, 1.75) # n=50
+dat.res16_2 <- fit.ftn(100, 1000, 1.75) # n=100
+dat.res16_3 <- fit.ftn(200, 1000, 1.75) # n=200
 dat.res16 <- rbind(dat.res16_1, dat.res16_2, dat.res16_3)
 
 
