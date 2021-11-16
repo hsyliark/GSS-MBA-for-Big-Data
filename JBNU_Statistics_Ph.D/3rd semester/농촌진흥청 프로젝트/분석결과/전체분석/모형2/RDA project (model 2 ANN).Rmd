@@ -44,7 +44,9 @@ library(NeuralNetTools)
 
 ## ANN Model
 
-- ANN 모형의 경우는 다음과 같이 적합할 수 있다. hidden node의 경우는 개수를 결정하는 기준점이 따로 정해져있지 않기 때문에 최적의 hidden node의 개수를 미리 정한다는 것은 매우 어려운 일이다. 이에 따라 우선적으로 hidden layer의 개수는 1, 그리고 각각의 layer에 대한 node의 수는 8로 설정한다. 
+- ANN 모형의 경우는 다음과 같이 적합할 수 있다. hidden node의 경우는 개수를 결정하는 기준점이 따로 정해져있지 않기 때문에 최적의 hidden node의 개수를 미리 정한다는 것은 매우 어려운 일이다. 이에 따라 다음과 같은 2가지의 모형을 비교해볼 것이다.
+-- hidden layer의 수 1, 각 layer에 대한 node의 수 8
+-- hidden layer의 수 2, 각 layer에 대한 node의 수 4
 - 한가지 주의할 점은 ANN의 경우는 기본적으로 모든 설명변수들을 다 사용하게 되지만 정확한 모형식은 알 수 없기 때문에 각 설명변수의 유의성은 판단할 수 없다는 것이다.
 - `neuralnet` 함수는 실행할 때마다 결과값이 다르게 나오기 때문에 `set.seed()`를 통해 미리 재현성을 확보해야 한다. 그리고 함수 실행 시 시간이 다소 소요된다. 그리고 dummy variable의 경우도 수치형으로 바꿔주어야 함수가 실행된다.
 
@@ -56,10 +58,11 @@ sample_index <- sample(1:nrow(ex1), round(nrow(ex1)*2/10), replace=F)
 ex1_sample <- ex1[sample_index,]
 ```
 
+
 ### hidden layer의 개수 1, 각각의 layer에 대한 node의 수 8
 
 - 요구사항을 반영하여 독립변수 중 환기율은 제외하였다.
-- 전체 데이터를 모두 사용하는 경우 소요되는 시간이 굉장히 많음에 따라 20%의 sample을 추출하여 모형적합을 실시하였다.
+- 전체 데이터를 모두 사용하는 경우 소요되는 시간이 많은 경우가 빈번하게 발생함에 따라 20%의 sample을 추출하여 모형적합을 실시하였다.
 
 ```{r}
 set.seed(1234)
@@ -68,7 +71,7 @@ summary(ann1)
 ```
 
 - 모형적합 결과, 5(입력)-1(은닉)-1(출력) 형태의 신경망 모형이 구성되었다.
-- 모형적합 시 소요된 시간은 약 1시간이다.
+- 모형적합 시 소요된 시간은 약 1분이다.
 - 이 모형을 이용하여 환기율의 예측값을 구하고 이를 바탕으로 예측력의 정확성을 판단하는 기준인 RMSE를 계산하도록 한다. 이는 다음과 같이 계산한다.
 - $RMSE = \frac {1} {n} \sqrt {\sum _{i=1} ^{n} (y _{i} - {\hat{y _{i}}} ) ^{2}}$
 
@@ -78,9 +81,9 @@ RMSE <- mean(sum((ex1_sample$내부기온-y_hat_ann1)^2))
 RMSE
 ```
 
-- 결과적으로 ANN 모형을 적합했을 때 산출되는 RMSE의 값은 $RMSE=808.6634$이다. 
+- 결과적으로 ANN 모형을 적합했을 때 산출되는 RMSE의 값은 $RMSE=843.8627$이다. 
 
-### train:test
+#### train:test
 
 - 이제 이 모형에 대한 예측력을 평가하기 위해 train:test=7:3 으로 데이터를 나눈 뒤 train data에 대해 모형을 적합하고 test data를 이용하여 test RMSE를 계산해보도록 한다. 
 
@@ -98,7 +101,7 @@ summary(ann1)
 ```
 
 - 모형적합 결과, 5(입력)-1(은닉)-1(출력) 형태의 신경망 모형이 구성되었다.
-- 모형적합 시 소요된 시간은 약 2시간이다.
+- 모형적합 시 소요된 시간은 약 10분이다.
 - 이 모형을 이용하여 test data에 대한 환기율의 예측값을 구하고 이를 바탕으로 예측력의 정확성을 판단하는 기준인 test RMSE를 계산하도록 한다. 이는 다음과 같이 계산한다.
 - $RMSE = \frac {1} {n} \sqrt {\sum _{i=1} ^{n} (y _{i} - {\hat{y _{i}}} ) ^{2}}$
 
@@ -108,5 +111,65 @@ RMSE <- mean(sum((ex1_test$내부기온-y_hat_ann1)^2))
 RMSE
 ```
 
-- 결과적으로 train data를 이용하여 ANN 모형을 적합하고 이를 이용하여 test data에 대해 계산한 RMSE의 값은 $RMSE=1378.524$이다.
+- 결과적으로 train data를 이용하여 hidden layer의 개수 1, 각각의 layer에 대한 node의 수 8인 ANN 모형을 적합하고 이를 이용하여 test data에 대해 계산한 RMSE의 값은 $RMSE=1378.524$이다.
 
+
+
+### hidden layer의 개수 2, 각각의 layer에 대한 node의 수 4
+
+- 요구사항을 반영하여 독립변수 중 환기율은 제외하였다.
+- 전체 데이터를 모두 사용하는 경우 소요되는 시간이 굉장히 많은 경우가 빈번하게 발생함에 따라 20%의 sample을 추출하여 모형적합을 실시하였다.
+
+```{r}
+set.seed(1234)
+ann2 <- neuralnet(내부기온~외부기온+외부풍속+외부일사량+환기창면적+작물유무수치, data=ex1_sample, hidden=c(4,4), threshold = 0.01, stepmax = 1e+08)
+summary(ann1)
+```
+
+- 모형적합 결과, 5(입력)-2(은닉)-1(출력) 형태의 신경망 모형이 구성되었다.
+- 모형적합 시 소요된 시간은 약 1초이다.
+- 이 모형을 이용하여 환기율의 예측값을 구하고 이를 바탕으로 예측력의 정확성을 판단하는 기준인 RMSE를 계산하도록 한다. 이는 다음과 같이 계산한다.
+- $RMSE = \frac {1} {n} \sqrt {\sum _{i=1} ^{n} (y _{i} - {\hat{y _{i}}} ) ^{2}}$
+
+```{r}
+y_hat_ann2 <- compute(ann2, ex1_sample)$net.result
+RMSE <- mean(sum((ex1_sample$내부기온-y_hat_ann2)^2))
+RMSE
+```
+
+- 결과적으로 ANN 모형을 적합했을 때 산출되는 RMSE의 값은 $RMSE=10672.82$이다. 
+
+#### train:test
+
+- 이제 이 모형에 대한 예측력을 평가하기 위해 train:test=7:3 으로 데이터를 나눈 뒤 train data에 대해 모형을 적합하고 test data를 이용하여 test RMSE를 계산해보도록 한다. 
+
+```{r}
+set.seed(5790)
+train.index <- sample(1:nrow(ex1), round(nrow(ex1)*7/10), replace=F)
+ex1_train <- ex1[train.index,]
+ex1_test <- ex1[-train.index,]
+```
+
+```{r}
+set.seed(1234)
+ann2 <- neuralnet(내부기온~외부기온+외부풍속+외부일사량+환기창면적+작물유무수치, data=ex1_train, hidden=c(4,4), threshold = 0.01, stepmax = 1e+08)
+summary(ann1)
+```
+
+- 모형적합 결과, 5(입력)-2(은닉)-1(출력) 형태의 신경망 모형이 구성되었다.
+- 모형적합 시 소요된 시간은 약 2초이다.
+- 이 모형을 이용하여 test data에 대한 환기율의 예측값을 구하고 이를 바탕으로 예측력의 정확성을 판단하는 기준인 test RMSE를 계산하도록 한다. 이는 다음과 같이 계산한다.
+- $RMSE = \frac {1} {n} \sqrt {\sum _{i=1} ^{n} (y _{i} - {\hat{y _{i}}} ) ^{2}}$
+
+```{r}
+y_hat_ann2 <- compute(ann2, ex1_test)$net.result
+RMSE <- mean(sum((ex1_test$내부기온-y_hat_ann2)^2))
+RMSE
+```
+
+- 결과적으로 train data를 이용하여 hidden layer의 개수 2, 각각의 layer에 대한 node의 수 4인 ANN 모형을 적합하고 이를 이용하여 test data에 대해 계산한 RMSE의 값은 $RMSE=14846.59$이다.
+
+
+### 비교
+
+- 분석결과 hidden layer의 개수 1, 각각의 layer에 대한 node의 수 8인 모형에 대한 RMSE의 값이 hidden layer의 개수 2, 각각의 layer에 대한 node의 수 4인 모형의 경우보다 작으므로 전자의 모형이 예측력 측면에서는 더 좋은 모형이라고 판단된다. 하지만, 후자의 모형을 적합 시 시간이 생각보가 굉장히 짧게 걸렸기 때문에 이 사실만 보더라도 이 모형이 예측력이 크지 않다는 것을 짐작할 수 있다. 만약 더 좋은 예측결과를 주는 모형을 적합하고 싶다면 더 복잡한 모형을 고려해볼 수도 있겠지만 많은 시간이 소요될 가능성이 크고 복잡한 모형이라고 해서 무조건 예측력이 좋은것은 아니고 오히려 과적합(overfitting)의 위험이 있을수도 있기 때문에 이러한 한계점을 잘 판단해서 모형을 설정하는 것이 현명하다고 판단된다.  
