@@ -29,7 +29,7 @@ dt <- data.table( t = 1:length(z[[1]]),
 ## 시계열그림 / ACF PACF
 p3 <- ggplot(dt, aes(t, rate)) + 
   geom_line(col='steelblue') +
-  xlab("")+ylab('')+ ggtitle('Time serise plot of the input Gas feed rate')+
+  xlab("")+ylab('')+ ggtitle('Time series plot of the input Gas feed rate')+
   theme_bw()
 
 p1 <- ggAcf(dt$rate) + 
@@ -71,7 +71,7 @@ dt[, resid := as.numeric(resid(fit2))]
 p3 <- ggplot(dt, aes(t, resid)) + 
   geom_line(col='steelblue') +
   geom_hline(yintercept = 0, col='grey', lty=2)+
-  xlab("")+ylab('')+ ggtitle('Time serise plot of Residual')+
+  xlab("")+ylab('')+ ggtitle('Time series plot of Residual')+
   theme_bw()
 
 p1 <- ggAcf(dt$resid) + 
@@ -145,7 +145,7 @@ dt[, resid := as.numeric(resid(fit))]
 p3 <- ggplot(dt, aes(t, resid)) + 
   geom_line(col='steelblue') +
   geom_hline(yintercept = 0, col='grey', lty=2)+
-  xlab("")+ylab('')+ ggtitle('Time serise plot of Residual')+
+  xlab("")+ylab('')+ ggtitle('Time series plot of Residual')+
   theme_bw()
 
 p1 <- ggAcf(dt$resid) + 
@@ -208,7 +208,7 @@ dt <- data.table( t = 1:length(z),
 
 p3 <- ggplot(dt, aes(t, z)) + 
   geom_line(col='steelblue') +
-  xlab("")+ylab('')+ ggtitle('Time serise plot')+
+  xlab("")+ylab('')+ ggtitle('Time series plot')+
   theme_bw()
 
 p1 <- ggAcf(dt$z) + 
@@ -232,15 +232,15 @@ adfTest(dt$z, lags = 1, type = "c")
 adfTest(dt$z, lags = 2, type = "c") 
 
 # function adf.test를 이용할 수도 있음
-# adf.test(dt$z)    # ADF 검정
-# pp.test(dt$z)     # PP 검정
+adf.test(dt$z)    # ADF 검정
+pp.test(dt$z)     # PP 검정
 
 ## 차분
 dt[, diff_z := c(0, diff(z))]
 
 p3 <- ggplot(dt, aes(t, diff_z)) + 
   geom_line(col='steelblue') +
-  xlab("")+ylab('')+ ggtitle('Time serise plot')+
+  xlab("")+ylab('')+ ggtitle('Time series plot')+
   theme_bw()
 
 p1 <- ggAcf(dt$diff_z) + 
@@ -274,7 +274,7 @@ dt[, resid := as.numeric(resid(fit))]
 p3 <- ggplot(dt, aes(t, resid)) + 
   geom_line(col='steelblue') +
   geom_hline(yintercept = 0, col='grey', lty=2)+
-  xlab("")+ylab('')+ ggtitle('Time serise plot of Residual')+
+  xlab("")+ylab('')+ ggtitle('Time series plot of Residual')+
   theme_bw()
 
 p1 <- ggAcf(dt$resid) + 
@@ -297,7 +297,7 @@ jarque.bera.test(dt$resid)  ##JB test H0: normal
 ggplot(dt, aes(t, resid)) + 
   geom_line(col='steelblue') +
   geom_hline(yintercept = 0, col='grey', lty=2)+
-  xlab("")+ylab('')+ ggtitle('Time serise plot of Residual')+
+  xlab("")+ylab('')+ ggtitle('Time series plot of Residual')+
   theme_bw()
 
 qqnorm(dt$resid)
@@ -321,7 +321,7 @@ dt <- data.table( t = seq.Date(as.Date("1983-01-01"),
 
 p3 <- ggplot(dt, aes(t, z)) + 
   geom_line(col='steelblue') +
-  xlab("")+ylab('')+ ggtitle('Time serise plot')+
+  xlab("")+ylab('')+ ggtitle('Time series plot')+
   theme_bw()
 
 p1 <- ggAcf(dt$z) + 
@@ -345,9 +345,9 @@ adfTest(dt$z, lags = 1, type = "ct")
 adfTest(dt$z, lags = 2, type = "ct") 
 
 # function adf.test를 이용할 수도 있음
-# library(tseries)   # library for function adf.test & pp.test
-# adf.test(dt$z)    # ADF 검정
-# pp.test(dt$z)     # PP 검정
+library(tseries)   # library for function adf.test & pp.test
+adf.test(dt$z)    # ADF 검정
+pp.test(dt$z)     # PP 검정
 
 
 ## 선형모형적합 
@@ -359,7 +359,7 @@ dt[, resid_lm := residuals(fit1)]
 
 p3 <- ggplot(dt, aes(t, resid_lm)) + 
   geom_line(col='steelblue') +
-  xlab("")+ylab('')+ ggtitle('Time serise plot')+
+  xlab("")+ylab('')+ ggtitle('Time series plot')+
   theme_bw()
 
 p1 <- ggAcf(dt$resid_lm) + 
@@ -394,7 +394,7 @@ coeftest(fit_resid)
 #### ut ~ WN(0, sigma^2)
 
 #### Zt = T + I
-#### Zt- T = It ~ stationry process
+#### Zt- T = It ~ stationary process
 
 #######################################
 ## 차분
@@ -402,7 +402,7 @@ dt[, diff_z := c(0, diff(z))]
 
 p3 <- ggplot(dt, aes(t, diff_z)) + 
   geom_line(col='steelblue') +
-  xlab("")+ylab('')+ ggtitle('Time serise plot')+
+  xlab("")+ylab('')+ ggtitle('Time series plot')+
   theme_bw()
 
 p1 <- ggAcf(dt$diff_z) + 
@@ -433,7 +433,7 @@ dt[, resid := as.numeric(resid(fit))]
 p3 <- ggplot(dt, aes(t, resid)) + 
   geom_line(col='steelblue') +
   geom_hline(yintercept = 0, col='grey', lty=2)+
-  xlab("")+ylab('')+ ggtitle('Time serise plot of Residual')+
+  xlab("")+ylab('')+ ggtitle('Time series plot of Residual')+
   theme_bw()
 
 p1 <- ggAcf(dt$resid) + 
@@ -456,7 +456,7 @@ jarque.bera.test(dt$resid)  ##JB test H0: normal
 ggplot(dt, aes(t, resid)) + 
   geom_line(col='steelblue') +
   geom_hline(yintercept = 0, col='grey', lty=2)+
-  xlab("")+ylab('')+ ggtitle('Time serise plot of Residual')+
+  xlab("")+ylab('')+ ggtitle('Time series plot of Residual')+
   theme_bw()
 
 qqnorm(dt$resid)
