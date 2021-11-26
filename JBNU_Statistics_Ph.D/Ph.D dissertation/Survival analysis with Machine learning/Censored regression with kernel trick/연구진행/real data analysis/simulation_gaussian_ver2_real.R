@@ -786,7 +786,7 @@ fit.ftn1 <- function(dat.sim) {
   
   # Final result
   
-  dat.res <- rbind(dat1, dat2, dat3, dat4, dat5, dat6, dat7, dat8)
+  dat.res <- rbind(dat2, dat4, dat6, dat8)
   
   return(dat.res)
   
@@ -1247,7 +1247,7 @@ fit.ftn <- function(dat.sim) {
   
   # Final result
   
-  dat.res <- rbind(dat1, dat2, dat3, dat4, dat5, dat6, dat7, dat8)
+  dat.res <- rbind(dat2, dat4, dat6, dat8)
   
   return(dat.res)
   
@@ -1382,18 +1382,79 @@ sd(dat.res16_3$RMSE[dat.res16_3$method=="p.GKRR2"])
 #-----------------------------------------------------#
 
 
-uis2 <- read.csv("C:/Users/HSY/Desktop/uis2.csv",
+uis2 <- read.csv("C:/Users/Hi/Desktop/uis2.csv",
                     sep=",",header=T)
 uis2 <-uis2[,-1]
 g <- km.surv(uis2$time, uis2$censor)
 uis2$y.s <- ifelse(uis2$time <= quantile(uis2$time, probs=0.98), 
                    uis2$time*uis2$censor/g, 0) 
 dat.sim <- data.frame(ys1=uis2$y.s, x1=uis2$age, x2=uis2$beck, 
-                      x3=uis2$ivhx, x4=uis2$ndrugtx,
-                      x5=uis2$lot, 
+                      x3=uis2$hercoc, x4=uis2$ivhx, x5=uis2$ndrugtx,
+                      x6=uis2$race, x7=uis2$treat, x8=uis2$lot,
                       ys2=uis2$y.s) 
 dat.res <- fit.ftn(dat.sim)
-write.csv(dat.res, "C:/Users/Hi/Desktop/real data analysis/uis2_res.csv")
+dat.res1 <- dat.res[dat.res$method=="a.GKR1",]
+dat.res2 <- dat.res[dat.res$method=="b.GKRS1",]
+dat.res3 <- dat.res[dat.res$method=="c.GKRB1",]
+dat.res4 <- dat.res[dat.res$method=="d.GKRR1",]
+dat.res_final <- rbind(dat.res1, dat.res2, dat.res3, dat.res4)
+write.csv(dat.res_final, "C:/Users/Hi/Desktop/real data analysis/uis2_res.csv")
+
+ggplot(dat.res_final, aes(x = method, y = RMSE, fill = method)) + geom_boxplot()
+
+mean(dat.res_final$RMSE[dat.res_final$method=="a.GKR1"])
+sd(dat.res_final$RMSE[dat.res_final$method=="a.GKR1"])
+mean(dat.res_final$RMSE[dat.res_final$method=="b.GKRS1"])
+sd(dat.res_final$RMSE[dat.res_final$method=="b.GKRS1"])
+mean(dat.res_final$RMSE[dat.res_final$method=="c.GKRB1"])
+sd(dat.res_final$RMSE[dat.res_final$method=="c.GKRB1"])
+mean(dat.res_final$RMSE[dat.res_final$method=="d.GKRR1"])
+sd(dat.res_final$RMSE[dat.res_final$method=="d.GKRR1"])
+
+
+#-----------------------------------------------------#
+
+
+pbc <- read.csv("C:/Users/Hi/Desktop/pbc.csv",
+                 sep=",",header=T)
+g <- km.surv(pbc$time, pbc$status)
+pbc$y.s <- ifelse(pbc$time <= quantile(pbc$time, probs=0.98), 
+                   pbc$time*pbc$status/g, 0) 
+dat.sim <- data.frame(ys1=pbc$y.s, x1=pbc$trt, x2=pbc$age, x3=pbc$sex,
+                      x4=pbc$ascites, x5=pbc$hepato, x6=pbc$spiders,
+                      x7=pbc$edema, x8=pbc$bili, x9=pbc$chol,
+                      x10=pbc$albumin, x11=pbc$copper, x12=pbc$alk.phos,
+                      x13=pbc$ast, x14=pbc$trig, x15=pbc$platelet,
+                      x16=pbc$protime, x17=pbc$stage,
+                      ys2=pbc$y.s) 
+dat.res <- fit.ftn(dat.sim)
+dat.res1 <- dat.res[dat.res$method=="a.GKR1",]
+dat.res2 <- dat.res[dat.res$method=="b.GKRS1",]
+dat.res3 <- dat.res[dat.res$method=="c.GKRB1",]
+dat.res4 <- dat.res[dat.res$method=="d.GKRR1",]
+dat.res_final <- rbind(dat.res1, dat.res2, dat.res3, dat.res4)
+write.csv(dat.res_final, "C:/Users/Hi/Desktop/real data analysis/pbc_res.csv")
+
+ggplot(dat.res_final, aes(x = method, y = RMSE, fill = method)) + geom_boxplot()
+
+mean(dat.res_final$RMSE[dat.res_final$method=="a.GKR1"])
+sd(dat.res_final$RMSE[dat.res_final$method=="a.GKR1"])
+mean(dat.res_final$RMSE[dat.res_final$method=="b.GKRS1"])
+sd(dat.res_final$RMSE[dat.res_final$method=="b.GKRS1"])
+mean(dat.res_final$RMSE[dat.res_final$method=="c.GKRB1"])
+sd(dat.res_final$RMSE[dat.res_final$method=="c.GKRB1"])
+mean(dat.res_final$RMSE[dat.res_final$method=="d.GKRR1"])
+sd(dat.res_final$RMSE[dat.res_final$method=="d.GKRR1"])
+
+
+#-----------------------------------------------------#
+
+
+
+
+
+
+
 
 #### Summary (p : number of independent variables / n : size of training data)
 ## Caution -> Please use appropriate 'dat.gen' function
