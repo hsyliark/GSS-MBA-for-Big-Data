@@ -1259,7 +1259,7 @@ library(ggplot2)
 
 
 
-uis2 <- read.csv("C:/Users/Hi/Desktop/uis2.csv",
+uis2 <- read.csv("C:/Users/HSY/Desktop/uis2.csv",
                     sep=",",header=T)
 uis2 <-uis2[,-1]
 g <- km.surv(uis2$time, uis2$censor)
@@ -1361,6 +1361,37 @@ sd(dat.res_final$RMSE[dat.res_final$method=="d.GKRR1"])
 
 
 
+retinopathy <- read.csv("C:/Users/Hi/Desktop/retinopathy.csv",
+                   sep=",",header=T)
+g <- km.surv(retinopathy$futime, retinopathy$status)
+retinopathy$y.s <- ifelse(retinopathy$futime <= quantile(retinopathy$futime, probs=0.98), 
+                     retinopathy$futime*retinopathy$status/g, 0) 
+dat.sim <- data.frame(ys1=retinopathy$y.s, x1=retinopathy$laser,
+                      x2=retinopathy$eye, x3=retinopathy$age,
+                      x4=retinopathy$type, x5=retinopathy$trt,
+                      x6=retinopathy$risk,
+                      ys2=retinopathy$y.s) 
+dat.res <- fit.ftn(dat.sim)
+dat.res1 <- dat.res[dat.res$method=="a.GKR1",]
+dat.res2 <- dat.res[dat.res$method=="b.GKRS1",]
+dat.res3 <- dat.res[dat.res$method=="c.GKRB1",]
+dat.res4 <- dat.res[dat.res$method=="d.GKRR1",]
+dat.res_final <- rbind(dat.res1, dat.res2, dat.res3, dat.res4)
+write.csv(dat.res_final, "C:/Users/Hi/Desktop/real data analysis/retinopathy_res.csv")
+
+ggplot(dat.res_final, aes(x = method, y = RMSE, fill = method)) + geom_boxplot()
+
+mean(dat.res_final$RMSE[dat.res_final$method=="a.GKR1"])
+sd(dat.res_final$RMSE[dat.res_final$method=="a.GKR1"])
+mean(dat.res_final$RMSE[dat.res_final$method=="b.GKRS1"])
+sd(dat.res_final$RMSE[dat.res_final$method=="b.GKRS1"])
+mean(dat.res_final$RMSE[dat.res_final$method=="c.GKRB1"])
+sd(dat.res_final$RMSE[dat.res_final$method=="c.GKRB1"])
+mean(dat.res_final$RMSE[dat.res_final$method=="d.GKRR1"])
+sd(dat.res_final$RMSE[dat.res_final$method=="d.GKRR1"])
+
+
+#-----------------------------------------------------#
 
 
 
