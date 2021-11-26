@@ -1,0 +1,16 @@
+> mean(dat.res_final$RMSE[dat.res_final$method=="a.GKR1"])
+[1] 509.3197
+> sd(dat.res_final$RMSE[dat.res_final$method=="a.GKR1"])
+[1] 72.1247
+> mean(dat.res_final$RMSE[dat.res_final$method=="b.GKRS1"])
+[1] 509.327
+> sd(dat.res_final$RMSE[dat.res_final$method=="b.GKRS1"])
+[1] 72.13664
+> mean(dat.res_final$RMSE[dat.res_final$method=="c.GKRB1"])
+[1] 509.3309
+> sd(dat.res_final$RMSE[dat.res_final$method=="c.GKRB1"])
+[1] 72.13847
+> mean(dat.res_final$RMSE[dat.res_final$method=="d.GKRR1"])
+[1] 465.7827
+> sd(dat.res_final$RMSE[dat.res_final$method=="d.GKRR1"])
+[1] 74.08905

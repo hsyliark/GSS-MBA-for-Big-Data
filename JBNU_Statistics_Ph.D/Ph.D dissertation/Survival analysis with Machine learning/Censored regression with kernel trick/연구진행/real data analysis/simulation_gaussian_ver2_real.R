@@ -1256,130 +1256,7 @@ fit.ftn <- function(dat.sim) {
 
 library(ggplot2)
 
-# Boxplot for one dataset
-ggplot(dat.res16_1, aes(x = method, y = RMSE, fill = method)) + geom_boxplot() 
-ggplot(dat.res16_2, aes(x = method, y = RMSE, fill = method)) + geom_boxplot()
-ggplot(dat.res16_3, aes(x = method, y = RMSE, fill = method)) + geom_boxplot()
-# Boxplot for row binded dataset
-dat.res16[dat.res16$number==50,]$number <- "1(50)"
-dat.res16[dat.res16$number==100,]$number <- "2(100)"
-dat.res16[dat.res16$number==200,]$number <- "3(200)"
-ggplot(dat.res16, aes(x = number, y = RMSE, fill = number)) + geom_boxplot() +
-  facet_wrap(~ method, ncol=16) + theme(axis.text.x=element_text(angle=45, hjust=1))
-write.csv(dat.res16, "C:/Users/Hi/Desktop/ver2/Polynomial vs Gaussian/p9cen50.csv")
 
-
-# Print result
-mean(dat.res16_1$RMSE[dat.res16_1$method=="a.PKR1"])
-sd(dat.res16_1$RMSE[dat.res16_1$method=="a.PKR1"])
-mean(dat.res16_1$RMSE[dat.res16_1$method=="b.PKRS1"])
-sd(dat.res16_1$RMSE[dat.res16_1$method=="b.PKRS1"])
-mean(dat.res16_1$RMSE[dat.res16_1$method=="c.PKRB1"])
-sd(dat.res16_1$RMSE[dat.res16_1$method=="c.PKRB1"])
-mean(dat.res16_1$RMSE[dat.res16_1$method=="d.PKRR1"])
-sd(dat.res16_1$RMSE[dat.res16_1$method=="d.PKRR1"])
-
-mean(dat.res16_1$RMSE[dat.res16_1$method=="e.GKR1"])
-sd(dat.res16_1$RMSE[dat.res16_1$method=="e.GKR1"])
-mean(dat.res16_1$RMSE[dat.res16_1$method=="f.GKRS1"])
-sd(dat.res16_1$RMSE[dat.res16_1$method=="f.GKRS1"])
-mean(dat.res16_1$RMSE[dat.res16_1$method=="g.GKRB1"])
-sd(dat.res16_1$RMSE[dat.res16_1$method=="g.GKRB1"])
-mean(dat.res16_1$RMSE[dat.res16_1$method=="h.GKRR1"])
-sd(dat.res16_1$RMSE[dat.res16_1$method=="h.GKRR1"])
-
-mean(dat.res16_1$RMSE[dat.res16_1$method=="i.PKR2"])
-sd(dat.res16_1$RMSE[dat.res16_1$method=="i.PKR2"])
-mean(dat.res16_1$RMSE[dat.res16_1$method=="j.PKRS2"])
-sd(dat.res16_1$RMSE[dat.res16_1$method=="j.PKRS2"])
-mean(dat.res16_1$RMSE[dat.res16_1$method=="k.PKRB2"])
-sd(dat.res16_1$RMSE[dat.res16_1$method=="k.PKRB2"])
-mean(dat.res16_1$RMSE[dat.res16_1$method=="l.PKRR2"])
-sd(dat.res16_1$RMSE[dat.res16_1$method=="l.PKRR2"])
-
-mean(dat.res16_1$RMSE[dat.res16_1$method=="m.GKR2"])
-sd(dat.res16_1$RMSE[dat.res16_1$method=="m.GKR2"])
-mean(dat.res16_1$RMSE[dat.res16_1$method=="n.GKRS2"])
-sd(dat.res16_1$RMSE[dat.res16_1$method=="n.GKRS2"])
-mean(dat.res16_1$RMSE[dat.res16_1$method=="o.GKRB2"])
-sd(dat.res16_1$RMSE[dat.res16_1$method=="o.GKRB2"])
-mean(dat.res16_1$RMSE[dat.res16_1$method=="p.GKRR2"])
-sd(dat.res16_1$RMSE[dat.res16_1$method=="p.GKRR2"])
-#-----------------------------------------------------#
-
-mean(dat.res16_2$RMSE[dat.res16_2$method=="a.PKR1"])
-sd(dat.res16_2$RMSE[dat.res16_2$method=="a.PKR1"])
-mean(dat.res16_2$RMSE[dat.res16_2$method=="b.PKRS1"])
-sd(dat.res16_2$RMSE[dat.res16_2$method=="b.PKRS1"])
-mean(dat.res16_2$RMSE[dat.res16_2$method=="c.PKRB1"])
-sd(dat.res16_2$RMSE[dat.res16_2$method=="c.PKRB1"])
-mean(dat.res16_2$RMSE[dat.res16_2$method=="d.PKRR1"])
-sd(dat.res16_2$RMSE[dat.res16_2$method=="d.PKRR1"])
-
-mean(dat.res16_2$RMSE[dat.res16_2$method=="e.GKR1"])
-sd(dat.res16_2$RMSE[dat.res16_2$method=="e.GKR1"])
-mean(dat.res16_2$RMSE[dat.res16_2$method=="f.GKRS1"])
-sd(dat.res16_2$RMSE[dat.res16_2$method=="f.GKRS1"])
-mean(dat.res16_2$RMSE[dat.res16_2$method=="g.GKRB1"])
-sd(dat.res16_2$RMSE[dat.res16_2$method=="g.GKRB1"])
-mean(dat.res16_2$RMSE[dat.res16_2$method=="h.GKRR1"])
-sd(dat.res16_2$RMSE[dat.res16_2$method=="h.GKRR1"])
-
-mean(dat.res16_2$RMSE[dat.res16_2$method=="i.PKR2"])
-sd(dat.res16_2$RMSE[dat.res16_2$method=="i.PKR2"])
-mean(dat.res16_2$RMSE[dat.res16_2$method=="j.PKRS2"])
-sd(dat.res16_2$RMSE[dat.res16_2$method=="j.PKRS2"])
-mean(dat.res16_2$RMSE[dat.res16_2$method=="k.PKRB2"])
-sd(dat.res16_2$RMSE[dat.res16_2$method=="k.PKRB2"])
-mean(dat.res16_2$RMSE[dat.res16_2$method=="l.PKRR2"])
-sd(dat.res16_2$RMSE[dat.res16_2$method=="l.PKRR2"])
-
-mean(dat.res16_2$RMSE[dat.res16_2$method=="m.GKR2"])
-sd(dat.res16_2$RMSE[dat.res16_2$method=="m.GKR2"])
-mean(dat.res16_2$RMSE[dat.res16_2$method=="n.GKRS2"])
-sd(dat.res16_2$RMSE[dat.res16_2$method=="n.GKRS2"])
-mean(dat.res16_2$RMSE[dat.res16_2$method=="o.GKRB2"])
-sd(dat.res16_2$RMSE[dat.res16_2$method=="o.GKRB2"])
-mean(dat.res16_2$RMSE[dat.res16_2$method=="p.GKRR2"])
-sd(dat.res16_2$RMSE[dat.res16_2$method=="p.GKRR2"])
-#-----------------------------------------------------#
-
-mean(dat.res16_3$RMSE[dat.res16_3$method=="a.PKR1"])
-sd(dat.res16_3$RMSE[dat.res16_3$method=="a.PKR1"])
-mean(dat.res16_3$RMSE[dat.res16_3$method=="b.PKRS1"])
-sd(dat.res16_3$RMSE[dat.res16_3$method=="b.PKRS1"])
-mean(dat.res16_3$RMSE[dat.res16_3$method=="c.PKRB1"])
-sd(dat.res16_3$RMSE[dat.res16_3$method=="c.PKRB1"])
-mean(dat.res16_3$RMSE[dat.res16_3$method=="d.PKRR1"])
-sd(dat.res16_3$RMSE[dat.res16_3$method=="d.PKRR1"])
-
-mean(dat.res16_3$RMSE[dat.res16_3$method=="e.GKR1"])
-sd(dat.res16_3$RMSE[dat.res16_3$method=="e.GKR1"])
-mean(dat.res16_3$RMSE[dat.res16_3$method=="f.GKRS1"])
-sd(dat.res16_3$RMSE[dat.res16_3$method=="f.GKRS1"])
-mean(dat.res16_3$RMSE[dat.res16_3$method=="g.GKRB1"])
-sd(dat.res16_3$RMSE[dat.res16_3$method=="g.GKRB1"])
-mean(dat.res16_3$RMSE[dat.res16_3$method=="h.GKRR1"])
-sd(dat.res16_3$RMSE[dat.res16_3$method=="h.GKRR1"])
-
-mean(dat.res16_3$RMSE[dat.res16_3$method=="i.PKR2"])
-sd(dat.res16_3$RMSE[dat.res16_3$method=="i.PKR2"])
-mean(dat.res16_3$RMSE[dat.res16_3$method=="j.PKRS2"])
-sd(dat.res16_3$RMSE[dat.res16_3$method=="j.PKRS2"])
-mean(dat.res16_3$RMSE[dat.res16_3$method=="k.PKRB2"])
-sd(dat.res16_3$RMSE[dat.res16_3$method=="k.PKRB2"])
-mean(dat.res16_3$RMSE[dat.res16_3$method=="l.PKRR2"])
-sd(dat.res16_3$RMSE[dat.res16_3$method=="l.PKRR2"])
-
-mean(dat.res16_3$RMSE[dat.res16_3$method=="m.GKR2"])
-sd(dat.res16_3$RMSE[dat.res16_3$method=="m.GKR2"])
-mean(dat.res16_3$RMSE[dat.res16_3$method=="n.GKRS2"])
-sd(dat.res16_3$RMSE[dat.res16_3$method=="n.GKRS2"])
-mean(dat.res16_3$RMSE[dat.res16_3$method=="o.GKRB2"])
-sd(dat.res16_3$RMSE[dat.res16_3$method=="o.GKRB2"])
-mean(dat.res16_3$RMSE[dat.res16_3$method=="p.GKRR2"])
-sd(dat.res16_3$RMSE[dat.res16_3$method=="p.GKRR2"])
-#-----------------------------------------------------#
 
 
 uis2 <- read.csv("C:/Users/Hi/Desktop/uis2.csv",
@@ -1448,6 +1325,40 @@ sd(dat.res_final$RMSE[dat.res_final$method=="d.GKRR1"])
 
 
 #-----------------------------------------------------#
+
+
+cancer <- read.csv("C:/Users/Hi/Desktop/cancer.csv",
+                sep=",",header=T)
+g <- km.surv(cancer$time, cancer$status)
+cancer$y.s <- ifelse(cancer$time <= quantile(cancer$time, probs=0.98), 
+                  cancer$time*cancer$status/g, 0) 
+dat.sim <- data.frame(ys1=cancer$y.s, x1=cancer$age, x2=cancer$sex,
+                      x3=cancer$ph.ecog, x4=cancer$ph.karno, 
+                      x5=cancer$pat.karno, x6=cancer$meal.cal,
+                      x7=cancer$wt.loss,
+                      ys2=cancer$y.s) 
+dat.res <- fit.ftn(dat.sim)
+dat.res1 <- dat.res[dat.res$method=="a.GKR1",]
+dat.res2 <- dat.res[dat.res$method=="b.GKRS1",]
+dat.res3 <- dat.res[dat.res$method=="c.GKRB1",]
+dat.res4 <- dat.res[dat.res$method=="d.GKRR1",]
+dat.res_final <- rbind(dat.res1, dat.res2, dat.res3, dat.res4)
+write.csv(dat.res_final, "C:/Users/Hi/Desktop/real data analysis/cancer_res.csv")
+
+ggplot(dat.res_final, aes(x = method, y = RMSE, fill = method)) + geom_boxplot()
+
+mean(dat.res_final$RMSE[dat.res_final$method=="a.GKR1"])
+sd(dat.res_final$RMSE[dat.res_final$method=="a.GKR1"])
+mean(dat.res_final$RMSE[dat.res_final$method=="b.GKRS1"])
+sd(dat.res_final$RMSE[dat.res_final$method=="b.GKRS1"])
+mean(dat.res_final$RMSE[dat.res_final$method=="c.GKRB1"])
+sd(dat.res_final$RMSE[dat.res_final$method=="c.GKRB1"])
+mean(dat.res_final$RMSE[dat.res_final$method=="d.GKRR1"])
+sd(dat.res_final$RMSE[dat.res_final$method=="d.GKRR1"])
+
+
+#-----------------------------------------------------#
+
 
 
 
