@@ -5,7 +5,9 @@ library(KernSmooth)
 library(np)
 library(locfit)
 library(latex2exp)
-
+library(survminer)
+library(KMsurv)
+library(survMisc)
 
 
 
@@ -1259,7 +1261,7 @@ library(ggplot2)
 
 
 
-uis2 <- read.csv("C:/Users/HSY/Desktop/uis2.csv",
+uis2 <- read.csv("C:/Users/Hi/Desktop/uis2.csv",
                     sep=",",header=T)
 uis2 <-uis2[,-1]
 g <- km.surv(uis2$time, uis2$censor)
@@ -1395,7 +1397,37 @@ sd(dat.res_final$RMSE[dat.res_final$method=="d.GKRR1"])
 
 
 
+bfeed <- read.csv("C:/Users/Hi/Desktop/bfeed.csv",
+                        sep=",",header=T)
+g <- km.surv(bfeed$duration, bfeed$delta)
+bfeed$y.s <- ifelse(bfeed$duration <= quantile(bfeed$duration, probs=0.98), 
+                    bfeed$duration*bfeed$delta/g, 0) 
+dat.sim <- data.frame(ys1=bfeed$y.s, x1=bfeed$race,
+                      x2=bfeed$poverty, x3=bfeed$smoke,
+                      x4=bfeed$alcohol, x5=bfeed$agemth,
+                      x6=bfeed$ybirth, x7=bfeed$yschool, x8=bfeed$pc3mth,
+                      ys2=bfeed$y.s) 
+dat.res <- fit.ftn(dat.sim) # censoring 4%
+dat.res1 <- dat.res[dat.res$method=="a.GKR1",]
+dat.res2 <- dat.res[dat.res$method=="b.GKRS1",]
+dat.res3 <- dat.res[dat.res$method=="c.GKRB1",]
+dat.res4 <- dat.res[dat.res$method=="d.GKRR1",]
+dat.res_final <- rbind(dat.res1, dat.res2, dat.res3, dat.res4)
+write.csv(dat.res_final, "C:/Users/Hi/Desktop/real data analysis/bfeed_res.csv")
 
+ggplot(dat.res_final, aes(x = method, y = RMSE, fill = method)) + geom_boxplot()
+
+mean(dat.res_final$RMSE[dat.res_final$method=="a.GKR1"])
+sd(dat.res_final$RMSE[dat.res_final$method=="a.GKR1"])
+mean(dat.res_final$RMSE[dat.res_final$method=="b.GKRS1"])
+sd(dat.res_final$RMSE[dat.res_final$method=="b.GKRS1"])
+mean(dat.res_final$RMSE[dat.res_final$method=="c.GKRB1"])
+sd(dat.res_final$RMSE[dat.res_final$method=="c.GKRB1"])
+mean(dat.res_final$RMSE[dat.res_final$method=="d.GKRR1"])
+sd(dat.res_final$RMSE[dat.res_final$method=="d.GKRR1"])
+
+
+#-----------------------------------------------------#
 
 
 #### Summary (p : number of independent variables / n : size of training data)
