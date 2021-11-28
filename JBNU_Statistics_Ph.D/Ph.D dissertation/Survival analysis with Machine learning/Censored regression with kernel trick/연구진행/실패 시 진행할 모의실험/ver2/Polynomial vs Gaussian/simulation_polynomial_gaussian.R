@@ -1840,7 +1840,10 @@ fit.ftn <- function(number1, number2, a) {
       boot.K <- u1$K
       boot.y.train <- u1$y.train ; boot.y.test <- u1$y.test
       
-      boot.rmse <- c(rep(0,10))
+      # synthetic
+      boot.rmse1 <- c(rep(0,10))
+      # original
+      boot.rmse2 <- c(rep(0,10))
       
       for (j in 1:10) {
         
@@ -1960,7 +1963,10 @@ fit.ftn <- function(number1, number2, a) {
       boot.K <- u1$K
       boot.y.train <- u1$y.train ; boot.y.test <- u1$y.test
       
-      boot.rmse <- c(rep(0,10))
+      # synthetic
+      boot.rmse1 <- c(rep(0,10))
+      # original
+      boot.rmse2 <- c(rep(0,10))
       
       for (j in 1:10) {
         
@@ -2052,16 +2058,16 @@ fit.ftn <- function(number1, number2, a) {
 library(ggplot2)
 
 # Boxplot for one dataset
-ggplot(dat.res16_1, aes(x = method, y = RMSE, fill = method)) + geom_boxplot() 
-ggplot(dat.res16_2, aes(x = method, y = RMSE, fill = method)) + geom_boxplot()
-ggplot(dat.res16_3, aes(x = method, y = RMSE, fill = method)) + geom_boxplot()
+ggplot(dat.res8_1, aes(x = method, y = RMSE, fill = method)) + geom_boxplot() 
+ggplot(dat.res8_2, aes(x = method, y = RMSE, fill = method)) + geom_boxplot()
+ggplot(dat.res8_3, aes(x = method, y = RMSE, fill = method)) + geom_boxplot()
 # Boxplot for row binded dataset
-dat.res16[dat.res16$number==50,]$number <- "1(50)"
-dat.res16[dat.res16$number==100,]$number <- "2(100)"
-dat.res16[dat.res16$number==200,]$number <- "3(200)"
-ggplot(dat.res16, aes(x = number, y = RMSE, fill = number)) + geom_boxplot() +
+dat.res8[dat.res8$number==50,]$number <- "1(50)"
+dat.res8[dat.res8$number==100,]$number <- "2(100)"
+dat.res8[dat.res8$number==200,]$number <- "3(200)"
+ggplot(dat.res8, aes(x = number, y = RMSE, fill = number)) + geom_boxplot() +
   facet_wrap(~ method, ncol=16) + theme(axis.text.x=element_text(angle=45, hjust=1))
-write.csv(dat.res16, "C:/Users/Hi/Desktop/ver2/Polynomial vs Gaussian/p9cen50.csv")
+write.csv(dat.res8, "C:/Users/Hi/Desktop/ver2/Polynomial vs Gaussian/p5cen50.csv")
 
 
 # Print result
