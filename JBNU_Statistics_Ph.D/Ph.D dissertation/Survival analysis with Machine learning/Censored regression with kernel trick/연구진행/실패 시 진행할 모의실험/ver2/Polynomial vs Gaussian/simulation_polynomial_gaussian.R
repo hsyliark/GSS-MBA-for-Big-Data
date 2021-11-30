@@ -2058,16 +2058,16 @@ fit.ftn <- function(number1, number2, a) {
 library(ggplot2)
 
 # Boxplot for one dataset
-ggplot(dat.res12_1, aes(x = method, y = RMSE, fill = method)) + geom_boxplot() 
-ggplot(dat.res12_2, aes(x = method, y = RMSE, fill = method)) + geom_boxplot()
-ggplot(dat.res12_3, aes(x = method, y = RMSE, fill = method)) + geom_boxplot()
+ggplot(dat.res15_1, aes(x = method, y = RMSE, fill = method)) + geom_boxplot() 
+ggplot(dat.res15_2, aes(x = method, y = RMSE, fill = method)) + geom_boxplot()
+ggplot(dat.res15_3, aes(x = method, y = RMSE, fill = method)) + geom_boxplot()
 # Boxplot for row binded dataset
-dat.res12[dat.res12$number==50,]$number <- "1(50)"
-dat.res12[dat.res12$number==100,]$number <- "2(100)"
-dat.res12[dat.res12$number==200,]$number <- "3(200)"
-ggplot(dat.res12, aes(x = number, y = RMSE, fill = number)) + geom_boxplot() +
+dat.res15[dat.res15$number==50,]$number <- "1(50)"
+dat.res15[dat.res15$number==100,]$number <- "2(100)"
+dat.res15[dat.res15$number==200,]$number <- "3(200)"
+ggplot(dat.res15, aes(x = number, y = RMSE, fill = number)) + geom_boxplot() +
   facet_wrap(~ method, ncol=16) + theme(axis.text.x=element_text(angle=45, hjust=1))
-write.csv(dat.res12, "C:/Users/Hi/Desktop/ver2/Polynomial vs Gaussian/p7cen50.csv")
+write.csv(dat.res15, "C:/Users/Hi/Desktop/ver2/Polynomial vs Gaussian/p9cen30.csv")
 
 
 # Print result
