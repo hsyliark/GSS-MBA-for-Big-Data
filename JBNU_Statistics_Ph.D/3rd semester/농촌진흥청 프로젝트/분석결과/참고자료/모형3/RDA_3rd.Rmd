@@ -1,0 +1,79 @@
+---
+title: "RDA project"
+author: "JBNU statistics"
+date: '2021 11 12 '
+output: html_document
+---
+
+## 목적 : 단동 비닐하우스 환기율 및 온습도에 대한 예측모형 구축 및 평가
+## 사용모형 : Multiple Linear Regression Model v.s Artificial Neural Network Model (ANN)
+
+## 1. Loading data (내부기온 반응변수)
+
+- 작물있음 데이터에서 외부CO2의 값이 결측치인 경우는 제외하였음.
+
+```{r}
+setwd("D:/OneDrive - 전북대학교/전북대학교/농림과학원용역/2021")
+plantyes <- read.csv("작물있음.csv",sep=",",header=T)
+plantyes <- plantyes[is.na(plantyes$외부CO2)==FALSE,]
+head(plantyes,10)
+plantyes$작물유무 <- as.factor(plantyes$작물유무)
+plantno <- read.csv("작물없음.csv",sep=",",header=T)
+head(plantno,10) 
+plantno$작물유무 <- as.factor(plantno$작물유무)
+plant <- rbind(plantno,plantyes)
+```
+
+
+```{r}
+#library(nnet)
+#library(devtools)
+#library(neuralnet)
+#library(NeuralNetTools)
+```
+
+## 2. 작물유무에 따라 데이터를 나누어서 분석 실시
+
+### 2.1 작물이 없을 떄
+
+#### Multiple Linear Regression Model
+
+- 먼저 변수들 간의 상관관계를 파악하기 위해 상관분석을 실시한다.
+
+```{r}
+ex1 <- plantno[,c(2,12,1,10,11,13,14,15)]
+head(ex1)
+ex2 <- ex1[,-7]
+```
+
+```{r}
+cor(ex2)
+```
+
+- 산점도행렬과 상관계수그림을 그리면 다음과 같다.
+
+```{r}
+pairs(ex2[1:nrow(plantno),],col=factor(ex2$환기창면적))
+```
+
+- 산점도를 통해 알 수 있는 사실은 환기율과 환기창면적이 증가할수록, 외부기온과 외부일사량이 떨어질 수록 내부기온이 내려간다는 점이다. 환기창면적과의 교호작용은 뚜렷하게 관측되는 것이 없으나, 외부풍속과의 교호작용의 존재 가능성이 추측된다. 외부풍속은 약하지만 내부기온과 음의 상관을 보이는 것으로 생각된다.
+
+```{r}
+library(corrplot)
+corrplot(cor(ex2))
+```
+
+- 그리고 각 변수에 대한 기초통계량은 다음과 같이 계산된다.
+
+```{r}
+library(psych)
+describe(ex1[,c(-6,-7,-8)])
+```
+
+- 내부기온을 반응변수로 하여 각 변수의 주효과와, 환기창면적과의 교호작용을 고려한 다중선형회귀모형을 적합하면 다음과 같다.
+
+```{r}
+m_no <- lm(내외부기온차~환기율+외부기온+외부풍속+외부일사량+환기창면적*환기율+환기창면적+환기창면적*외부기온+환기창면적*외부풍속+환기창면적*외부일사량,data=plantno)
+summary(m_no)
+```
+

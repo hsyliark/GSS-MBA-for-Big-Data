@@ -1,0 +1,62 @@
+---
+title: "RDA project"
+author: "JBNU statistics"
+date: '2021 11 16 '
+output: html_document
+---
+
+## 목적 : 단동 비닐하우스 환기율 및 온습도에 대한 예측모형 구축 및 평가
+## 사용모형 : Artificial Neural Network Model (ANN)
+
+
+## 0. 분석방향
+
+- 환기율을 반응변수로, 외부기온, 외부풍속, 외부일사량, 환기창면적, 작물유무를 독립변수로 하는 ANN 모형 적합.
+- 작물유무 데이터세트를 합친 경우에 대해서만 적합
+- hidden layer는 1~2개를 가지는 경우를 가정. 단, 적합에 시간이 많이 소요되어 충분한 tuning이 되지 않을 수 있음. 개선여지 있음.
+- 자체적으로 비선형 효과를 모형화하므로 교호작용 효과 등은 따로 모형에 포함시킬 필요 없음. 
+
+## 1. Loading data
+
+- 작물있음 데이터에서 외부CO2의 값이 결측치인 경우는 제외하였음.
+
+```{r}
+setwd("D:/OneDrive - 전북대학교/전북대학교/농림과학원용역/2021")
+plantyes <- read.csv("작물있음.csv",sep=",",header=T)
+plantyes <- plantyes[is.na(plantyes$외부CO2)==FALSE,]
+head(plantyes,10)
+plantyes$작물유무 <- as.factor(plantyes$작물유무)
+plantno <- read.csv("작물없음.csv",sep=",",header=T)
+head(plantno,10) 
+plantno$작물유무 <- as.factor(plantno$작물유무)
+plant <- rbind(plantno,plantyes)
+```
+
+### Open library
+
+```{r}
+library(nnet)
+library(devtools)
+library(neuralnet)
+library(NeuralNetTools)
+```
+
+- 작물유무에 따라 데이터를 나누어서 사전분석을 실시한 결과 구축된 모형에 많은 차이가 있었다. 이에 따라 작물있음 데이터와 작물없음 데이터를 합친 데이터에 대해 작물유무와 다른 독립변수들간의 교호작용을 포함한 모형을 적합하여 결과를 살펴보았다.
+
+
+## 2. ANN 적합
+
+```{r}
+set.seed(5790)
+train.index <- sample(1:nrow(plant), round(nrow(plant)*7/10), replace=F)
+ex1_train <-plant[train.index,]
+ex1_test <- plant[-train.index,]
+set.seed(1234)
+ann1 <- neuralnet(환기율~외부기온+외부풍속+외부일사량+환기창면적+작물유무수치, data=ex1_train, hidden=c(2,2), threshold = 0.01, stepmax = 1e+08)
+summary(ann1)
+y_hat_ann1 <- compute(ann1, ex1_test)$net.result
+RMSE <- mean(sum((ex1_test$환기율-y_hat_ann1)^2))
+RMSE
+```
+
+- 선형모형과 비교할 때 특별히 우위에 있지 않다. 이는, 데이터의 특성이 선형모형에 의해서 높은 설명력을 가지고 충분히 잘 설명되기 때문으로 보인다. 
