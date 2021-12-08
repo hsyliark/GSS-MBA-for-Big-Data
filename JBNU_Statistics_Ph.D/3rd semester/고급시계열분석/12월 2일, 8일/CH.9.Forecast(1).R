@@ -11,7 +11,6 @@ library(data.table)
 library(ggplot2)
 library(gridExtra)
 library(forecast)
-
 library(portes)  ##LjungBox
 library(fUnitRoots)  # library for function adfTest
 library(tseries)  ##JB test
@@ -23,8 +22,7 @@ setwd("C:\\R-Project\\DAT\\Time Series Data")
 
 z <- scan("eg8_7.txt")
 
-dt <- data.table( t = 1:length(z),12
-                  z = z)
+dt <- data.table( t = 1:length(z),z = z)
 ## 시계열그림 / ACF PACF
 
 p3 <- ggplot(dt, aes(t, z)) + 

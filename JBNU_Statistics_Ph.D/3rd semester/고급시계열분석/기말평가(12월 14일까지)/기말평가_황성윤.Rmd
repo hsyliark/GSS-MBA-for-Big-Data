@@ -1,0 +1,402 @@
+---
+title: "Time Series (Final Report)"
+author: "Hwang Seong-Yun"
+date: '2021 12 8 '
+output: html_document
+---
+
+## Loading packages
+
+```{r}
+library(sarima)
+library(ggplot2)
+library(forecast)
+library(data.table)
+library(gridExtra)
+library(fUnitRoots)
+library(portes)
+library(lmtest)
+library(expsmooth)
+library(fma)
+library(fpp2)
+```
+
+
+## 1.사용할 데이터 : mcopper
+
+```{r}
+mcopper
+```
+
+### 1) 변수변환이 필요한지를 설명하고, 필요하다면 적절한 변수 변환을 하여라.
+
+- 먼저 본 데이터에 대한 plot을 그려보면 다음과 같다.
+
+```{r}
+plot(mcopper)
+```
+
+- 그래프를 보면 시간이 지날수록 변동성이 더 커지는 경향이 있음을 알 수 있다. 보통 이러한 경우에는 log변환을 생각할 수 있지만 boxcox 변환을 통해서 적절한 변환을 실시해보도록 한다. 이는 다음과 같이 할 수 있다.
+
+```{r}
+mcopper_trans <- BoxCox(mcopper,lambda=BoxCox.lambda(mcopper))
+BoxCox.lambda(mcopper)
+```
+
+- 변환결과, 적절한 모수 lambda는 약 0.1919로 산출되었고 이를 통하여 변환된 결과에 대한 plot을 그려보면 다음과 같다.
+
+```{r}
+plot(mcopper_trans)
+```
+
+- boxcox 변환을 통해 변동성을 어느정도 줄인 것으로 판단된다.
+
+### 2) auto.arima 를 이용하여 예측 모형을 적합하여라. (형태 : ARIMA(p.d.q)(P,D,Q)s , 모수 추정값)
+
+- 1)에서 변환한 결과에 대해 `auto.arima` 함수를 이용하여 모형을 적합하면 다음과 같다.
+
+```{r}
+auto.arima(mcopper_trans, trace=T, ic='aic')
+```
+
+- 적합결과 AIC 기준으로 모수의 값이 $\hat{\theta}=-0.3720$인 ARIMA(0,1,1) 모형을 가장 좋은 모형으로 제시하고 있다. 이 모형에 대한 로그가능도값은 45.05이다.
+
+### 3) 2)번 모형을 제외한 다른 후보 모형을 선택하여 적합하여라. (형태 : ARIMA(p.d.q)(P,D,Q)s , 모수 추정값)
+
+- 모형을 식별하기 위해 1)을 통해 변환된 자료에 대해 ACF와 PACF를 그려보도록 하자.
+
+```{r}
+p1 <- ggAcf(mcopper_trans) + 
+  theme_bw() + ylim(-1,1) +
+  theme(plot.title = element_blank())
+p2 <- ggPacf(mcopper_trans) + 
+  theme_bw() +ylim(-1,1) +
+  theme(plot.title = element_blank())
+grid.arrange(p1, p2, nrow=2)
+```
+
+- ACF를 보면 감소는 하고 있지만 굉장히 느린 속도로 감소하고 있음을 알 수 있다. 즉 정상시계열로 만들기 위해 차분이 필요함을 알 수 있다. 우선 Dickey-Fuller unit root test를 통해 단위근의 존재 여부를 판단해보자.
+
+```{r}
+adfTest(mcopper_trans, lags = 0, type = "c")
+adfTest(mcopper_trans, lags = 1, type = "c")
+adfTest(mcopper_trans, lags = 2, type = "c")
+```
+
+- 위의 결과 모두 유의확률의 값이 유의수준 $\alpha=0.05$보다 큰 값이므로 단위근이 존재한다는 결론을 주고 있다. 이에 따라 시차 1에서 차분을 하고 그 결과에 대한 그림을 그리면 다음과 같다.
+
+```{r}
+plot(diff(mcopper_trans))
+```
+
+```{r}
+p1 <- ggAcf(diff(mcopper_trans)) + 
+  theme_bw() + ylim(-1,1) +
+  theme(plot.title = element_blank())
+p2 <- ggPacf(diff(mcopper_trans)) + 
+  theme_bw() +ylim(-1,1) +
+  theme(plot.title = element_blank())
+grid.arrange(p1, p2, nrow=2)
+```
+
+- 차분을 실시한 결과, 정상시계열의 형태를 보이고 있고 이에 대한 ACF와 PACF는 시차 1에서만 유의하고 그 이후에 대해서는 유의하지 않은 형태를 보이고 있다. 이를 바탕으로 ARIMA(1,1,1) 모형을 생각해볼 수 있으며 적합결과는 다음과 같다.
+
+```{r}
+fit1 <- arima(mcopper_trans, order = c(1,1,1))
+fit1
+```
+
+- 분석결과 모수의 값이 $\hat{\phi}=-0.0092, \hat{\theta}=-0.3797$인 ARIMA(1,1,1) 모형을 제시하고 있으며, 이 모형에 대한 로그가능도값은 45.05이다.
+
+### 4) 2),3)번 모형 중 어떤 모형일 더 적절한지 설명하여라.
+
+- 2)와 3)에서 제시한 두가지 모형에 대한 로그가능도값이 거의 비슷하다. 이 중 간단한 모형은 2)에서 적합한 모형이므로 최종적으로 boxcox 변환이 이루어진 데이터에 대해 ARIMA(0,1,1) 모형을 최적의 모형으로 선정하도록 한다.
+
+### 5) 4)에서 선택한 모형을 이용하여 잔차검정을 시행하여라.
+
+- 적합한 모형에 대하여 잔차검정을 진행한다면 다음과 같이 할 수 있다. 우선 잔차에 대한 plot과 ACF, PACF를 살펴보면 다음과 같다.
+
+```{r}
+fit_final <- arima(mcopper_trans, order=c(0,1,1))
+fit_final
+res <- as.numeric(resid(fit_final))
+plot(res,type='l')
+```
+
+```{r}
+p1 <- ggAcf(res) + 
+  theme_bw() + ylim(-1,1) +
+  theme(plot.title = element_blank())
+p2 <- ggPacf(res) + 
+  theme_bw() +ylim(-1,1) +
+  theme(plot.title = element_blank())
+grid.arrange(p1, p2, nrow=2)
+```
+
+- 위의 3가지 그림을 통해 잔차가 백색잡음의 성질을 만족하고 있다고 판단할 수 있다. 좀 더 명확한 결과를 위해 잔차에 대한 Portmanteau test를 실시해보면 다음과 같다.  
+
+```{r}
+LjungBox(fit_final, lags=seq(6,24,3))
+```
+
+- 분석결과, 유의확률의 값이 모두 유의수준 $\alpha=0.05$보다 크기 때문에 잔차가 백색잡음의 성질을 만족한다는 결론을 얻을 수 있다.
+
+### 6) 2007년과 2008년 데이터를 예측하여라.
+
+- 이제까지 적합한 모형은 boxcox 변환을 실시한 이후 적합한 모형이기 때문에 예측값의 경우도 모형을 통해 예측값을 구한 뒤 다시 원래의 상태로 변환해주어야 한다.
+
+```{r}
+mcopper_trans_for <- forecast(fit_final, 12*2)
+mcopper_trans_for
+lam <- BoxCox.lambda(mcopper)
+mcopper_return <- (lam*mcopper_trans_for$mean+1)^(1/lam)
+mcopper_return
+```
+
+- 예측결과, 위와 같은 결과를 보여주었으며 이를 그림으로 표현하면 다음과 같다. 다만 이 그림은 boxcox 변환 이후에 대한 예측결과임을 명시하도록 하겠다.
+
+```{r}
+plot(mcopper_trans_for)
+```
+
+
+
+
+
+## 2. 사용할 데이터 : hsales
+
+```{r}
+hsales
+```
+
+### 1) 변수변환이 필요한지를 설명하고, 필요하다면 적절한 변수 변환을 하여라.
+
+- 먼저 본 데이터에 대한 plot을 그려보면 다음과 같다.
+
+```{r}
+plot(hsales)
+```
+
+- plot을 통해서 살펴봤을 때 전체 기간동안 큰 변동성은 없어보인다. 다만 계절성은 존재하는 것으로 판단된다. 따라서 이 경우에 대해서는 변수 변환 없이 분석을 진행하도록 하겠다.
+
+### 2) 데이터가 정상시계열인가? 아니면 적절한 차분을 통해 정상시계열로 변환하여라.
+### 3) 모형을 식별하여라. (2개 이상의 모형 고려)(형태 : ARIMA(p.d.q)(P,D,Q)s)
+### 4) 3)에서 고려한 모형을 적합하여라. (형태 : ARIMA(p.d.q)(P,D,Q)s, 모수추정값)
+### 5) 4)에서 적합된 결과를 이용하여 더 좋은 모형을 선택하여라.
+
+- 본 데이터에 대해 ACF와 PACF를 그려보면 다음과 같다.
+
+```{r}
+p1 <- ggAcf(hsales) + 
+  theme_bw() + ylim(-1,1) +
+  theme(plot.title = element_blank())
+p2 <- ggPacf(hsales) + 
+  theme_bw() +ylim(-1,1) +
+  theme(plot.title = element_blank())
+grid.arrange(p1, p2, nrow=2)
+```
+
+- 위에 있는 ACF와 PACF를 통해 확실히 계절성이 존재함을 파악할 수 있다. 다만 ACF의 감소하는 속도가 그렇게 빠른것은 아니기 때문에 차분을 실시해야 할 필요가 있다고 보여진다. 단위근이 존재하는지 파악하기 위해 Dickey-Fuller unit root test을 실시하면 다음과 같다. plot을 통해 계절주기가 12라고 보여지므로 시차 1과 12에 대해 검정을 실시한다.
+
+```{r}
+adfTest(hsales, lags = 1, type = "c")
+adfTest(hsales, lags = 12, type = "c")
+```
+
+- 검정결과, 시차 12에 대해 유의확률의 값이 $\alpha=0.05$보다 크므로 시차 12에 대한 계절차분이 필요한 것으로 판단된다. 이에 따라 계절차분을 실시하고 그래프를 그려보면 다음과 같다.
+
+```{r}
+plot(diff(hsales,lag=12))
+```
+
+```{r}
+p1 <- ggAcf(diff(hsales,lag=12)) + 
+  theme_bw() + ylim(-1,1) +
+  theme(plot.title = element_blank())
+p2 <- ggPacf(diff(hsales,lag=12)) + 
+  theme_bw() +ylim(-1,1) +
+  theme(plot.title = element_blank())
+grid.arrange(p1, p2, nrow=2)
+```
+
+- 계절차분을 실시한 결과, 정상시계열로 적절하게 변환되었음을 확인할 수 있다. 우선 ACF가 빠른 속도로 감소하고 있고 PACF는 주기 12를 기준으로 빠르게 감소하는 듯한 형태를 보이고 있기 때문에 이를 통해 ARIMA(1,0,0)(0,1,1)_12 모형이 적절하다고 보여진다. 그리고 함수 `auto.arima`를 통해 AIC 기준으로 적절한 모형을 찾아보면 다음과 같다.
+
+```{r}
+auto.arima(hsales, trace=T, ic='aic')
+```
+
+- 함수 `auto.arima`의 경우는 ARIMA(0,1,1) 모형을 제안하고 있다. 그리고 이 모형에 대한 로그가능도값은 45.05이다. 추가로 ACF와 PACF를 통해 식별한 모형 ARIMA(1,0,0)(0,1,1)_12를 적합하면 다음과 같다. 
+
+```{r}
+arima(hsales, order = c(1,0,0), seasonal = list(order = c(0,1,1),  period = 12))
+```
+
+- 이 모형에 대한 로그가능도값은 -778.94로서 `auto.arima`에서 제안한 모형에 비해 매우 작다. 하지만 필자가 보기에는 데이터 hsales의 경우 확실하게 계절성이 존재하는 것으로 보이기 때문에 계절성이 포함된 ARIMA(1,0,0)(0,1,1)_12 모형을 선택하도록 하겠다.
+
+```{r}
+fit_final <- arima(hsales, order = c(1,0,0), seasonal = list(order = c(0,1,1),  period = 12))
+fit_final
+```
+
+- 최종으로 선택된 모형을 적합한 결과, 모수의 값이 $\hat{\phi}=0.9047, \hat{\Theta}=1.0000$인 ARIMA(1,0,0)(0,1,1)_12 모형이 적합되었다.
+
+### 6) 5)에서 선택한 모형을 이용하여 잔차검정을 시행하여라.
+
+- 적합한 모형에 대하여 잔차검정을 진행한다면 다음과 같이 할 수 있다. 우선 잔차에 대한 plot과 ACF, PACF를 살펴보면 다음과 같다.
+
+```{r}
+fit_final <- arima(hsales, order = c(1,0,0), seasonal = list(order = c(0,1,1),  period = 12))
+fit_final
+res <- as.numeric(resid(fit_final))
+plot(res,type='l')
+```
+
+```{r}
+p1 <- ggAcf(res) + 
+  theme_bw() + ylim(-1,1) +
+  theme(plot.title = element_blank())
+p2 <- ggPacf(res) + 
+  theme_bw() +ylim(-1,1) +
+  theme(plot.title = element_blank())
+grid.arrange(p1, p2, nrow=2)
+```
+
+- 위의 3가지 그림을 통해 잔차가 백색잡음의 성질을 만족하고 있다고 판단할 수 있다. 좀 더 명확한 결과를 위해 잔차에 대한 Portmanteau test를 실시해보면 다음과 같다.  
+
+```{r}
+LjungBox(fit_final, lags=seq(6,24,3))
+```
+
+- 분석결과, 유의확률의 값이 모두 유의수준 $\alpha=0.05$보다 크기 때문에 잔차가 백색잡음의 성질을 만족한다는 결론을 얻을 수 있다.
+
+### 7) 다음 2년간의 값을 예측하여라.
+
+- 이제까지 적합한 모형을 통해 다음과 같이 이후 2년간의 값을 예측할 수 있다.
+
+```{r}
+hsales_for <- forecast(fit_final, 12*2)
+hsales_for
+```
+
+- 그리고 예측한 결과를 그래프로 표현하면 다음과 같다.
+
+```{r}
+plot(hsales_for)
+```
+
+
+
+
+
+## 3. 사용할 데이터 : ukcars
+
+```{r}
+ukcars
+```
+
+### 1) 변수변환이 필요한지를 설명하고, 필요하다면 적절한 변수 변환을 하여라. 
+
+- 우선 본 데이터에 대한 plot을 그려보면 다음과 같다.
+
+```{r}
+plot(ukcars)
+```
+
+- plot을 살펴본 결과 시간이 흘러감에 따라 변동성이 어느정도 나타나는 것으로 보여짐에 따라 log변환을 실시하도록 한다. 이는 다음과 같이 할 수 있다.
+
+```{r}
+ukcars_log <- log(ukcars)
+plot(ukcars_log)
+```
+
+### 2) 마지막 2년동안의 데이터는 test 데이터, 나머지는 train 데이터로 분할하여라.
+
+- 변환된 데이터를 다음과 같이 훈련자료와 검증자료로 나눌 수 있다.
+
+```{r}
+dt <- data.table(t = 1:length(ukcars_log),ukcars_log=ukcars_log)
+train_dt <- dt[1:108,] ; test_dt <- dt[109:113,]
+train <- ts(train_dt[,2], start=c(1977,1), frequency=4) 
+test <- ts(test_dt[,2], start=c(2004,1), frequency=4) 
+```
+
+### 3) 이동평균을 이용하여 마지막 2년을 예측하여라.
+
+```{r}
+library(forecast)
+library(data.table)
+library(ggplot2)
+library(lmtest)
+library(TTR)
+library(tseries)
+library(imputeTS)
+library(zoo)
+library(dplyr)
+```
+
+- 1)에서 확인한 plot을 통해서 시계열 자료의 움직임을 바탕으로 판단했을 때 차수 5의 이동평균법을 적용하는 것이 바람직하다고 판단된다. 이를 적용하면 다음과 같은 결과를 얻을 수 있다.  
+
+```{r}
+ma(ukcars_log,order=5)
+plot(ukcars_log)
+lines(ma(ukcars_log,order=5),col='red')
+```
+
+- 하지만 이동평균의 차수가 5이기 때문에 마지막 2시점에 대한 예측값은 구할 수 없다는 한계가 있다. 이 점을 감안하여 이에 대한 최종적인 RMSE 값을 계산하면 약 0.0583으로 산출된다.
+
+```{r}
+sqrt(sum((test[1:3]-ma(ukcars_log,order=5)[109:111])^2)/length(test))
+```
+
+
+### 4) 지수평활법을 이용하여 마지막 2년을 예측하여라.
+
+- 본 시계열 자료는 특정 주기를 바탕으로 상승과 하락을 반복하면서 전체적으로 상승하는 경향을 보이고 있다. 따라서 계절지수평활법을 적용하는 것이 타당하다고 판단된다. 이는 다음과 같이 할 수 있다.
+
+```{r}
+fit1 <- HoltWinters(train)
+fit1
+```
+
+- 이를 바탕으로 마지막 2년에 대한 예측값을 구하면 다음과 같다.
+
+```{r}
+fore1 <- forecast(fit1, h=5)
+fore1
+plot(fore1)
+```
+
+- 그리고 이 예측값을 이용하여 최종적인 RMSE의 값을 구하면 다음과 같이 약 0.0374로 산출된다.
+
+```{r}
+sqrt(sum((test-fore1$mean)^2)/length(test))
+```
+
+
+### 5) 계절형 ARIMA 모형을 적합하여 마지막 2년을 예측하여라.
+
+- 함수 `auto.arima`를 이용하여 AIC 기준으로 적절한 모형을 선정하면 다음과 같이 계절적인 요소가 포함된 ARIMA(1,0,1)(1,1,1)_4 모형을 제시해준다. 
+
+```{r}
+fit2 <- auto.arima(train,trace=T,ic='aic')
+fit2
+```
+
+- 이를 바탕으로 마지막 2년에 대한 예측값을 구하면 다음과 같다.
+
+```{r}
+fore2 <- forecast(fit2, 5)
+fore2 
+plot(fore2)
+```
+
+- 그리고 이 예측값을 이용하여 최종적인 RMSE의 값을 구하면 다음과 같이 약 0.0214로 산출된다.
+
+```{r}
+sqrt(sum((test-fore2$mean)^2)/length(test))
+```
+
+
+### 6) 예측값과 실제값을 이용하여 3)-5) 모형 중 가장 좋은 모형을 선택하여라.
+
+- 3가지 모형을 통해 예측값을 구하고 이에 대한 RMSE를 계산한 결과 계절형 ARIMA 모형에 대한 RMSE의 값이 가장 작게 산출되었다. 이에 따라 계절형 ARIMA 모형을 가장 좋은 모형으로 선택할 수 있다.
