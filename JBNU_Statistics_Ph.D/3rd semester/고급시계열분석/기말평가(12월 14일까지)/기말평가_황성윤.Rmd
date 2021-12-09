@@ -342,10 +342,10 @@ plot(ukcars_log)
 lines(ma(ukcars_log,order=5),col='red')
 ```
 
-- 하지만 이동평균의 차수가 5이기 때문에 마지막 2시점에 대한 예측값은 구할 수 없다는 한계가 있다. 이 점을 감안하여 이에 대한 최종적인 RMSE 값을 계산하면 약 0.0583으로 산출된다.
+- 하지만 이동평균의 차수가 5이기 때문에 마지막 2시점에 대한 예측값은 구할 수 없다는 한계가 있다. 이 점을 감안하여 이에 대한 최종적인 RMSE 값을 계산하면 약 0.0753으로 산출된다.
 
 ```{r}
-sqrt(sum((test[1:3]-ma(ukcars_log,order=5)[109:111])^2)/length(test))
+sqrt(sum((test[1:3]-ma(ukcars_log,order=5)[109:111])^2)/(length(test)-2))
 ```
 
 
