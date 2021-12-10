@@ -1,0 +1,486 @@
+---
+title: "RDA project"
+author: "JBNU statistics"
+date: '2021 12 14 '
+output: html_document
+---
+
+## 목적 : 단동 비닐하우스 환기율 및 온습도에 대한 예측모형 구축 및 평가
+## 사용모형 : Multiple Linear Regression Model v.s Artificial Neural Network Model (ANN)
+
+## 1. Loading data (내부상대습도 반응변수)
+
+- 작물있음 데이터에서 외부CO2의 값이 결측치인 경우는 제외하였음.
+
+```{r}
+plantyes <- read.csv("C:/Users/HSY/Desktop/작물있음.csv",sep=",",header=T)
+plantyes <- plantyes[is.na(plantyes$외부CO2)==FALSE,]
+head(plantyes,10)
+plantyes$작물유무 <- as.factor(plantyes$작물유무)
+plantno <- read.csv("C:/Users/HSY/Desktop/작물없음.csv",sep=",",header=T)
+head(plantno,10) 
+plantno$작물유무 <- as.factor(plantno$작물유무)
+plant <- rbind(plantno,plantyes)
+```
+
+
+
+## Multiple Linear Regression Model
+
+## 2. 작물유무에 따라 데이터를 나누어서 분석 실시
+
+### 2.1 작물이 없을 때
+
+#### Multiple Linear Regression Model
+
+- 먼저 변수들 간의 상관관계를 파악하기 위해 상관분석을 실시한다.
+
+```{r}
+ex1 <- plantno[,c(5,12,1,4,10,11,13,14,15)]
+head(ex1)
+ex2 <- ex1[,1:7]
+```
+
+```{r}
+cor(ex2)
+```
+
+- 산점도행렬과 상관계수그림을 그리면 다음과 같다.
+
+```{r}
+pairs(ex2[1:nrow(plantno),],col=factor(ex2$환기창면적))
+```
+
+- 산점도를 통해 알 수 있는 사실은 환기율과 환기창면적이 감소할수록, 외부기온과 외부일사량이 떨어질 수록 내부상대습도가 올라간다는 점이다. 환기창면적과의 교호작용은 뚜렷하게 관측되는 것이 없으나, 외부풍속과의 교호작용의 존재 가능성이 추측된다. 외부풍속은 약하지만 내부상대습도와 음의 상관을 보이는 것으로 생각된다.
+
+```{r}
+library(corrplot)
+corrplot(cor(ex2))
+```
+
+- 그리고 각 변수에 대한 기초통계량은 다음과 같이 계산된다.
+
+```{r}
+library(psych)
+describe(ex1[,c(-8,-9)])
+```
+
+- 내부상대습도를 반응변수로 하여 각 변수의 주효과와 환기창면적과의 교호작용을 고려한 다중선형회귀모형을 적합하면 다음과 같다.
+
+```{r}
+m_no <- lm(내부상대습도~환기율+외부기온+외부상대습도+외부풍속+외부일사량+환기창면적+환기창면적*환기율+환기창면적*외부기온+환기창면적*외부상대습도+환기창면적*외부풍속+환기창면적*외부일사량,data=plantno)
+summary(m_no)
+```
+
+- 모형적합 결과 모든 주효과와 교호작용이 유의수준 0.05에서 유의미하다. 
+- 그리고 교호작용들 중 환기율과 환기창면적, 그리고 외부풍속과 환기창면적 사이의 교호작용에 대한 t 통계량의 절대값이 첫번째와 두번째 순으로 가장 크므로 이를 가장 중요한 2가지 교호작용으로 결정한다.
+- 조정된 결정계수의 값이 $R^2_{adj}=0.9522$이다.
+
+#### Best subset selection
+
+- 여러 측도들을 이용하여 모형에 포함될 변수를 적절히 선택해 보도록 하겠다.
+- 분석 의뢰기관의 요청에 따라 환기율은 설명변수에서 제외하도록 한다.
+
+```{r}
+library(leaps)
+ms0 <- regsubsets(내부상대습도~외부기온+외부상대습도+외부풍속+외부일사량+환기창면적+환기창면적*외부기온+환기창면적*외부상대습도+환기창면적*외부풍속+환기창면적*외부일사량,data=plantno,nvmax=9)
+ms0.summary <- summary(ms0)
+ms0.summary
+
+par(mfrow=c(2,2)) 
+# RSS=SSE
+plot(ms0.summary$rss,xlab="Number of Variables",ylab="RSS",type="l")
+# Adj R^2
+plot(ms0.summary$adjr2,xlab="Number of Variables",ylab="Adjusted RSq",type="l")
+which.max(ms0.summary$adjr2)
+points(which.max(ms0.summary$adjr2)
+,ms0.summary$adjr2[which.max(ms0.summary$adjr2)
+], col="red",cex=2,pch=20)
+# Cp
+plot(ms0.summary$cp,xlab="Number of Variables",ylab="Cp",type='l') 
+which.min(ms0.summary$cp)
+points(which.min(ms0.summary$cp)
+,ms0.summary$cp[which.min(ms0.summary$cp)
+],col="red",cex=2,pch=20)
+# BIC
+plot(ms0.summary$bic,xlab="Number of Variables",ylab="BIC",type='l')
+which.min(ms0.summary$bic) 
+points(which.min(ms0.summary$bic) 
+,ms0.summary$bic[which.min(ms0.summary$bic) 
+],col="red",cex=2,pch=20)
+par(mfrow=c(1,1))
+```
+
+- 외부풍속을 제외하는 것이 좋다는 결과이다. 
+- 외부풍속을 제외한 모형에 대해서 다시한번 선택해 보자. 
+
+```{r}
+library(leaps)
+ms0 <- regsubsets(내부상대습도~외부기온+외부상대습도+외부일사량+환기창면적+환기창면적*외부기온+환기창면적*외부상대습도+환기창면적*외부일사량,data=plantno,nvmax=7)
+ms0.summary <- summary(ms0)
+ms0.summary
+
+par(mfrow=c(2,2)) 
+# RSS=SSE
+plot(ms0.summary$rss,xlab="Number of Variables",ylab="RSS",type="l")
+# Adj R^2
+plot(ms0.summary$adjr2,xlab="Number of Variables",ylab="Adjusted RSq",type="l")
+which.max(ms0.summary$adjr2)
+points(which.max(ms0.summary$adjr2)
+,ms0.summary$adjr2[which.max(ms0.summary$adjr2)
+], col="red",cex=2,pch=20)
+# Cp
+plot(ms0.summary$cp,xlab="Number of Variables",ylab="Cp",type='l') 
+which.min(ms0.summary$cp)
+points(which.min(ms0.summary$cp)
+,ms0.summary$cp[which.min(ms0.summary$cp)
+],col="red",cex=2,pch=20)
+# BIC
+plot(ms0.summary$bic,xlab="Number of Variables",ylab="BIC",type='l')
+which.min(ms0.summary$bic) 
+points(which.min(ms0.summary$bic) 
+,ms0.summary$bic[which.min(ms0.summary$bic) 
+],col="red",cex=2,pch=20)
+par(mfrow=c(1,1))
+```
+
+- 분석결과 6개의 변수를 가지는 모형이 가장 바람직하다고 판단된다. 
+
+#### 교차타당검증에 의한 모형 비교 
+
+- 지금부터는 train:test=7:3 으로 데이터를 나누어서 몇 개의 후보 모형들의 test RMSE를 계산하여 보겠다. 이 값이 작을수록 예측력이 우수한 모형이라고 볼 수 있다.
+- 먼저 데이터를 임의로 train:test=7:3 의 비율로 나눈다. train data는 모형구축 시, test data는 구축된 모형을 평가 시 사용한다.
+
+```{r}
+set.seed(5790)
+train.index <- sample(1:nrow(plantno), round(nrow(plantno)*7/10), replace=F)
+ex1_train <- plantno[train.index,]
+ex1_test <- plantno[-train.index,]
+```
+
+```{r}
+# 모든 주효과, 그리고 환기창면적과 다른 변수들 사이의 교호작용을 포함한 모형
+m0 <- lm(내부상대습도~환기율+외부기온+외부상대습도+외부풍속+외부일사량+환기창면적+환기창면적*환기율+환기창면적*외부기온+환기창면적*외부상대습도+환기창면적*외부풍속+환기창면적*외부일사량,data=ex1_train) 
+y_hat0 <- predict(m0,ex1_test)
+RMSE0 <- mean(sum((ex1_test$내부상대습도-y_hat0)^2))
+RMSE0
+
+# Adj R^2, Cp, BIC 등의 기준을 바탕으로 선택된 모형 (교호작용이 있는 경우는 주효과 포함)
+m0 <- lm(내부상대습도~외부기온+외부상대습도+외부일사량+환기창면적+환기창면적*외부기온+환기창면적*외부일사량,data=ex1_train) 
+y_hat0 <- predict(m0,ex1_test)
+RMSE1 <- mean(sum((ex1_test$내부상대습도-y_hat0)^2))
+RMSE1
+
+# 모든 주효과와 가장 중요한 교호작용 1가지를 포함한 모형 (분석 의뢰기관의 요청에 따라 환기율은 제외)
+m0 <- lm(내부상대습도~외부기온+외부상대습도+외부풍속+외부일사량+환기창면적+환기창면적*외부풍속,data=ex1_train) 
+y_hat0 <- predict(m0,ex1_test)
+RMSE2 <- mean(sum((ex1_test$내부상대습도-y_hat0)^2))
+RMSE2
+```
+
+- 결과적으로 3가지 모형들 중 모든 주효과, 그리고 환기창면적과 다른 변수들 사이의 교호작용을 포함한 모형이 가장 우수하였다.
+
+
+```{r}
+summary(lm(내부상대습도~환기율+외부기온+외부상대습도+외부풍속+외부일사량+환기창면적+환기창면적*환기율+환기창면적*외부기온+환기창면적*외부상대습도+환기창면적*외부풍속+환기창면적*외부일사량,data=ex1_train))
+```
+
+
+
+
+### 2.2 작물이 있을 때
+
+#### Multiple Linear Regression Model
+
+- 먼저 변수들 간의 상관관계를 파악하기 위해 상관분석을 실시한다.
+
+```{r}
+ex1 <- plantyes[,c(5,12,1,4,10,11,13,14,15)]
+head(ex1)
+ex2 <- ex1[,1:7]
+```
+
+```{r}
+cor(ex2)
+```
+
+- 산점도행렬과 상관계수그림을 그리면 다음과 같다.
+
+```{r}
+pairs(ex2[1:nrow(plantyes),],col=factor(ex2$환기창면적))
+```
+
+- 작물이 없을 때와 유사하다.
+- 산점도를 통해 알 수 있는 사실은 외부기온과 외부일사량이 떨어질 수록 내부상대습도가 올라간다는 점이다. 환기창면적과의 교호작용은 뚜렷하게 관측되는 것이 없으나, 외부풍속과의 교호작용의 존재 가능성이 추측된다. 외부풍속은 약하지만 내부상대습도와 음의 상관을 보이는 것으로 생각된다.
+
+```{r}
+library(corrplot)
+corrplot(cor(ex2))
+```
+
+- 그리고 각 변수에 대한 기초통계량은 다음과 같이 계산된다.
+
+```{r}
+library(psych)
+describe(ex1[,c(-8,-9)])
+```
+
+- 내외부기온차를 반응변수로 하여 각 변수의 주효과와 환기창면적과의 교호작용을 고려한 다중선형회귀모형을 적합하면 다음과 같다.
+
+```{r}
+m_yes <- lm(내부상대습도~환기율+외부기온+외부상대습도+외부풍속+외부일사량+환기창면적+환기창면적*환기율+환기창면적*외부기온+환기창면적*외부상대습도+환기창면적*외부풍속+환기창면적*외부일사량,data=plantyes)
+summary(m_yes)
+```
+
+- 모형적합 결과 외부기온과 환기창면적이 유의수준 0.05에서 유의미하지 않았다. 그러므로 변수선택 시 외부기온은 제외해야 할 것으로 보인다. 하지만 환기창면적의 경우는 다른 변수들과의 교호작용이 유의미한 경우가 존재하기 때문에 제외할 필요는 없다고 판단된다. 조정된 결정계수의 값이 $R^2_{adj}=0.9502$이므로 작물이 없을 때와 거의 비슷하다.
+- 그리고 여러 교호작용들 중 t 통계량의 절대값이 가장 큰 외부풍속과 환기창면적 사이의 교호작용을 가장 중요한 교호작용으로 판단할 수 있다. 
+
+
+#### Best subset selection
+
+- 여러 측도들을 이용하여 모형에 포함될 변수를 적절히 선택해 보도록 하겠다.
+- 분석 의뢰기관의 요청에 따라 환기율은 제외하고 분석한다.
+
+```{r}
+library(leaps)
+ms0 <- regsubsets(내부상대습도~외부기온+외부상대습도+외부풍속+외부일사량+환기창면적+환기창면적*외부기온+환기창면적*외부상대습도+환기창면적*외부풍속+환기창면적*외부일사량,data=plantyes,nvmax=9)
+ms0.summary <- summary(ms0)
+ms0.summary
+
+par(mfrow=c(2,2)) 
+# RSS=SSE
+plot(ms0.summary$rss,xlab="Number of Variables",ylab="RSS",type="l")
+# Adj R^2
+plot(ms0.summary$adjr2,xlab="Number of Variables",ylab="Adjusted RSq",type="l")
+which.max(ms0.summary$adjr2)
+points(which.max(ms0.summary$adjr2)
+,ms0.summary$adjr2[which.max(ms0.summary$adjr2)
+], col="red",cex=2,pch=20)
+# Cp
+plot(ms0.summary$cp,xlab="Number of Variables",ylab="Cp",type='l') 
+which.min(ms0.summary$cp)
+points(which.min(ms0.summary$cp)
+,ms0.summary$cp[which.min(ms0.summary$cp)
+],col="red",cex=2,pch=20)
+# BIC
+plot(ms0.summary$bic,xlab="Number of Variables",ylab="BIC",type='l')
+which.min(ms0.summary$bic) 
+points(which.min(ms0.summary$bic) 
+,ms0.summary$bic[which.min(ms0.summary$bic) 
+],col="red",cex=2,pch=20)
+par(mfrow=c(1,1))
+```
+
+- 외부기온을 제외하는 것이 좋다는 결과이다. 
+- 외부기온을 제외한 모형에 대해서 다시한번 선택해 보자. 
+
+```{r}
+library(leaps)
+ms0 <- regsubsets(내부상대습도~외부상대습도+외부풍속+외부일사량+환기창면적+환기창면적*외부상대습도+환기창면적*외부풍속+환기창면적*외부일사량,data=plantyes,nvmax=7)
+ms0.summary <- summary(ms0)
+ms0.summary
+
+par(mfrow=c(2,2)) 
+# RSS=SSE
+plot(ms0.summary$rss,xlab="Number of Variables",ylab="RSS",type="l")
+# Adj R^2
+plot(ms0.summary$adjr2,xlab="Number of Variables",ylab="Adjusted RSq",type="l")
+which.max(ms0.summary$adjr2)
+points(which.max(ms0.summary$adjr2)
+,ms0.summary$adjr2[which.max(ms0.summary$adjr2)
+], col="red",cex=2,pch=20)
+# Cp
+plot(ms0.summary$cp,xlab="Number of Variables",ylab="Cp",type='l') 
+which.min(ms0.summary$cp)
+points(which.min(ms0.summary$cp)
+,ms0.summary$cp[which.min(ms0.summary$cp)
+],col="red",cex=2,pch=20)
+# BIC
+plot(ms0.summary$bic,xlab="Number of Variables",ylab="BIC",type='l')
+which.min(ms0.summary$bic) 
+points(which.min(ms0.summary$bic) 
+,ms0.summary$bic[which.min(ms0.summary$bic) 
+],col="red",cex=2,pch=20)
+par(mfrow=c(1,1))
+```
+
+
+- 분석결과 $R_{adj}^2$의 경우는 변수의 개수 6인 모형, $Cp$의 경우는 변수의 개수 6인 모형, 그리고 $BIC$의 경우는 변수의 개수 4인 모형을 최적으로 판단하고 있다. 이들 중 가장 단순한 모형인 변수의 개수 4인 모형을 최종적으로 선택하도록 한다. 복잡한 모형이 항상 바람직한 결과를 주지는 않으며 단순한 모형도 설명력이 높은 경우가 많기 때문이다.
+
+
+
+#### 교차타당검증에 의한 모형 비교 
+
+- 지금부터는 train:test=7:3 으로 데이터를 나누어서 몇 개의 후보 모형들의 test RMSE를 계산하여 보겠다. 이 값이 작을수록 예측력이 우수한 모형이라고 볼 수 있다.
+- 먼저 데이터를 임의로 train:test=7:3 의 비율로 나눈다. train data는 모형구축 시, test data는 구축된 모형을 평가 시 사용한다.
+
+```{r}
+set.seed(5790)
+train.index <- sample(1:nrow(plantyes), round(nrow(plantyes)*7/10), replace=F)
+ex1_train <- plantyes[train.index,]
+ex1_test <- plantyes[-train.index,]
+```
+
+```{r}
+# 모든 주효과, 그리고 환기창면적과 다른 변수들 사이의 교호작용을 포함한 모형
+m0 <- lm(내부상대습도~환기율+외부기온+외부상대습도+외부풍속+외부일사량+환기창면적+환기창면적*환기율+환기창면적*외부기온+환기창면적*외부상대습도+환기창면적*외부풍속+환기창면적*외부일사량,data=ex1_train) 
+y_hat0 <- predict(m0,ex1_test)
+RMSE0 <- mean(sum((ex1_test$내부상대습도-y_hat0)^2))
+RMSE0
+
+# Adj R^2, Cp, BIC 등의 기준을 통해 선택된 모형
+m0 <- lm(내부상대습도~외부상대습도+외부일사량+환기창면적*외부풍속+환기창면적*외부일사량,data=ex1_train) 
+y_hat0 <- predict(m0,ex1_test)
+RMSE1 <- mean(sum((ex1_test$내부상대습도-y_hat0)^2))
+RMSE1
+
+# 모든 주효과와 가장 중요한 교호작용 1가지를 포함한 모형 (분석 의뢰기관의 요청에 따라 환기율은 제외)
+m0 <- lm(내부상대습도~외부기온+외부상대습도+외부풍속+외부일사량+환기창면적+환기창면적*외부풍속,data=ex1_train) 
+y_hat0 <- predict(m0,ex1_test)
+RMSE2 <- mean(sum((ex1_test$내부상대습도-y_hat0)^2))
+RMSE2
+```
+
+- 결과적으로 모든 주효과, 그리고 환기창면적과 다른 변수들 사이의 교호작용을 포함한 모형이 가장 우수하였다.
+
+```{r}
+summary(lm(내부상대습도~환기율+외부기온+외부상대습도+외부풍속+외부일사량+환기창면적+환기창면적*환기율+환기창면적*외부기온+환기창면적*외부상대습도+환기창면적*외부풍속+환기창면적*외부일사량,data=ex1_train))
+```
+
+
+
+### 2.3 작물유무 데이터를 합친 경우
+
+#### Multiple Linear Regression Model
+
+- 상관관계에 대한 분석은 작물유무에 따라 데이터를 나누어 분석하는 과정에서 모두 다루었기 때문에 생략하도록 한다.
+- 2.1절과 2.2절의 결과를 통해 환기창면적과 환기율, 그리고 환기창면적과 외부풍속 사이의 교호작용이 유의미하다는 사실을 파악할 수 있다.
+- 여기에서는 작물유무에 대한 변수가 추가로 들어가고 이에 따라 작물유무에 대한 교호작용을 포함해서 다양한 교호작용 변수를 고려할 수 있지만 모형이 너무 복잡해지므로 바람직하지 않다. 오히려 중요한 교호작용만을 포함한 모형도 충분한 설명력을 가지기 때문이다.
+- 따라서 내부상대습도를 반응변수로 하여 각 변수의 주효과와 환기창면적과 환기율, 그리고 환기창면적과 외부풍속 사이의 교호작용을 포함한 모형을 시작점으로 하여 분석을 진행하도록 한다. 여기에 주효과와 작물유무 사이의 교호작용도 우선 포함한다. 
+
+```{r}
+m_total <- lm(내부상대습도~환기율+외부기온+외부상대습도+외부풍속+외부일사량+환기창면적+작물유무+환기창면적*환기율+환기창면적*외부풍속+작물유무*환기율+작물유무*외부기온+작물유무*외부상대습도+작물유무*외부풍속+작물유무*외부일사량+작물유무*환기창면적,data=plant)
+summary(m_total)
+```
+
+- 모형적합 결과 외부상대습도와 작물유무 사이의 교호작용이 유의수준 0.05에서 유의미하지 않다. 이는 변수선택 시 제외해야 할 필요가 있다고 보여진다.
+- 그리고 가장 중요한 교호작용은 두가지를 선택할 수 있는데 바로 t 통계량의 절대값이 가장 큰 환기창면적과 외부풍속 사이의 교호작용과 t 통계량의 절대값이 두번째로 큰 외부일사량과 작물유무 사이의 교호작용이라고 판단된다. 
+- 조정된 결정계수의 값이 $R^2_{adj}=0.9625$이다.
+
+
+#### Best subset selection
+
+- 여러 측도들을 이용하여 모형에 포함될 변수를 적절히 선택해 보도록 하겠다.
+- 분석 의뢰기관의 요청에 따라 환기율은 분석에서 제외한다.
+
+```{r}
+library(leaps)
+ms0 <- regsubsets(내부상대습도~외부기온+외부상대습도+외부풍속+외부일사량+환기창면적+작물유무+환기창면적*외부풍속+작물유무*외부기온+작물유무*외부상대습도+작물유무*외부풍속+작물유무*외부일사량+작물유무*환기창면적,data=plant,nvmax=12)
+ms0.summary <- summary(ms0)
+ms0.summary
+
+par(mfrow=c(2,2)) 
+# RSS=SSE
+plot(ms0.summary$rss,xlab="Number of Variables",ylab="RSS",type="l")
+# Adj R^2
+plot(ms0.summary$adjr2,xlab="Number of Variables",ylab="Adjusted RSq",type="l")
+which.max(ms0.summary$adjr2)
+points(which.max(ms0.summary$adjr2)
+,ms0.summary$adjr2[which.max(ms0.summary$adjr2)
+], col="red",cex=2,pch=20)
+# Cp
+plot(ms0.summary$cp,xlab="Number of Variables",ylab="Cp",type='l') 
+which.min(ms0.summary$cp)
+points(which.min(ms0.summary$cp)
+,ms0.summary$cp[which.min(ms0.summary$cp)
+],col="red",cex=2,pch=20)
+# BIC
+plot(ms0.summary$bic,xlab="Number of Variables",ylab="BIC",type='l')
+which.min(ms0.summary$bic) 
+points(which.min(ms0.summary$bic) 
+,ms0.summary$bic[which.min(ms0.summary$bic) 
+],col="red",cex=2,pch=20)
+par(mfrow=c(1,1))
+```
+
+- 외부풍속을 제외하는 것이 좋다는 결과이다. 
+- 외부풍속을 제외한 모형에 대해서 다시한번 선택해 보자. 
+
+```{r}
+library(leaps)
+ms0 <- regsubsets(내부상대습도~외부기온+외부상대습도+외부일사량+환기창면적+작물유무+작물유무*외부기온+작물유무*외부상대습도+작물유무*외부일사량+작물유무*환기창면적,data=plant,nvmax=9)
+ms0.summary <- summary(ms0)
+ms0.summary
+
+par(mfrow=c(2,2)) 
+# RSS=SSE
+plot(ms0.summary$rss,xlab="Number of Variables",ylab="RSS",type="l")
+# Adj R^2
+plot(ms0.summary$adjr2,xlab="Number of Variables",ylab="Adjusted RSq",type="l")
+which.max(ms0.summary$adjr2)
+points(which.max(ms0.summary$adjr2)
+,ms0.summary$adjr2[which.max(ms0.summary$adjr2)
+], col="red",cex=2,pch=20)
+# Cp
+plot(ms0.summary$cp,xlab="Number of Variables",ylab="Cp",type='l') 
+which.min(ms0.summary$cp)
+points(which.min(ms0.summary$cp)
+,ms0.summary$cp[which.min(ms0.summary$cp)
+],col="red",cex=2,pch=20)
+# BIC
+plot(ms0.summary$bic,xlab="Number of Variables",ylab="BIC",type='l')
+which.min(ms0.summary$bic) 
+points(which.min(ms0.summary$bic) 
+,ms0.summary$bic[which.min(ms0.summary$bic) 
+],col="red",cex=2,pch=20)
+par(mfrow=c(1,1))
+```
+
+- 분석결과 $R_{adj}^2$의 경우는 변수의 개수 8인 모형, $Cp$의 경우는 변수의 개수 8인 모형, 그리고 $BIC$의 경우는 변수의 개수 8인 모형을 최적으로 판단하고 있다. 이에 따라 변수의 개수 8인 모형을 최종적으로 선택하도록 한다.
+
+```{r}
+summary(lm(내부상대습도~외부기온+외부상대습도+외부일사량+환기창면적+작물유무+작물유무*외부기온+작물유무*외부일사량+작물유무*환기창면적,data=plant))
+```
+
+
+#### 교차타당검증에 의한 모형 비교 
+
+- 지금부터는 train:test=7:3 으로 데이터를 나누어서 몇 개의 후보 모형들의 test RMSE를 계산하여 보겠다. 이 값이 작을수록 예측력이 우수한 모형이라고 볼 수 있다.
+- 먼저 데이터를 임의로 train:test=7:3 의 비율로 나눈다. train data는 모형구축 시, test data는 구축된 모형을 평가 시 사용한다.
+
+```{r}
+set.seed(5790)
+train.index <- sample(1:nrow(plant), round(nrow(plant)*7/10), replace=F)
+ex1_train <- plant[train.index,]
+ex1_test <- plant[-train.index,]
+```
+
+```{r}
+# 최초로 고려한 모형
+m0 <- lm(내부상대습도~환기율+외부기온+외부상대습도+외부풍속+외부일사량+환기창면적+작물유무+환기창면적*환기율+환기창면적*외부풍속+작물유무*환기율+작물유무*외부기온+작물유무*외부상대습도+작물유무*외부풍속+작물유무*외부일사량+작물유무*환기창면적,data=ex1_train)
+y_hat0 <- predict(m0,ex1_test)
+RMSE0 <- mean(sum((ex1_test$내부상대습도-y_hat0)^2))
+RMSE0
+
+# Adj R^2, Cp, BIC 등의 기준을 바탕으로 선택된 모형 (교호작용이 있는 경우는 주효과 포함)
+m0 <- lm(내부상대습도~외부기온+외부상대습도+외부일사량+환기창면적+작물유무+작물유무*외부기온+작물유무*외부일사량+작물유무*환기창면적,data=plant)
+y_hat0 <- predict(m0,ex1_test)
+RMSE1 <- mean(sum((ex1_test$내부상대습도-y_hat0)^2))
+RMSE1
+
+# 모든 주효과와 가장 중요한 교호작용 2가지를 포함한 모형
+# 분석 의뢰기관의 요청에 따라 환기율은 제외
+m0 <- lm(내부상대습도~외부기온+외부상대습도+외부풍속+외부일사량+환기창면적+작물유무+환기창면적*외부풍속+작물유무*외부일사량,data=ex1_train)
+y_hat0 <- predict(m0,ex1_test)
+RMSE2 <- mean(sum((ex1_test$내부상대습도-y_hat0)^2))
+RMSE2
+```
+
+- 결과적으로 3가지 모형들 중 최초로 고려한 모형이 가장 우수하였다.
+
+```{r}
+summary(lm(내부상대습도~환기율+외부기온+외부상대습도+외부풍속+외부일사량+환기창면적+작물유무+환기창면적*환기율+환기창면적*외부풍속+작물유무*환기율+작물유무*외부기온+작물유무*외부상대습도+작물유무*외부풍속+작물유무*외부일사량+작물유무*환기창면적,data=ex1_train))
+```
+
+
+
