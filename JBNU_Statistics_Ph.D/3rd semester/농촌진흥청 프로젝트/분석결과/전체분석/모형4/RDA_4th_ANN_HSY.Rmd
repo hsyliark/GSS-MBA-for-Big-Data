@@ -70,14 +70,14 @@ ex1_test <- as.data.frame(plantno_scale[-train.index,])
 # ex1_train <-plantno[train.index,]
 # ex1_test <- plantno[-train.index,]
 set.seed(1234)
-ann1 <- neuralnet(내부상대습도~외부기온+외부상대습도+외부풍속+외부일사량+환기창면적, data=ex1_train, hidden=c(10,20), threshold = 0.01, stepmax = 1e+08)
+ann1 <- neuralnet(내부상대습도~외부기온+외부상대습도+외부풍속+외부일사량+환기창면적, data=ex1_train, hidden=rep(10,20), threshold = 0.01, stepmax = 1e+08)
 summary(ann1)
 y_hat_ann1 <- compute(ann1, ex1_test)$net.result
 RMSE <- mean(sum(((ex1_test$내부상대습도-y_hat_ann1)*(max(plantno$내부상대습도)-min(plantno$내부상대습도))+min(plantno$내부상대습도))^2))
 RMSE
 ```
 
-- 적합결과 test RMSE의 값이 43164.3으로 산출되었다. 이는 다중회귀모형과 비교했을 때 좋지 않은 결과인데, 이미 구축한 다중회귀모형이 데이터를 충분히 잘 설명하도록 만들어졌기 때문이라고 생각한다.
+- 적합결과 test RMSE의 값이 52681.1로 산출되었다. 이는 다중회귀모형과 비교했을 때 좋지 않은 결과인데, 이미 구축한 다중회귀모형이 데이터를 충분히 잘 설명하도록 만들어졌기 때문이라고 생각한다.
 
 
 ### 3.2 작물이 있을 때

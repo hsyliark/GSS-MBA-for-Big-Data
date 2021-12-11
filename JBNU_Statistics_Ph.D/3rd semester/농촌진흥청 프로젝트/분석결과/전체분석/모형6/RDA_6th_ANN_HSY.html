@@ -177,8 +177,8 @@ pre code {
 <div id="사용모형-multiple-linear-regression-model-v.s-artificial-neural-network-model-ann" class="section level2">
 <h2>사용모형 : Multiple Linear Regression Model v.s Artificial Neural Network Model (ANN)</h2>
 </div>
-<div id="loading-data-내부상대습도-반응변수" class="section level2">
-<h2>1. Loading data (내부상대습도 반응변수)</h2>
+<div id="loading-data-내부co2-반응변수" class="section level2">
+<h2>1. Loading data (내부CO2 반응변수)</h2>
 <ul>
 <li>작물있음 데이터에서 외부CO2의 값이 결측치인 경우는 제외하였음.</li>
 </ul>
@@ -279,14 +279,14 @@ library(NeuralNetTools)</code></pre>
 <div id="작물이-없을-때" class="section level3">
 <h3>3.1 작물이 없을 때</h3>
 <ul>
-<li>적합모형은 hidden layer 20개, 각 layer에 대한 node 10개인 모형이다.</li>
+<li>적합모형은 hidden layer 20개, 각 layer에 대한 node 20개인 모형이다.</li>
 <li>activation function은 <code>logistic</code>으로 설정하였다.</li>
 </ul>
-<pre class="r"><code>plantno_scale &lt;- transform(plantno[,c(5,12,1,4,10,11,13)], 
-                           내부상대습도=(내부상대습도-min(내부상대습도))/(max(내부상대습도)-min(내부상대습도)),
+<pre class="r"><code>plantno_scale &lt;- transform(plantno[,c(8,12,1,7,10,11,13)], 
+                           내부CO2=(내부CO2-min(내부CO2))/(max(내부CO2)-min(내부CO2)),
                            환기율=(환기율-min(환기율))/(max(환기율)-min(환기율)),
                            외부기온=(외부기온-min(외부기온))/(max(외부기온)-min(외부기온)),
-                           외부상대습도=(외부상대습도-min(외부상대습도))/(max(외부상대습도)-min(외부상대습도)),
+                           외부CO2=(외부CO2-min(외부CO2))/(max(외부CO2)-min(외부CO2)),
                            외부풍속=(외부풍속-min(외부풍속))/(max(외부풍속)-min(외부풍속)),
                            외부일사량=(외부일사량-min(외부일사량))/(max(외부일사량)-min(외부일사량)),
                            환기창면적=(환기창면적-min(환기창면적))/(max(환기창면적)-min(환기창면적)))
@@ -299,7 +299,7 @@ ex1_test &lt;- as.data.frame(plantno_scale[-train.index,])
 # ex1_train &lt;-plantno[train.index,]
 # ex1_test &lt;- plantno[-train.index,]
 set.seed(1234)
-ann1 &lt;- neuralnet(내부상대습도~외부기온+외부상대습도+외부풍속+외부일사량+환기창면적, data=ex1_train, hidden=rep(10,20), threshold = 0.01, stepmax = 1e+08)
+ann1 &lt;- neuralnet(내부CO2~외부기온+외부CO2+외부풍속+외부일사량+환기창면적, data=ex1_train, hidden=rep(20,20), threshold = 0.01, stepmax = 1e+08)
 summary(ann1)</code></pre>
 <pre><code>##                     Length Class      Mode    
 ## call                   6   -none-     call    
@@ -315,26 +315,26 @@ summary(ann1)</code></pre>
 ## weights                1   -none-     list    
 ## generalized.weights    1   -none-     list    
 ## startweights           1   -none-     list    
-## result.matrix       2164   -none-     numeric</code></pre>
+## result.matrix       8124   -none-     numeric</code></pre>
 <pre class="r"><code>y_hat_ann1 &lt;- compute(ann1, ex1_test)$net.result
-RMSE &lt;- mean(sum(((ex1_test$내부상대습도-y_hat_ann1)*(max(plantno$내부상대습도)-min(plantno$내부상대습도))+min(plantno$내부상대습도))^2))
+RMSE &lt;- mean(sum(((ex1_test$내부CO2-y_hat_ann1)*(max(plantno$내부CO2)-min(plantno$내부CO2))+min(plantno$내부CO2))^2))
 RMSE</code></pre>
-<pre><code>## [1] 52681.1</code></pre>
+<pre><code>## [1] 47693348</code></pre>
 <ul>
-<li>적합결과 test RMSE의 값이 52681.1로 산출되었다. 이는 다중회귀모형과 비교했을 때 좋지 않은 결과인데, 이미 구축한 다중회귀모형이 데이터를 충분히 잘 설명하도록 만들어졌기 때문이라고 생각한다.</li>
+<li>적합결과 test RMSE의 값이 47693348로 산출되었다. 이는 다중회귀모형과 비교했을 때 좋지 않은 결과인데, 이미 구축한 다중회귀모형이 데이터를 충분히 잘 설명하도록 만들어졌기 때문이라고 생각한다.</li>
 </ul>
 </div>
 <div id="작물이-있을-때" class="section level3">
 <h3>3.2 작물이 있을 때</h3>
 <ul>
-<li>적합모형은 hidden layer 20개, 각 layer에 대한 node 10개인 모형이다.</li>
+<li>적합모형은 hidden layer 30개, 각 layer에 대한 node 20개인 모형이다.</li>
 <li>activation function은 <code>logistic</code>으로 설정하였다.</li>
 </ul>
-<pre class="r"><code>plantyes_scale &lt;- transform(plantyes[,c(5,12,1,4,10,11,13)], 
-                           내부상대습도=(내부상대습도-min(내부상대습도))/(max(내부상대습도)-min(내부상대습도)),
+<pre class="r"><code>plantyes_scale &lt;- transform(plantyes[,c(8,12,1,7,10,11,13)], 
+                           내부CO2=(내부CO2-min(내부CO2))/(max(내부CO2)-min(내부CO2)),
                            환기율=(환기율-min(환기율))/(max(환기율)-min(환기율)),
                            외부기온=(외부기온-min(외부기온))/(max(외부기온)-min(외부기온)),
-                           외부상대습도=(외부상대습도-min(외부상대습도))/(max(외부상대습도)-min(외부상대습도)),
+                           외부CO2=(외부CO2-min(외부CO2))/(max(외부CO2)-min(외부CO2)),
                            외부풍속=(외부풍속-min(외부풍속))/(max(외부풍속)-min(외부풍속)),
                            외부일사량=(외부일사량-min(외부일사량))/(max(외부일사량)-min(외부일사량)),
                            환기창면적=(환기창면적-min(환기창면적))/(max(환기창면적)-min(환기창면적)))
@@ -347,29 +347,29 @@ ex1_test &lt;- as.data.frame(plantyes_scale[-train.index,])
 # ex1_train &lt;-plantyes[train.index,]
 # ex1_test &lt;- plantyes[-train.index,]
 set.seed(1234)
-ann1 &lt;- neuralnet(내부상대습도~외부기온+외부상대습도+외부풍속+외부일사량+환기창면적, data=ex1_train, hidden=rep(10,20), threshold = 0.01, stepmax = 1e+08)
+ann1 &lt;- neuralnet(내부CO2~외부기온+외부CO2+외부풍속+외부일사량+환기창면적, data=ex1_train, hidden=rep(20,30), threshold = 0.01, stepmax = 1e+08)
 summary(ann1)</code></pre>
 <pre><code>##                     Length Class      Mode    
-## call                   6   -none-     call    
-## response             738   -none-     numeric 
-## covariate           3690   -none-     numeric 
-## model.list             2   -none-     list    
-## err.fct                1   -none-     function
-## act.fct                1   -none-     function
-## linear.output          1   -none-     logical 
-## data                   7   data.frame list    
-## exclude                0   -none-     NULL    
-## net.result             1   -none-     list    
-## weights                1   -none-     list    
-## generalized.weights    1   -none-     list    
-## startweights           1   -none-     list    
-## result.matrix       2164   -none-     numeric</code></pre>
+## call                    6  -none-     call    
+## response              738  -none-     numeric 
+## covariate            3690  -none-     numeric 
+## model.list              2  -none-     list    
+## err.fct                 1  -none-     function
+## act.fct                 1  -none-     function
+## linear.output           1  -none-     logical 
+## data                    7  data.frame list    
+## exclude                 0  -none-     NULL    
+## net.result              1  -none-     list    
+## weights                 1  -none-     list    
+## generalized.weights     1  -none-     list    
+## startweights            1  -none-     list    
+## result.matrix       12324  -none-     numeric</code></pre>
 <pre class="r"><code>y_hat_ann1 &lt;- compute(ann1, ex1_test)$net.result
-RMSE &lt;- mean(sum(((ex1_test$내부상대습도-y_hat_ann1)*(max(plantyes$내부상대습도)-min(plantyes$내부상대습도))+min(plantyes$내부상대습도))^2))
+RMSE &lt;- mean(sum(((ex1_test$내부CO2-y_hat_ann1)*(max(plantyes$내부CO2)-min(plantyes$내부CO2))+min(plantyes$내부CO2))^2))
 RMSE</code></pre>
-<pre><code>## [1] 202594.5</code></pre>
+<pre><code>## [1] 50308178</code></pre>
 <ul>
-<li>적합결과 test RMSE의 값이 202594.5로 산출되었다. 이는 다중회귀모형과 비교했을 때 좋지 않은 결과인데, 이미 구축한 다중회귀모형이 데이터를 충분히 잘 설명하도록 만들어졌기 때문이라고 생각한다.</li>
+<li>적합결과 test RMSE의 값이 50308178로 산출되었다. 이는 다중회귀모형과 비교했을 때 좋지 않은 결과인데, 이미 구축한 다중회귀모형이 데이터를 충분히 잘 설명하도록 만들어졌기 때문이라고 생각한다.</li>
 </ul>
 </div>
 </div>
