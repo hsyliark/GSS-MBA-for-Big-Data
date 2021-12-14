@@ -261,8 +261,10 @@ plant &lt;- rbind(plantno,plantyes)</code></pre>
 <h2>Artificial Neural Network Model (ANN)</h2>
 <ul>
 <li>ANN의 경우는 작물이 없을 때와 작물이 있을 때로 나누어 각각 모형을 적합하고 분석을 실시한다.</li>
-<li>모형적합은 데이터에서 임의로 70%를 추출한 train data를 이용하여 만들고 이 모형의 성능을 판단하기 위해 나머지 30%를 test data로 두어서 test RMSE를 계산한다.</li>
-<li>추가로 모형적합의 효율성을 위해 주어진 데이터에 대해 최댓값 1, 최솟값 0을 기준으로 하는 표준화를 실시하고 모형을 적합하였다.</li>
+<li>모형적합은 데이터에서 임의로 70%를 추출한 train data를 이용하여 만들고 이 모형의 성능을 판단하기 위해 나머지 30%를 test data로 두어서 test RMSE와 SSE/SST를 계산한다. 이 두가지 기준 모두 산출된 값이 작을수록 더 예측력이 좋은 모형이라고 해석할 수 있다.</li>
+<li><span class="math inline">\(RMSE=\sqrt{{\frac {1}{n} \sum_{i=1}^{n} (y_{i}-\hat{y_{i}})^{2}}}\)</span></li>
+<li><span class="math inline">\(SSE/SST=\frac {\sum_{i=1}^{n} (y_{i}-\hat{y_{i}})^{2}} {\sum_{i=1}^{n} (y_{i}-\bar{y})^{2}}\)</span></li>
+<li>추가로 모형적합의 효율성을 위해 주어진 데이터에 대해 최댓값 1, 최솟값 0을 기준으로 하는 표준화를 실시하고 모형을 적합하였다. 그런 다음 실제 예측값은 표준화된 데이터에 의해 산출된 표준화된 예측값에 대해 표준화의 역순으로 환산을 실시하여 구할 수 있다.</li>
 <li>그리고 분석 의뢰기관의 요청에 따라 환기율은 설명변수에서 제외하였다.</li>
 </ul>
 </div>
@@ -279,98 +281,264 @@ library(NeuralNetTools)</code></pre>
 <div id="작물이-없을-때" class="section level3">
 <h3>3.1 작물이 없을 때</h3>
 <ul>
-<li>적합모형은 hidden layer 20개, 각 layer에 대한 node 10개인 모형이다.</li>
-<li>activation function은 <code>logistic</code>으로 설정하였다.</li>
+<li>우선 다음과 같이 데이터를 표준화한다.</li>
 </ul>
-<pre class="r"><code>plantno_scale &lt;- transform(plantno[,c(5,12,1,4,10,11,13)], 
+<pre class="r"><code>plantno_scale &lt;- transform(plantno[,c(5,1,4,10,11,13)], 
                            내부상대습도=(내부상대습도-min(내부상대습도))/(max(내부상대습도)-min(내부상대습도)),
-                           환기율=(환기율-min(환기율))/(max(환기율)-min(환기율)),
                            외부기온=(외부기온-min(외부기온))/(max(외부기온)-min(외부기온)),
                            외부상대습도=(외부상대습도-min(외부상대습도))/(max(외부상대습도)-min(외부상대습도)),
                            외부풍속=(외부풍속-min(외부풍속))/(max(외부풍속)-min(외부풍속)),
                            외부일사량=(외부일사량-min(외부일사량))/(max(외부일사량)-min(외부일사량)),
-                           환기창면적=(환기창면적-min(환기창면적))/(max(환기창면적)-min(환기창면적)))
-set.seed(5790)
+                           환기창면적=(환기창면적-min(환기창면적))/(max(환기창면적)-min(환기창면적)))</code></pre>
+<div id="첫번째-모형" class="section level4">
+<h4>첫번째 모형</h4>
+<ul>
+<li>첫번째로 고려한 적합모형은 hidden layer 2개, 각 layer에 대한 node 10개인 모형이다.</li>
+<li>activation function은 <code>logistic</code>으로 설정하였다.</li>
+</ul>
+<pre class="r"><code>set.seed(5790)
 train.index &lt;- sample(1:nrow(plantno_scale), round(nrow(plantno_scale)*7/10), replace=F)
 ex1_train &lt;-as.data.frame(plantno_scale[train.index,])
 ex1_test &lt;- as.data.frame(plantno_scale[-train.index,])
-# set.seed(5790)
-# train.index &lt;- sample(1:nrow(plantno), round(nrow(plantno)*7/10), replace=F)
-# ex1_train &lt;-plantno[train.index,]
-# ex1_test &lt;- plantno[-train.index,]
 set.seed(1234)
-ann1 &lt;- neuralnet(내부상대습도~외부기온+외부상대습도+외부풍속+외부일사량+환기창면적, data=ex1_train, hidden=rep(10,20), threshold = 0.01, stepmax = 1e+08)
+ann1 &lt;- neuralnet(내부상대습도~외부기온+외부상대습도+외부풍속+외부일사량+환기창면적, data=ex1_train, hidden=rep(10,2), threshold = 0.01, stepmax = 1e+08, act.fct=&#39;logistic&#39;)
 summary(ann1)</code></pre>
 <pre><code>##                     Length Class      Mode    
-## call                   6   -none-     call    
+## call                   7   -none-     call    
 ## response             514   -none-     numeric 
 ## covariate           2570   -none-     numeric 
 ## model.list             2   -none-     list    
 ## err.fct                1   -none-     function
 ## act.fct                1   -none-     function
 ## linear.output          1   -none-     logical 
-## data                   7   data.frame list    
+## data                   6   data.frame list    
 ## exclude                0   -none-     NULL    
 ## net.result             1   -none-     list    
 ## weights                1   -none-     list    
 ## generalized.weights    1   -none-     list    
 ## startweights           1   -none-     list    
-## result.matrix       2164   -none-     numeric</code></pre>
-<pre class="r"><code>y_hat_ann1 &lt;- compute(ann1, ex1_test)$net.result
-RMSE &lt;- mean(sum(((ex1_test$내부상대습도-y_hat_ann1)*(max(plantno$내부상대습도)-min(plantno$내부상대습도))+min(plantno$내부상대습도))^2))
-RMSE</code></pre>
-<pre><code>## [1] 52681.1</code></pre>
+## result.matrix        184   -none-     numeric</code></pre>
+<pre class="r"><code># plot(ann1)
+y &lt;- (ex1_test$내부상대습도)*(max(plantno$내부상대습도)-min(plantno$내부상대습도))+min(plantno$내부상대습도)
+y_hat_ann1 &lt;- (compute(ann1, ex1_test)$net.result)*(max(plantno$내부상대습도)-min(plantno$내부상대습도))+min(plantno$내부상대습도)
+y_bar &lt;- mean(y*(max(plantno$내부상대습도)-min(plantno$내부상대습도))+min(plantno$내부상대습도))
+RMSE &lt;- sqrt(mean((y-y_hat_ann1)^2))
+SSE &lt;- sum((y-y_hat_ann1)^2) 
+SST &lt;- sum((y-y_bar)^2) 
+result &lt;- data.frame(y, y_hat_ann1, y-y_hat_ann1)
+colnames(result) &lt;- c(&#39;y&#39;,&#39;yhat&#39;,&#39;y-yhat&#39;)
+RMSE # test RMSE</code></pre>
+<pre><code>## [1] 1.040828</code></pre>
+<pre class="r"><code>SSE/SST # SSE/SST</code></pre>
+<pre><code>## [1] 9.747682e-07</code></pre>
+<pre class="r"><code>head(result,12)</code></pre>
+<pre><code>##       y     yhat      y-yhat
+## 3  33.2 36.68746 -3.48746424
+## 5  28.8 29.60625 -0.80625201
+## 7  25.3 26.53871 -1.23871117
+## 10 22.6 23.90478 -1.30478056
+## 12 22.7 21.66005  1.03995039
+## 17 19.2 19.26728 -0.06727816
+## 20 17.2 16.71533  0.48466986
+## 24 16.8 16.19598  0.60402330
+## 33 16.5 15.56636  0.93363561
+## 51 44.8 44.47180  0.32820459
+## 60 24.6 24.90563 -0.30563398
+## 62 22.4 22.10230  0.29769581</code></pre>
 <ul>
-<li>적합결과 test RMSE의 값이 52681.1로 산출되었다. 이는 다중회귀모형과 비교했을 때 좋지 않은 결과인데, 이미 구축한 다중회귀모형이 데이터를 충분히 잘 설명하도록 만들어졌기 때문이라고 생각한다.</li>
+<li>적합결과 test RMSE의 값이 약 1.0408로 산출되었다. 이는 다중회귀모형과 비교했을 때 더 작은 값이므로 이 ANN 모형이 다중회귀모형보다 예측력이 좋다고 해석할 수 있다.</li>
 </ul>
+</div>
+<div id="두번째-모형" class="section level4">
+<h4>두번째 모형</h4>
+<ul>
+<li>두번째로 고려한 적합모형은 hidden layer 6개, 각 layer에 대한 node 4개인 모형이다.</li>
+<li>activation function은 <code>logistic</code>으로 설정하였다.</li>
+</ul>
+<pre class="r"><code>set.seed(5790)
+train.index &lt;- sample(1:nrow(plantno_scale), round(nrow(plantno_scale)*7/10), replace=F)
+ex1_train &lt;-as.data.frame(plantno_scale[train.index,])
+ex1_test &lt;- as.data.frame(plantno_scale[-train.index,])
+set.seed(1234)
+ann1 &lt;- neuralnet(내부상대습도~외부기온+외부상대습도+외부풍속+외부일사량+환기창면적, data=ex1_train, hidden=rep(4,6), threshold = 0.01, stepmax = 1e+08, act.fct=&#39;logistic&#39;)
+summary(ann1)</code></pre>
+<pre><code>##                     Length Class      Mode    
+## call                   7   -none-     call    
+## response             514   -none-     numeric 
+## covariate           2570   -none-     numeric 
+## model.list             2   -none-     list    
+## err.fct                1   -none-     function
+## act.fct                1   -none-     function
+## linear.output          1   -none-     logical 
+## data                   6   data.frame list    
+## exclude                0   -none-     NULL    
+## net.result             1   -none-     list    
+## weights                1   -none-     list    
+## generalized.weights    1   -none-     list    
+## startweights           1   -none-     list    
+## result.matrix        132   -none-     numeric</code></pre>
+<pre class="r"><code># plot(ann1)
+y &lt;- (ex1_test$내부상대습도)*(max(plantno$내부상대습도)-min(plantno$내부상대습도))+min(plantno$내부상대습도)
+y_hat_ann1 &lt;- (compute(ann1, ex1_test)$net.result)*(max(plantno$내부상대습도)-min(plantno$내부상대습도))+min(plantno$내부상대습도)
+y_bar &lt;- mean(y*(max(plantno$내부상대습도)-min(plantno$내부상대습도))+min(plantno$내부상대습도))
+RMSE &lt;- sqrt(mean((y-y_hat_ann1)^2))
+SSE &lt;- sum((y-y_hat_ann1)^2) 
+SST &lt;- sum((y-y_bar)^2) 
+result &lt;- data.frame(y, y_hat_ann1, y-y_hat_ann1)
+colnames(result) &lt;- c(&#39;y&#39;,&#39;yhat&#39;,&#39;y-yhat&#39;)
+RMSE # test RMSE</code></pre>
+<pre><code>## [1] 1.257284</code></pre>
+<pre class="r"><code>SSE/SST # SSE/SST</code></pre>
+<pre><code>## [1] 1.422362e-06</code></pre>
+<pre class="r"><code>head(result,12)</code></pre>
+<pre><code>##       y     yhat      y-yhat
+## 3  33.2 32.83003  0.36997494
+## 5  28.8 26.41653  2.38346538
+## 7  25.3 24.56850  0.73149977
+## 10 22.6 23.98034 -1.38033917
+## 12 22.7 21.48900  1.21100253
+## 17 19.2 19.32014 -0.12013641
+## 20 17.2 17.14005  0.05994515
+## 24 16.8 16.63915  0.16085366
+## 33 16.5 16.54555 -0.04555495
+## 51 44.8 45.47640 -0.67639548
+## 60 24.6 24.31927  0.28072854
+## 62 22.4 22.41375 -0.01374783</code></pre>
+<ul>
+<li>적합결과 test RMSE의 값이 약 1.2573으로 산출되었다. 첫번째 모형의 결과와 동일하게 이는 다중회귀모형과 비교했을 때 더 작은 값이므로 이 ANN 모형이 다중회귀모형보다 예측력이 좋다고 해석할 수 있다.</li>
+</ul>
+</div>
 </div>
 <div id="작물이-있을-때" class="section level3">
 <h3>3.2 작물이 있을 때</h3>
 <ul>
-<li>적합모형은 hidden layer 20개, 각 layer에 대한 node 10개인 모형이다.</li>
-<li>activation function은 <code>logistic</code>으로 설정하였다.</li>
+<li>우선 다음과 같이 데이터를 표준화한다.</li>
 </ul>
-<pre class="r"><code>plantyes_scale &lt;- transform(plantyes[,c(5,12,1,4,10,11,13)], 
+<pre class="r"><code>plantyes_scale &lt;- transform(plantyes[,c(5,1,4,10,11,13)], 
                            내부상대습도=(내부상대습도-min(내부상대습도))/(max(내부상대습도)-min(내부상대습도)),
-                           환기율=(환기율-min(환기율))/(max(환기율)-min(환기율)),
                            외부기온=(외부기온-min(외부기온))/(max(외부기온)-min(외부기온)),
                            외부상대습도=(외부상대습도-min(외부상대습도))/(max(외부상대습도)-min(외부상대습도)),
                            외부풍속=(외부풍속-min(외부풍속))/(max(외부풍속)-min(외부풍속)),
                            외부일사량=(외부일사량-min(외부일사량))/(max(외부일사량)-min(외부일사량)),
-                           환기창면적=(환기창면적-min(환기창면적))/(max(환기창면적)-min(환기창면적)))
-set.seed(5790)
+                           환기창면적=(환기창면적-min(환기창면적))/(max(환기창면적)-min(환기창면적)))</code></pre>
+<div id="첫번째-모형-1" class="section level4">
+<h4>첫번째 모형</h4>
+<ul>
+<li>첫번째로 고려한 적합모형은 hidden layer 4개, 각 layer에 대한 node 8개인 모형이다.</li>
+<li>activation function은 <code>logistic</code>으로 설정하였다.</li>
+</ul>
+<pre class="r"><code>set.seed(5790)
 train.index &lt;- sample(1:nrow(plantyes_scale), round(nrow(plantyes_scale)*7/10), replace=F)
 ex1_train &lt;- as.data.frame(plantyes_scale[train.index,])
 ex1_test &lt;- as.data.frame(plantyes_scale[-train.index,])
-# set.seed(5790)
-# train.index &lt;- sample(1:nrow(plantyes), round(nrow(plantyes)*7/10), replace=F)
-# ex1_train &lt;-plantyes[train.index,]
-# ex1_test &lt;- plantyes[-train.index,]
 set.seed(1234)
-ann1 &lt;- neuralnet(내부상대습도~외부기온+외부상대습도+외부풍속+외부일사량+환기창면적, data=ex1_train, hidden=rep(10,20), threshold = 0.01, stepmax = 1e+08)
+ann1 &lt;- neuralnet(내부상대습도~외부기온+외부상대습도+외부풍속+외부일사량+환기창면적, data=ex1_train, hidden=rep(8,4), threshold = 0.01, stepmax = 1e+08, act.fct=&#39;logistic&#39;)
 summary(ann1)</code></pre>
 <pre><code>##                     Length Class      Mode    
-## call                   6   -none-     call    
+## call                   7   -none-     call    
 ## response             738   -none-     numeric 
 ## covariate           3690   -none-     numeric 
 ## model.list             2   -none-     list    
 ## err.fct                1   -none-     function
 ## act.fct                1   -none-     function
 ## linear.output          1   -none-     logical 
-## data                   7   data.frame list    
+## data                   6   data.frame list    
 ## exclude                0   -none-     NULL    
 ## net.result             1   -none-     list    
 ## weights                1   -none-     list    
 ## generalized.weights    1   -none-     list    
 ## startweights           1   -none-     list    
-## result.matrix       2164   -none-     numeric</code></pre>
-<pre class="r"><code>y_hat_ann1 &lt;- compute(ann1, ex1_test)$net.result
-RMSE &lt;- mean(sum(((ex1_test$내부상대습도-y_hat_ann1)*(max(plantyes$내부상대습도)-min(plantyes$내부상대습도))+min(plantyes$내부상대습도))^2))
-RMSE</code></pre>
-<pre><code>## [1] 202594.5</code></pre>
+## result.matrix        276   -none-     numeric</code></pre>
+<pre class="r"><code># plot(ann1)
+y &lt;- (ex1_test$내부상대습도)*(max(plantno$내부상대습도)-min(plantno$내부상대습도))+min(plantno$내부상대습도)
+y_hat_ann1 &lt;- (compute(ann1, ex1_test)$net.result)*(max(plantno$내부상대습도)-min(plantno$내부상대습도))+min(plantno$내부상대습도)
+y_bar &lt;- mean(y*(max(plantno$내부상대습도)-min(plantno$내부상대습도))+min(plantno$내부상대습도))
+RMSE &lt;- sqrt(mean((y-y_hat_ann1)^2))
+SSE &lt;- sum((y-y_hat_ann1)^2) 
+SST &lt;- sum((y-y_bar)^2) 
+result &lt;- data.frame(y, y_hat_ann1, y-y_hat_ann1)
+colnames(result) &lt;- c(&#39;y&#39;,&#39;yhat&#39;,&#39;y-yhat&#39;)
+RMSE # test RMSE</code></pre>
+<pre><code>## [1] 1.480187</code></pre>
+<pre class="r"><code>SSE/SST # SSE/SST</code></pre>
+<pre><code>## [1] 1.896886e-06</code></pre>
+<pre class="r"><code>head(result,12)</code></pre>
+<pre><code>##           y     yhat     y-yhat
+## 3  36.07555 36.88165 -0.8061019
+## 5  34.87904 33.28747  1.5915739
+## 10 27.52052 25.20004  2.3204876
+## 12 24.05066 23.75847  0.2921881
+## 17 25.00786 23.94384  1.0640191
+## 20 22.31572 22.18826  0.1274629
+## 23 23.57205 21.90593  1.6661257
+## 24 22.07642 21.07151  1.0049062
+## 33 16.03406 16.40449 -0.3704301
+## 39 17.17074 16.73493  0.4358076
+## 45 26.02489 27.18417 -1.1592750
+## 54 54.62140 54.34372  0.2776766</code></pre>
 <ul>
-<li>적합결과 test RMSE의 값이 202594.5로 산출되었다. 이는 다중회귀모형과 비교했을 때 좋지 않은 결과인데, 이미 구축한 다중회귀모형이 데이터를 충분히 잘 설명하도록 만들어졌기 때문이라고 생각한다.</li>
+<li>적합결과 test RMSE의 값이 약 1.4802로 산출되었다. 이는 다중회귀모형과 비교했을 때 더 작은 값이므로 이 ANN 모형이 다중회귀모형보다 예측력이 좋다고 해석할 수 있다.</li>
 </ul>
+</div>
+<div id="두번째-모형-1" class="section level4">
+<h4>두번째 모형</h4>
+<ul>
+<li>두번째로 고려한 적합모형은 hidden layer 7개, 각 layer에 대한 node 7개인 모형이다.</li>
+<li>activation function은 <code>logistic</code>으로 설정하였다.</li>
+</ul>
+<pre class="r"><code>set.seed(5790)
+train.index &lt;- sample(1:nrow(plantyes_scale), round(nrow(plantyes_scale)*7/10), replace=F)
+ex1_train &lt;- as.data.frame(plantyes_scale[train.index,])
+ex1_test &lt;- as.data.frame(plantyes_scale[-train.index,])
+set.seed(1234)
+ann1 &lt;- neuralnet(내부상대습도~외부기온+외부상대습도+외부풍속+외부일사량+환기창면적, data=ex1_train, hidden=rep(7,7), threshold = 0.01, stepmax = 1e+08, act.fct=&#39;logistic&#39;)
+summary(ann1)</code></pre>
+<pre><code>##                     Length Class      Mode    
+## call                   7   -none-     call    
+## response             738   -none-     numeric 
+## covariate           3690   -none-     numeric 
+## model.list             2   -none-     list    
+## err.fct                1   -none-     function
+## act.fct                1   -none-     function
+## linear.output          1   -none-     logical 
+## data                   6   data.frame list    
+## exclude                0   -none-     NULL    
+## net.result             1   -none-     list    
+## weights                1   -none-     list    
+## generalized.weights    1   -none-     list    
+## startweights           1   -none-     list    
+## result.matrix        389   -none-     numeric</code></pre>
+<pre class="r"><code># plot(ann1)
+y &lt;- (ex1_test$내부상대습도)*(max(plantno$내부상대습도)-min(plantno$내부상대습도))+min(plantno$내부상대습도)
+y_hat_ann1 &lt;- (compute(ann1, ex1_test)$net.result)*(max(plantno$내부상대습도)-min(plantno$내부상대습도))+min(plantno$내부상대습도)
+y_bar &lt;- mean(y*(max(plantno$내부상대습도)-min(plantno$내부상대습도))+min(plantno$내부상대습도))
+RMSE &lt;- sqrt(mean((y-y_hat_ann1)^2))
+SSE &lt;- sum((y-y_hat_ann1)^2) 
+SST &lt;- sum((y-y_bar)^2) 
+result &lt;- data.frame(y, y_hat_ann1, y-y_hat_ann1)
+colnames(result) &lt;- c(&#39;y&#39;,&#39;yhat&#39;,&#39;y-yhat&#39;)
+RMSE # test RMSE</code></pre>
+<pre><code>## [1] 1.580338</code></pre>
+<pre class="r"><code>SSE/SST # SSE/SST</code></pre>
+<pre><code>## [1] 2.162261e-06</code></pre>
+<pre class="r"><code>head(result,12)</code></pre>
+<pre><code>##           y     yhat     y-yhat
+## 3  36.07555 37.74328 -1.6677326
+## 5  34.87904 34.50497  0.3740736
+## 10 27.52052 25.45078  2.0697415
+## 12 24.05066 23.87302  0.1776306
+## 17 25.00786 24.62643  0.3814331
+## 20 22.31572 22.56363 -0.2479057
+## 23 23.57205 22.07109  1.5009628
+## 24 22.07642 21.60354  0.4728792
+## 33 16.03406 16.39036 -0.3563003
+## 39 17.17074 16.51431  0.6564306
+## 45 26.02489 27.26020 -1.2353102
+## 54 54.62140 54.44287  0.1785284</code></pre>
+<ul>
+<li>적합결과 test RMSE의 값이 약 1.5803으로 산출되었다. 첫번째 모형의 결과와 동일하게 이는 다중회귀모형과 비교했을 때 더 작은 값이므로 이 ANN 모형이 다중회귀모형보다 예측력이 좋다고 해석할 수 있다.</li>
+</ul>
+</div>
 </div>
 </div>
 

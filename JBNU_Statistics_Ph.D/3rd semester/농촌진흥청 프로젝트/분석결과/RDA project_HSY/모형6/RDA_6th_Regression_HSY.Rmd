@@ -1,0 +1,506 @@
+---
+title: "RDA project"
+author: "JBNU statistics"
+date: '2021 12 14 '
+output: html_document
+---
+
+## 목적 : 단동 비닐하우스 환기율 및 온습도에 대한 예측모형 구축 및 평가
+## 사용모형 : Multiple Linear Regression Model v.s Artificial Neural Network Model (ANN)
+
+## 0. 분석방향
+
+- 내부CO2를 반응변수로, 외부기온, 외부CO2, 외부풍속, 외부일사량, 환기창면적을 독립변수로 하는 선형회귀모형 적합.
+- 작물유무에 따라 실험이 수행되었으므로 두 경우에 각각 다른 모형을 적합해보고, 두 데이터세트를 합쳐서 작물유무를 추가 독립변수로 가지는 모형을 또한 적합하여 본다.
+- 환기율은 외부기온, 외부풍속, 환기창면적 등에 의해 계산되는 값이다. 이 변수들이 이미 독립변수로 고려되었으므로 환기율은 독립변수에 포함시키지 않는다.
+- 고려하는 독립변수들은 모두 어느 정도의 중요도를 가진다고 판단된다. 따라서, 영향력이 큰 변수들을 골라내어 단순화된 모형을 찾는 것이 본 분석의 일차적인 목적은 아닐 수 있다.
+- 독립변수들간의 교호작용(혹은 상호작용: interaction effect)이 존재할 수 있다. 하지만 교호작용의 포함은 모형의 해석을 난해하게 만들 수 있다.
+- 위 요소들을 종합하여, (1) 가능한 모든 효과를 포함한 모형 (2) 예측성능 혹은 변수선택측도 등의 차원에서 가장 우수한 모형 (3) 모든 독립변수들의 주효과를 포함하되 교호작용은 최소한으로 포함한 모형, 크게 3개의 차원에서 모형을 살펴보고 그 예측성능 및 설명력 등을 비교하여 보겠다.
+
+## 1. Loading data (내부CO2 반응변수)
+
+- 작물있음 데이터에서 외부CO2의 값이 결측치인 경우는 제외하였음.
+
+```{r}
+plantyes <- read.csv("C:/Users/HSY/Desktop/작물있음.csv",sep=",",header=T)
+plantyes <- plantyes[is.na(plantyes$외부CO2)==FALSE,]
+head(plantyes,10)
+plantyes$작물유무 <- as.factor(plantyes$작물유무)
+plantno <- read.csv("C:/Users/HSY/Desktop/작물없음.csv",sep=",",header=T)
+head(plantno,10) 
+plantno$작물유무 <- as.factor(plantno$작물유무)
+plant <- rbind(plantno,plantyes)
+```
+
+
+
+## Multiple Linear Regression Model
+
+## 2. 작물유무에 따라 데이터를 나누어서 분석 실시
+
+### 2.1 작물이 없을 때
+
+#### Multiple Linear Regression Model
+
+- 먼저 변수들 간의 상관관계를 파악하기 위해 상관분석을 실시한다.
+
+```{r}
+ex1 <- plantno[,c(8,1,7,10,11,13)]
+head(ex1)
+```
+
+```{r}
+cor(ex1)
+```
+
+- 산점도행렬과 상관계수그림을 그리면 다음과 같다.
+
+```{r}
+pairs(ex1,col=factor(ex1$환기창면적))
+```
+
+- 환기창면적과 다른 주효과들간의 뚜렷한 교호작용이 관측되지는 않는다.
+- 외부풍속은 약하지만 내부CO2와 음의 상관을 보이는 것으로 생각된다.
+
+```{r}
+library(corrplot)
+corrplot(cor(ex1))
+```
+
+- 그리고 각 변수에 대한 기초통계량은 다음과 같이 계산된다.
+
+```{r}
+library(psych)
+describe(ex1)
+```
+
+- 내부CO2를 반응변수로 하여 각 변수의 주효과와 모든 가능한 교호작용을 고려한 다중선형회귀모형을 적합하면 다음과 같다.
+- 모든 교호작용을 함께 고려한 것은, 사전분석 결과 환기창면적과 다른 변수들과의 교호작용 뿐 아니라 다른 효과들도 비교적 유의미하게 관측되었기 때문이다.
+
+```{r}
+m_no <- lm(내부CO2~(외부기온+외부CO2+외부풍속+외부일사량+환기창면적)^2,data=plantno)
+summary(m_no)
+```
+
+- 모형적합 결과 모든 주효과와 교호작용이 유의수준 0.05에서 유의미하지 않았다. 그러므로 변수선택을 통해 유의미한 항을 다시 선택하는 과정이 필요하다고 보여진다.
+- 모든 교호작용이 유의미하지는 않지만 이들 중 그래도 가장 중요하다고 판단되는 1가지를 선택한다면 t 통계량의 절대값이 가장 큰 외부일사량과 환기창면적 사이의 교호작용을 고를 수 있다.
+- 조정된 결정계수의 값이 $R^2_{adj}=0.7641$이다. 주어진 모형의 설명력이 그다지 높아보이지는 않는다.
+
+#### Best subset selection
+
+- 여러 측도들을 이용하여 모형에 포함될 변수를 적절히 선택해 보도록 하겠다.
+
+```{r}
+library(leaps)
+ms0 <- regsubsets(내부CO2~(외부기온+외부CO2+외부풍속+외부일사량+환기창면적)^2,data=plantno,nvmax=15)
+ms0.summary <- summary(ms0)
+ms0.summary
+
+par(mfrow=c(2,2)) 
+# RSS=SSE
+plot(ms0.summary$rss,xlab="Number of Variables",ylab="RSS",type="l")
+# Adj R^2
+plot(ms0.summary$adjr2,xlab="Number of Variables",ylab="Adjusted RSq",type="l")
+which.max(ms0.summary$adjr2)
+points(which.max(ms0.summary$adjr2)
+,ms0.summary$adjr2[which.max(ms0.summary$adjr2)
+], col="red",cex=2,pch=20)
+# Cp
+plot(ms0.summary$cp,xlab="Number of Variables",ylab="Cp",type='l') 
+which.min(ms0.summary$cp)
+points(which.min(ms0.summary$cp)
+,ms0.summary$cp[which.min(ms0.summary$cp)
+],col="red",cex=2,pch=20)
+# BIC
+plot(ms0.summary$bic,xlab="Number of Variables",ylab="BIC",type='l')
+which.min(ms0.summary$bic) 
+points(which.min(ms0.summary$bic) 
+,ms0.summary$bic[which.min(ms0.summary$bic) 
+],col="red",cex=2,pch=20)
+par(mfrow=c(1,1))
+```
+
+- 분석결과 $R_{adj}^2$는 변수의 개수 8인 모형, $Cp$는 변수의 개수 5인 모형, 그리고 $BIC$는 변수의 개수 3인 모형을 최적으로 판단하고 있다. 이들 중 가장 간단한 변수의 개수 3인 모형을 선택하도록 한다. 복잡한 모형이 항상 바람직한 결과를 주지는 않으며 단순한 모형도 설명력이 높은 경우가 많기 때문이다.
+
+```{r}
+summary(lm(내부CO2~외부CO2+외부CO2*환기창면적+외부풍속*외부일사량,data=plantno))
+```
+
+ 
+
+#### 교차타당검증에 의한 모형 비교 
+
+- 지금부터는 train:test=7:3 으로 데이터를 나누어서 몇 개의 후보 모형들의 test RMSE를 계산하여 보겠다. 이 값이 작을수록 예측력이 우수한 모형이라고 볼 수 있다.
+- 먼저 데이터를 임의로 train:test=7:3 의 비율로 나눈다. train data는 모형구축 시, test data는 구축된 모형을 평가 시 사용한다.
+- 모형에 대한 성능은 test RMSE와 SSE/SST를 바탕으로 실시하며, 두가지 기준 모두 그 값이 작을수록 모형의 예측력이 우수하다고 판단하면 된다.
+- $RMSE=\sqrt{{\frac {1}{n} \sum_{i=1}^{n} (y_{i}-\hat{y_{i}})^{2}}}$
+- $SSE/SST=\frac {\sum_{i=1}^{n} (y_{i}-\hat{y_{i}})^{2}} {\sum_{i=1}^{n} (y_{i}-\bar{y})^{2}}$
+
+```{r}
+set.seed(5790)
+train.index <- sample(1:nrow(plantno), round(nrow(plantno)*7/10), replace=F)
+ex1_train <- plantno[train.index,]
+ex1_test <- plantno[-train.index,]
+```
+
+```{r}
+# 모든 주효과 및 교호작용을 포함한 모형
+m0 <- lm(내부CO2~(외부기온+외부CO2+외부풍속+외부일사량+환기창면적)^2,data=ex1_train) 
+y_hat0 <- predict(m0,ex1_test)
+RMSE0 <- sqrt(mean((ex1_test$내부CO2-y_hat0)^2)) 
+SSE0 <- sum((ex1_test$내부CO2-y_hat0)^2) 
+SST0 <- sum((ex1_test$내부CO2-mean(ex1_test$내부CO2))^2) 
+result0 <- data.frame(ex1_test$내부CO2, y_hat0, ex1_test$내부CO2-y_hat0)
+colnames(result0) <- c('y','yhat','y-yhat')
+RMSE0 # test RMSE
+SSE0/SST0 # SSE/SST
+head(result0,12)
+
+# Adj R^2, Cp, BIC 등의 기준을 바탕으로 선택된 모형 (교호작용이 있는 경우는 주효과 포함)
+m0 <- lm(내부CO2~외부CO2+외부CO2*환기창면적+외부풍속*외부일사량,data=ex1_train) 
+y_hat0 <- predict(m0,ex1_test)
+RMSE1 <- sqrt(mean((ex1_test$내부CO2-y_hat0)^2))
+SSE1 <- sum((ex1_test$내부CO2-y_hat0)^2) 
+SST1 <- sum((ex1_test$내부CO2-mean(ex1_test$내부CO2))^2) 
+result1 <- data.frame(ex1_test$내부CO2, y_hat0, ex1_test$내부CO2-y_hat0)
+colnames(result1) <- c('y','yhat','y-yhat')
+RMSE1 # test RMSE
+SSE1/SST1 # SSE/SST
+head(result1,12)
+
+# 모든 주효과와 가장 중요한 교호작용 1가지를 포함한 모형 (분석 의뢰기관의 요청에 따라 환기율은 제외)
+m0 <- lm(내부CO2~외부기온+외부CO2+외부풍속+외부일사량+환기창면적+환기창면적*외부일사량,data=ex1_train) 
+y_hat0 <- predict(m0,ex1_test)
+RMSE2 <- sqrt(mean((ex1_test$내부CO2-y_hat0)^2))
+SSE2 <- sum((ex1_test$내부CO2-y_hat0)^2) 
+SST2 <- sum((ex1_test$내부CO2-mean(ex1_test$내부CO2))^2) 
+result2 <- data.frame(ex1_test$내부CO2, y_hat0, ex1_test$내부CO2-y_hat0)
+colnames(result2) <- c('y','yhat','y-yhat')
+RMSE2 # test RMSE
+SSE2/SST2 # SSE/SST
+head(result2,12)
+```
+
+- 결과적으로 3가지 모형들 중 모든 주효과와 가장 중요한 교호작용 1가지(환기창면적과 외부일사량)를 포함한 모형이 가장 우수하였다.
+
+
+```{r}
+summary(lm(내부CO2~외부기온+외부CO2+외부풍속+외부일사량+환기창면적+환기창면적*외부일사량,data=ex1_train))
+```
+
+
+
+
+### 2.2 작물이 있을 때
+
+#### Multiple Linear Regression Model
+
+- 먼저 변수들 간의 상관관계를 파악하기 위해 상관분석을 실시한다.
+
+```{r}
+ex1 <- plantyes[,c(8,1,7,10,11,13)]
+head(ex1)
+```
+
+```{r}
+cor(ex1)
+```
+
+- 산점도행렬과 상관계수그림을 그리면 다음과 같다.
+
+```{r}
+pairs(ex1,col=factor(ex1$환기창면적))
+```
+
+- 환기창면적과 다른 주효과들간의 뚜렷한 교호작용이 관측되지는 않는다.
+- 독립변수들과 내부상대습도와의 연관성의 방향은 작물이 없을 때와 유사해 보인다.
+
+
+```{r}
+library(corrplot)
+corrplot(cor(ex1))
+```
+
+- 그리고 각 변수에 대한 기초통계량은 다음과 같이 계산된다.
+
+```{r}
+library(psych)
+describe(ex1)
+```
+
+- 내부CO2를 반응변수로 하여 각 변수의 주효과와 모든 가능한 교호작용을 고려한 다중선형회귀모형을 적합하면 다음과 같다.
+- 작물이 없을 때와 마찬가지로 모든 교호작용을 함께 고려한 것은, 사전분석 결과 환기창면적과 다른 변수들과의 교호작용 뿐 아니라 다른 효과들도 비교적 유의미하게 관측되었기 때문이다.
+
+```{r}
+m_yes <- lm(내부CO2~(외부기온+외부CO2+외부풍속+외부일사량+환기창면적)^2,data=plantyes)
+summary(m_yes)
+```
+
+- 모형적합 결과 외부기온, 외부일사량, 그리고 외부일사량과 환기창면적 사이의 교호작용이 유의수준 0.05에서 유의미하지 않았다. 하지만 외부기온, 외부일사량과 다른 독립변수 사이의 교호작용이 유의미한 경우가 존재하기 때문에 이들을 모형에서 제외할 필요는 없어보인다. 조정된 결정계수의 값은 $R^2_{adj}=0.7950$이다.
+- 그리고 여러 교호작용들 중 t 통계량의 절대값이 가장 큰 외부CO2와 환기창면적 사이의 교호작용을 1차적으로 고려해 볼 수 있다. 외부기온과 외부일사량 사이의 교호작용, 외부기온과 환기창면적과의 교호작용 또한 유의미해 보인다.
+- 전체적으로 환기창면적과의 교호작용 뿐 아니라 다양한 교호작용들이 유의미하게 나타난다. 
+
+
+#### Best subset selection
+
+- 여러 측도들을 이용하여 모형에 포함될 변수를 적절히 선택해 보도록 하겠다.
+
+```{r}
+library(leaps)
+ms0 <- regsubsets(내부CO2~(외부기온+외부CO2+외부풍속+외부일사량+환기창면적)^2,data=plantyes,nvmax=15)
+ms0.summary <- summary(ms0)
+ms0.summary
+
+par(mfrow=c(2,2)) 
+# RSS=SSE
+plot(ms0.summary$rss,xlab="Number of Variables",ylab="RSS",type="l")
+# Adj R^2
+plot(ms0.summary$adjr2,xlab="Number of Variables",ylab="Adjusted RSq",type="l")
+which.max(ms0.summary$adjr2)
+points(which.max(ms0.summary$adjr2)
+,ms0.summary$adjr2[which.max(ms0.summary$adjr2)
+], col="red",cex=2,pch=20)
+# Cp
+plot(ms0.summary$cp,xlab="Number of Variables",ylab="Cp",type='l') 
+which.min(ms0.summary$cp)
+points(which.min(ms0.summary$cp)
+,ms0.summary$cp[which.min(ms0.summary$cp)
+],col="red",cex=2,pch=20)
+# BIC
+plot(ms0.summary$bic,xlab="Number of Variables",ylab="BIC",type='l')
+which.min(ms0.summary$bic) 
+points(which.min(ms0.summary$bic) 
+,ms0.summary$bic[which.min(ms0.summary$bic) 
+],col="red",cex=2,pch=20)
+par(mfrow=c(1,1))
+```
+
+- 전체적으로 변수의 개수가 11~13일 때 안정화되는 경향이 있다.
+- 분석결과 $R_{adj}^2$와 $Cp$는 변수의 개수 12인 모형, 그리고 $BIC$의 경우는 변수의 개수 11인 모형을 최적으로 판단하고 있다.
+
+```{r}
+summary(lm(내부CO2~외부CO2+외부풍속+환기창면적+외부기온*외부CO2+외부기온*외부풍속+외부기온*외부일사량+외부기온*환기창면적+외부CO2*외부풍속+외부CO2*외부일사량+외부CO2*환기창면적+외부풍속*외부일사량+외부풍속*환기창면적,data=plantyes))
+```
+
+
+
+
+#### 교차타당검증에 의한 모형 비교 
+
+- 지금부터는 train:test=7:3 으로 데이터를 나누어서 몇 개의 후보 모형들의 test RMSE를 계산하여 보겠다. 이 값이 작을수록 예측력이 우수한 모형이라고 볼 수 있다.
+- 먼저 데이터를 임의로 train:test=7:3 의 비율로 나눈다. train data는 모형구축 시, test data는 구축된 모형을 평가 시 사용한다.
+- 모형에 대한 성능은 test RMSE와 SSE/SST를 바탕으로 실시하며, 두가지 기준 모두 그 값이 작을수록 모형의 예측력이 우수하다고 판단하면 된다.
+- $RMSE=\sqrt{{\frac {1}{n} \sum_{i=1}^{n} (y_{i}-\hat{y_{i}})^{2}}}$
+- $SSE/SST=\frac {\sum_{i=1}^{n} (y_{i}-\hat{y_{i}})^{2}} {\sum_{i=1}^{n} (y_{i}-\bar{y})^{2}}$
+
+```{r}
+set.seed(5790)
+train.index <- sample(1:nrow(plantyes), round(nrow(plantyes)*7/10), replace=F)
+ex1_train <- plantyes[train.index,]
+ex1_test <- plantyes[-train.index,]
+```
+
+```{r}
+# 모든 주효과 및 교호작용을 포함한 모형
+m0 <- lm(내부CO2~(외부기온+외부CO2+외부풍속+외부일사량+환기창면적)^2,data=ex1_train) 
+y_hat0 <- predict(m0,ex1_test)
+RMSE0 <- sqrt(mean((ex1_test$내부CO2-y_hat0)^2))
+SSE0 <- sum((ex1_test$내부CO2-y_hat0)^2) 
+SST0 <- sum((ex1_test$내부CO2-mean(ex1_test$내부CO2))^2) 
+result0 <- data.frame(ex1_test$내부CO2, y_hat0, ex1_test$내부CO2-y_hat0)
+colnames(result0) <- c('y','yhat','y-yhat')
+RMSE0 # test RMSE
+SSE0/SST0 # SSE/SST
+head(result0,12)
+
+# 모든 주효과, 그리고 주요한 3개의 교호작용을 포함한 모형
+m0 <- lm(내부CO2~외부기온+외부CO2+외부풍속+외부일사량+환기창면적+외부CO2*환기창면적+외부기온*환기창면적+외부기온*외부일사량,data=ex1_train) 
+y_hat0 <- predict(m0,ex1_test)
+RMSE1 <- sqrt(mean((ex1_test$내부CO2-y_hat0)^2))
+SSE1 <- sum((ex1_test$내부CO2-y_hat0)^2) 
+SST1 <- sum((ex1_test$내부CO2-mean(ex1_test$내부CO2))^2) 
+result1 <- data.frame(ex1_test$내부CO2, y_hat0, ex1_test$내부CO2-y_hat0)
+colnames(result1) <- c('y','yhat','y-yhat')
+RMSE1 # test RMSE
+SSE1/SST1 # SSE/SST
+head(result1,12)
+
+# 모든 주효과, 그리고 외부CO2와 환기창면적과의 교호작용 1개만을 포함한 모형
+m0 <- lm(내부CO2~외부기온+외부CO2+외부풍속+외부일사량+환기창면적+외부CO2*환기창면적,data=ex1_train) 
+y_hat0 <- predict(m0,ex1_test)
+RMSE2 <- sqrt(mean((ex1_test$내부CO2-y_hat0)^2))
+SSE2 <- sum((ex1_test$내부CO2-y_hat0)^2) 
+SST2 <- sum((ex1_test$내부CO2-mean(ex1_test$내부CO2))^2) 
+result2 <- data.frame(ex1_test$내부CO2, y_hat0, ex1_test$내부CO2-y_hat0)
+colnames(result2) <- c('y','yhat','y-yhat')
+RMSE2 # test RMSE
+SSE2/SST2 # SSE/SST
+head(result2,12)
+
+# 모든 주효과, 그리고 외부기온과 환기창면적과의 교호작용 1개만을 포함한 모형
+m0 <- lm(내부CO2~외부기온+외부CO2+외부풍속+외부일사량+환기창면적+외부기온*환기창면적,data=ex1_train) 
+y_hat0 <- predict(m0,ex1_test)
+RMSE3 <- sqrt(mean((ex1_test$내부CO2-y_hat0)^2))
+SSE3 <- sum((ex1_test$내부CO2-y_hat0)^2) 
+SST3 <- sum((ex1_test$내부CO2-mean(ex1_test$내부CO2))^2) 
+result3 <- data.frame(ex1_test$내부CO2, y_hat0, ex1_test$내부CO2-y_hat0)
+colnames(result3) <- c('y','yhat','y-yhat')
+RMSE3 # test RMSE
+SSE3/SST3 # SSE/SST
+head(result3,12)
+
+# 모든 주효과, 그리고 외부기온과 외부일사량과의 교호작용 1개만을 포함한 모형
+m0 <- lm(내부CO2~외부기온+외부CO2+외부풍속+외부일사량+환기창면적+외부기온*외부일사량,data=ex1_train) 
+y_hat0 <- predict(m0,ex1_test)
+RMSE4 <- sqrt(mean((ex1_test$내부CO2-y_hat0)^2))
+SSE4 <- sum((ex1_test$내부CO2-y_hat0)^2) 
+SST4 <- sum((ex1_test$내부CO2-mean(ex1_test$내부CO2))^2) 
+result4 <- data.frame(ex1_test$내부CO2, y_hat0, ex1_test$내부CO2-y_hat0)
+colnames(result4) <- c('y','yhat','y-yhat')
+RMSE4 # test RMSE
+SSE4/SST4 # SSE/SST
+head(result4,12)
+```
+
+- 결과적으로 5가지 모형들 중 모든 주효과, 그리고 주요한 3개의 교호작용을 포함한 모형이 가장 우수하였다.
+
+```{r}
+summary(lm(내부CO2~외부기온+외부CO2+외부풍속+외부일사량+환기창면적+외부CO2*환기창면적+외부기온*환기창면적+외부기온*외부일사량,data=ex1_train))
+```
+
+
+
+### 2.3 작물유무 데이터를 합친 경우
+
+#### Multiple Linear Regression Model
+
+- 상관관계에 대한 분석은 작물유무에 따라 데이터를 나누어 분석하는 과정에서 모두 다루었기 때문에 생략하도록 한다.
+- 2.1절과 2.2절의 결과를 통해 외부CO2와 환기창면적, 외부기온과 외부일사량, 그리고 외부기온과 환기창면적 사이의 교호작용이 유의미하다는 사실을 파악할 수 있다.
+- 여기에서는 작물유무에 대한 변수가 추가로 들어가고 이에 따라 작물유무에 대한 교호작용을 포함해서 다양한 교호작용 변수를 고려할 수 있지만 모형이 너무 복잡해지므로 바람직하지 않다. 오히려 중요한 교호작용만을 포함한 모형도 충분한 설명력을 가지기 때문이다.
+- 따라서 내부CO2를 반응변수로 하여 각 변수의 주효과와 외부CO2와 환기창면적, 외부기온과 외부일사량, 그리고 외부기온과 환기창면적 사이의 교호작용을 포함한 모형을 시작점으로 하여 분석을 진행하도록 한다. 여기에 주효과와 작물유무 사이의 교호작용도 우선 포함한다. 
+
+```{r}
+m_total <- lm(내부CO2~외부기온+외부CO2+외부풍속+외부일사량+환기창면적+작물유무+외부CO2*환기창면적+외부기온*외부일사량+외부기온*환기창면적+작물유무*외부기온+작물유무*외부CO2+작물유무*외부풍속+작물유무*외부일사량+작물유무*환기창면적,data=plant)
+summary(m_total)
+```
+
+- 모형적합 결과 외부기온, 외부풍속과 작물유무 사이의 교호작용, 그리고 외부일사량과 작물유무 사이의 교호작용이 유의수준 0.05에서 유의미하지 않다. 
+- 그리고 가장 중요한 교호작용은 세가지를 선택할 수 있는데 바로 t 통계량의 절대값이 가장 큰 외부CO2와 환기창면적 사이의 교호작용, t 통계량의 절대값이 두번째로 큰 외부CO2와 작물유무 사이의 교호작용, 그리고 t 통계량의 절대값이 세번째로 큰 외부기온과 외부일사량 사이의 교호작용이라고 판단된다. 
+- 조정된 결정계수의 값은 $R^2_{adj}=0.9532$이다.
+
+
+#### Best subset selection
+
+- 여러 측도들을 이용하여 모형에 포함될 변수를 적절히 선택해 보도록 하겠다.
+
+```{r}
+library(leaps)
+ms0 <- regsubsets(내부CO2~외부기온+외부CO2+외부풍속+외부일사량+환기창면적+작물유무+외부CO2*환기창면적+외부기온*외부일사량+외부기온*환기창면적+작물유무*외부기온+작물유무*외부CO2+작물유무*외부풍속+작물유무*외부일사량+작물유무*환기창면적,data=plant,nvmax=14)
+ms0.summary <- summary(ms0)
+ms0.summary
+
+par(mfrow=c(2,2)) 
+# RSS=SSE
+plot(ms0.summary$rss,xlab="Number of Variables",ylab="RSS",type="l")
+# Adj R^2
+plot(ms0.summary$adjr2,xlab="Number of Variables",ylab="Adjusted RSq",type="l")
+which.max(ms0.summary$adjr2)
+points(which.max(ms0.summary$adjr2)
+,ms0.summary$adjr2[which.max(ms0.summary$adjr2)
+], col="red",cex=2,pch=20)
+# Cp
+plot(ms0.summary$cp,xlab="Number of Variables",ylab="Cp",type='l') 
+which.min(ms0.summary$cp)
+points(which.min(ms0.summary$cp)
+,ms0.summary$cp[which.min(ms0.summary$cp)
+],col="red",cex=2,pch=20)
+# BIC
+plot(ms0.summary$bic,xlab="Number of Variables",ylab="BIC",type='l')
+which.min(ms0.summary$bic) 
+points(which.min(ms0.summary$bic) 
+,ms0.summary$bic[which.min(ms0.summary$bic) 
+],col="red",cex=2,pch=20)
+par(mfrow=c(1,1))
+```
+
+- 분석결과 $R_{adj}^2$는 변수의 개수 13인 모형, $Cp$는 변수의 개수 12인 모형, 그리고 $BIC$는 변수의 개수 10인 모형을 최적으로 판단하고 있다. 이에 따라 변수의 개수 10인 모형을 선택하도록 한다. 
+
+```{r}
+summary(lm(내부CO2~외부CO2+외부풍속+외부일사량+환기창면적+작물유무+외부CO2*환기창면적+외부기온*외부일사량+외부기온*환기창면적+작물유무*외부CO2+작물유무*환기창면적,data=plant))
+```
+
+
+
+#### 교차타당검증에 의한 모형 비교 
+
+- 지금부터는 train:test=7:3 으로 데이터를 나누어서 몇 개의 후보 모형들의 test RMSE를 계산하여 보겠다. 이 값이 작을수록 예측력이 우수한 모형이라고 볼 수 있다.
+- 먼저 데이터를 임의로 train:test=7:3 의 비율로 나눈다. train data는 모형구축 시, test data는 구축된 모형을 평가 시 사용한다.
+- 모형에 대한 성능은 test RMSE와 SSE/SST를 바탕으로 실시하며, 두가지 기준 모두 그 값이 작을수록 모형의 예측력이 우수하다고 판단하면 된다.
+- $RMSE=\sqrt{{\frac {1}{n} \sum_{i=1}^{n} (y_{i}-\hat{y_{i}})^{2}}}$
+- $SSE/SST=\frac {\sum_{i=1}^{n} (y_{i}-\hat{y_{i}})^{2}} {\sum_{i=1}^{n} (y_{i}-\bar{y})^{2}}$
+
+```{r}
+set.seed(5790)
+train.index <- sample(1:nrow(plant), round(nrow(plant)*7/10), replace=F)
+ex1_train <- plant[train.index,]
+ex1_test <- plant[-train.index,]
+```
+
+```{r}
+# 최초로 고려한 모형
+m0 <- lm(내부CO2~외부기온+외부CO2+외부풍속+외부일사량+환기창면적+작물유무+외부CO2*환기창면적+외부기온*외부일사량+외부기온*환기창면적+작물유무*외부기온+작물유무*외부CO2+작물유무*외부풍속+작물유무*외부일사량+작물유무*환기창면적,data=ex1_train)
+y_hat0 <- predict(m0,ex1_test)
+RMSE0 <- sqrt(mean((ex1_test$내부CO2-y_hat0)^2)) 
+SSE0 <- sum((ex1_test$내부CO2-y_hat0)^2) 
+SST0 <- sum((ex1_test$내부CO2-mean(ex1_test$내부CO2))^2) 
+result0 <- data.frame(ex1_test$내부CO2, y_hat0, ex1_test$내부CO2-y_hat0)
+colnames(result0) <- c('y','yhat','y-yhat')
+RMSE0 # test RMSE
+SSE0/SST0 # SSE/SST
+head(result0,12)
+
+# Adj R^2, Cp, BIC 등의 기준을 바탕으로 선택된 모형 (교호작용이 있는 경우는 주효과 포함)
+m0 <- lm(내부CO2~외부CO2+외부풍속+외부일사량+환기창면적+작물유무+외부CO2*환기창면적+외부기온*외부일사량+외부기온*환기창면적+작물유무*외부CO2+작물유무*환기창면적,data=ex1_train)
+y_hat0 <- predict(m0,ex1_test)
+RMSE1 <- sqrt(mean((ex1_test$내부CO2-y_hat0)^2))
+SSE1 <- sum((ex1_test$내부CO2-y_hat0)^2) 
+SST1 <- sum((ex1_test$내부CO2-mean(ex1_test$내부CO2))^2) 
+result1 <- data.frame(ex1_test$내부CO2, y_hat0, ex1_test$내부CO2-y_hat0)
+colnames(result1) <- c('y','yhat','y-yhat')
+RMSE1 # test RMSE
+SSE1/SST1 # SSE/SST
+head(result1,12)
+
+# 모든 주효과와 가장 중요한 교호작용 1가지(외부CO2와 환기창면적)를 포함한 모형
+m0 <- lm(내부CO2~외부기온+외부CO2+외부풍속+외부일사량+환기창면적+작물유무+외부CO2*환기창면적,data=ex1_train)
+y_hat0 <- predict(m0,ex1_test)
+RMSE2 <- sqrt(mean((ex1_test$내부CO2-y_hat0)^2))
+SSE2 <- sum((ex1_test$내부CO2-y_hat0)^2) 
+SST2 <- sum((ex1_test$내부CO2-mean(ex1_test$내부CO2))^2) 
+result2 <- data.frame(ex1_test$내부CO2, y_hat0, ex1_test$내부CO2-y_hat0)
+colnames(result2) <- c('y','yhat','y-yhat')
+RMSE2 # test RMSE
+SSE2/SST2 # SSE/SST
+head(result2,12)
+
+# 모든 주효과와 가장 중요한 교호작용 2가지(외부CO2와 환기창면적, 외부CO2와 작물유무)를 포함한 모형
+m0 <- lm(내부CO2~외부기온+외부CO2+외부풍속+외부일사량+환기창면적+작물유무+외부CO2*환기창면적+외부CO2*작물유무,data=ex1_train)
+y_hat0 <- predict(m0,ex1_test)
+RMSE3 <- sqrt(mean((ex1_test$내부CO2-y_hat0)^2))
+SSE3 <- sum((ex1_test$내부CO2-y_hat0)^2) 
+SST3 <- sum((ex1_test$내부CO2-mean(ex1_test$내부CO2))^2) 
+result3 <- data.frame(ex1_test$내부CO2, y_hat0, ex1_test$내부CO2-y_hat0)
+colnames(result3) <- c('y','yhat','y-yhat')
+RMSE3 # test RMSE
+SSE3/SST3 # SSE/SST
+head(result2,12)
+```
+
+- 결과적으로 4가지 모형들 중 Adj R^2, Cp, BIC 등의 기준을 바탕으로 선택된 모형이 가장 우수하였다.
+
+```{r}
+summary(lm(내부CO2~외부CO2+외부풍속+외부일사량+환기창면적+작물유무+외부CO2*환기창면적+외부기온*외부일사량+외부기온*환기창면적+작물유무*외부CO2+작물유무*환기창면적,data=ex1_train))
+```
+
+
+
