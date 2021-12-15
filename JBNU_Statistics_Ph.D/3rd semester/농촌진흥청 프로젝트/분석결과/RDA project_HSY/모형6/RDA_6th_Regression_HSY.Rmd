@@ -22,11 +22,11 @@ output: html_document
 - 작물있음 데이터에서 외부CO2의 값이 결측치인 경우는 제외하였음.
 
 ```{r}
-plantyes <- read.csv("C:/Users/HSY/Desktop/작물있음.csv",sep=",",header=T)
+plantyes <- read.csv("C:/Users/stat/Desktop/작물있음.csv",sep=",",header=T)
 plantyes <- plantyes[is.na(plantyes$외부CO2)==FALSE,]
 head(plantyes,10)
 plantyes$작물유무 <- as.factor(plantyes$작물유무)
-plantno <- read.csv("C:/Users/HSY/Desktop/작물없음.csv",sep=",",header=T)
+plantno <- read.csv("C:/Users/stat/Desktop/작물없음.csv",sep=",",header=T)
 head(plantno,10) 
 plantno$작물유무 <- as.factor(plantno$작물유무)
 plant <- rbind(plantno,plantyes)
@@ -185,7 +185,7 @@ head(result2,12)
 
 
 ```{r}
-summary(lm(내부CO2~외부기온+외부CO2+외부풍속+외부일사량+환기창면적+환기창면적*외부일사량,data=ex1_train))
+summary(lm(내부CO2~외부기온+외부CO2+외부풍속+외부일사량+환기창면적+환기창면적*외부일사량,data=plantno))
 ```
 
 
@@ -365,7 +365,7 @@ head(result4,12)
 - 결과적으로 5가지 모형들 중 모든 주효과, 그리고 주요한 3개의 교호작용을 포함한 모형이 가장 우수하였다.
 
 ```{r}
-summary(lm(내부CO2~외부기온+외부CO2+외부풍속+외부일사량+환기창면적+외부CO2*환기창면적+외부기온*환기창면적+외부기온*외부일사량,data=ex1_train))
+summary(lm(내부CO2~외부기온+외부CO2+외부풍속+외부일사량+환기창면적+외부CO2*환기창면적+외부기온*환기창면적+외부기온*외부일사량,data=plantyes))
 ```
 
 
@@ -493,13 +493,13 @@ result3 <- data.frame(ex1_test$내부CO2, y_hat0, ex1_test$내부CO2-y_hat0)
 colnames(result3) <- c('y','yhat','y-yhat')
 RMSE3 # test RMSE
 SSE3/SST3 # SSE/SST
-head(result2,12)
+head(result3,12)
 ```
 
 - 결과적으로 4가지 모형들 중 Adj R^2, Cp, BIC 등의 기준을 바탕으로 선택된 모형이 가장 우수하였다.
 
 ```{r}
-summary(lm(내부CO2~외부CO2+외부풍속+외부일사량+환기창면적+작물유무+외부CO2*환기창면적+외부기온*외부일사량+외부기온*환기창면적+작물유무*외부CO2+작물유무*환기창면적,data=ex1_train))
+summary(lm(내부CO2~외부CO2+외부풍속+외부일사량+환기창면적+작물유무+외부CO2*환기창면적+외부기온*외부일사량+외부기온*환기창면적+작물유무*외부CO2+작물유무*환기창면적,data=plant))
 ```
 
 

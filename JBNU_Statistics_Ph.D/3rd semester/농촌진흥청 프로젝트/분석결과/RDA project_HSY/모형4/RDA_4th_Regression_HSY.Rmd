@@ -24,11 +24,11 @@ output: html_document
 - 작물있음 데이터에서 외부CO2의 값이 결측치인 경우는 제외하였음.
 
 ```{r}
-plantyes <- read.csv("C:/Users/HSY/Desktop/작물있음.csv",sep=",",header=T)
+plantyes <- read.csv("C:/Users/stat/Desktop/작물있음.csv",sep=",",header=T)
 plantyes <- plantyes[is.na(plantyes$외부CO2)==FALSE,]
 head(plantyes,10)
 plantyes$작물유무 <- as.factor(plantyes$작물유무)
-plantno <- read.csv("C:/Users/HSY/Desktop/작물없음.csv",sep=",",header=T)
+plantno <- read.csv("C:/Users/stat/Desktop/작물없음.csv",sep=",",header=T)
 head(plantno,10) 
 plantno$작물유무 <- as.factor(plantno$작물유무)
 plant <- rbind(plantno,plantyes)
@@ -195,7 +195,7 @@ head(result3,12)
 - 결과적으로 4가지 모형들 중 모든 주효과 및 교호작용을 포함한 모형이 가장 우수하였다.
 
 ```{r}
-summary(lm(내부상대습도~(외부기온+외부상대습도+외부풍속+외부일사량+환기창면적)^2,data=ex1_train))
+summary(lm(내부상대습도~(외부기온+외부상대습도+외부풍속+외부일사량+환기창면적)^2,data=plantno))
 ```
 
 
@@ -238,7 +238,7 @@ describe(ex1)
 ```
 
 - 내부상대습도를 반응변수로 하여 각 변수의 주효과와 모든 가능한 교호작용을 고려한 다중선형회귀모형을 적합하면 다음과 같다.
-- 작물이 없을 때와는 달리 모든 교호작용을 함께 고려한 것은, 사전분석 결과 환기창면적과 다른 변수들과의 교호작용 뿐 아니라 다른 효과들도 비교적 유의미하게 관측되었기 때문이다.
+- 모든 교호작용을 함께 고려한 것은, 사전분석 결과 환기창면적과 다른 변수들과의 교호작용 뿐 아니라 다른 효과들도 비교적 유의미하게 관측되었기 때문이다.
 
 ```{r}
 m_yes <- lm(내부상대습도~(외부기온+외부상대습도+외부풍속+외부일사량+환기창면적)^2,data=plantyes)
@@ -351,13 +351,13 @@ result3 <- data.frame(ex1_test$내부상대습도, y_hat0, ex1_test$내부상대
 colnames(result3) <- c('y','yhat','y-yhat')
 RMSE3 # test RMSE
 SSE3/SST3 # SSE/SST
-head(result2,12)
+head(result3,12)
 ```
 
 - 결과적으로 모든 주효과 및 교호작용을 포함한 모형이 가장 우수하였다.
 
 ```{r}
-summary(lm(내부상대습도~(외부기온+외부상대습도+외부풍속+외부일사량+환기창면적)^2,data=ex1_train))
+summary(lm(내부상대습도~(외부기온+외부상대습도+외부풍속+외부일사량+환기창면적)^2,data=plantyes))
 ```
 
 
@@ -484,13 +484,13 @@ result3 <- data.frame(ex1_test$내부상대습도, y_hat0, ex1_test$내부상대
 colnames(result3) <- c('y','yhat','y-yhat')
 RMSE3 # test RMSE
 SSE3/SST3 # SSE/SST
-head(result2,12)
+head(result3,12)
 ```
 
 - 결과적으로 4가지 모형들 중 최초로 고려한 모형이 가장 우수하였다.
 
 ```{r}
-summary(lm(내부상대습도~외부기온+외부상대습도+외부풍속+외부일사량+환기창면적+작물유무+외부풍속*외부일사량+외부상대습도*외부일사량+작물유무*외부기온+작물유무*외부상대습도+작물유무*외부풍속+작물유무*외부일사량+작물유무*환기창면적,data=ex1_train))
+summary(lm(내부상대습도~외부기온+외부상대습도+외부풍속+외부일사량+환기창면적+작물유무+외부풍속*외부일사량+외부상대습도*외부일사량+작물유무*외부기온+작물유무*외부상대습도+작물유무*외부풍속+작물유무*외부일사량+작물유무*환기창면적,data=plant))
 ```
 
 

@@ -13,11 +13,11 @@ output: html_document
 - 작물있음 데이터에서 외부CO2의 값이 결측치인 경우는 제외하였음.
 
 ```{r}
-plantyes <- read.csv("C:/Users/HSY/Desktop/작물있음.csv",sep=",",header=T)
+plantyes <- read.csv("C:/Users/stat/Desktop/작물있음.csv",sep=",",header=T)
 plantyes <- plantyes[is.na(plantyes$외부CO2)==FALSE,]
 head(plantyes,10)
 plantyes$작물유무 <- as.factor(plantyes$작물유무)
-plantno <- read.csv("C:/Users/HSY/Desktop/작물없음.csv",sep=",",header=T)
+plantno <- read.csv("C:/Users/stat/Desktop/작물없음.csv",sep=",",header=T)
 head(plantno,10) 
 plantno$작물유무 <- as.factor(plantno$작물유무)
 plant <- rbind(plantno,plantyes)
@@ -88,7 +88,7 @@ SSE/SST # SSE/SST
 head(result,12)
 ```
 
-- 적합결과 test RMSE의 값이 약 0.8522로 산출되었다. 이는 다중회귀모형과 비교했을 때 더 작은 값이므로 이 ANN 모형이 다중회귀모형보다 예측력이 좋다고 해석할 수 있다.
+- 적합결과 test RMSE와 SSE/SST의 값이 다중회귀모형과 비교했을 때 더 작은 값이므로 이 ANN 모형이 다중회귀모형보다 예측력이 좋다고 해석할 수 있다.
 
 #### 두번째 모형
 
@@ -117,7 +117,7 @@ SSE/SST # SSE/SST
 head(result,12)
 ```
 
-- 적합결과 test RMSE의 값이 약 0.8552로 산출되었다. 첫번째 모형의 결과와 동일하게 이는 다중회귀모형과 비교했을 때 더 작은 값이므로 이 ANN 모형이 다중회귀모형보다 예측력이 좋다고 해석할 수 있다.
+- 적합결과 test RMSE와 SSE/SST의 값이 다중회귀모형과 비교했을 때 더 작은 값이므로 이 ANN 모형이 다중회귀모형보다 예측력이 좋다고 해석할 수 있다. 첫번째 모형과 동일한 결과이다.
 
 
 
@@ -147,9 +147,9 @@ set.seed(1234)
 ann1 <- neuralnet(내부기온~외부기온+외부풍속+외부일사량+환기창면적, data=ex1_train, hidden=rep(6,2), threshold = 0.01, stepmax = 1e+08)
 summary(ann1)
 # plot(ann1)
-y <- (ex1_test$내부기온)*(max(plantno$내부기온)-min(plantno$내부기온))+min(plantno$내부기온)
-y_hat_ann1 <- (compute(ann1, ex1_test)$net.result)*(max(plantno$내부기온)-min(plantno$내부기온))+min(plantno$내부기온)
-y_bar <- mean(y*(max(plantno$내부기온)-min(plantno$내부기온))+min(plantno$내부기온))
+y <- (ex1_test$내부기온)*(max(plantyes$내부기온)-min(plantyes$내부기온))+min(plantyes$내부기온)
+y_hat_ann1 <- (compute(ann1, ex1_test)$net.result)*(max(plantyes$내부기온)-min(plantyes$내부기온))+min(plantyes$내부기온)
+y_bar <- mean(y*(max(plantyes$내부기온)-min(plantyes$내부기온))+min(plantyes$내부기온))
 RMSE <- sqrt(mean((y-y_hat_ann1)^2))
 SSE <- sum((y-y_hat_ann1)^2) 
 SST <- sum((y-y_bar)^2) 
@@ -160,7 +160,7 @@ SSE/SST # SSE/SST
 head(result,12)
 ```
 
-- 적합결과 test RMSE의 값이 약 0.9673으로 산출되었다. 이는 다중회귀모형과 비교했을 때 더 작은 값이므로 이 ANN 모형이 다중회귀모형보다 예측력이 좋다고 해석할 수 있다.
+- 적합결과 test RMSE와 SSE/SST의 값이 다중회귀모형과 비교했을 때 더 작은 값이므로 이 ANN 모형이 다중회귀모형보다 예측력이 좋다고 해석할 수 있다. 
 
 #### 두번째 모형
 
@@ -176,9 +176,9 @@ set.seed(1234)
 ann1 <- neuralnet(내부기온~외부기온+외부풍속+외부일사량+환기창면적, data=ex1_train, hidden=rep(5,5), threshold = 0.01, stepmax = 1e+08)
 summary(ann1)
 # plot(ann1)
-y <- (ex1_test$내부기온)*(max(plantno$내부기온)-min(plantno$내부기온))+min(plantno$내부기온)
-y_hat_ann1 <- (compute(ann1, ex1_test)$net.result)*(max(plantno$내부기온)-min(plantno$내부기온))+min(plantno$내부기온)
-y_bar <- mean(y*(max(plantno$내부기온)-min(plantno$내부기온))+min(plantno$내부기온))
+y <- (ex1_test$내부기온)*(max(plantyes$내부기온)-min(plantyes$내부기온))+min(plantyes$내부기온)
+y_hat_ann1 <- (compute(ann1, ex1_test)$net.result)*(max(plantyes$내부기온)-min(plantyes$내부기온))+min(plantyes$내부기온)
+y_bar <- mean(y*(max(plantyes$내부기온)-min(plantyes$내부기온))+min(plantyes$내부기온))
 RMSE <- sqrt(mean((y-y_hat_ann1)^2))
 SSE <- sum((y-y_hat_ann1)^2) 
 SST <- sum((y-y_bar)^2) 
@@ -189,5 +189,5 @@ SSE/SST # SSE/SST
 head(result,12)
 ```
 
-- 적합결과 test RMSE의 값이 약 0.9554로 산출되었다. 첫번째 모형의 결과와 동일하게 이는 다중회귀모형과 비교했을 때 더 작은 값이므로 이 ANN 모형이 다중회귀모형보다 예측력이 좋다고 해석할 수 있다.
+- 적합결과 test RMSE와 SSE/SST의 값이 다중회귀모형과 비교했을 때 더 작은 값이므로 이 ANN 모형이 다중회귀모형보다 예측력이 좋다고 해석할 수 있다. 첫번째 모형과 동일한 결과이다.
   
