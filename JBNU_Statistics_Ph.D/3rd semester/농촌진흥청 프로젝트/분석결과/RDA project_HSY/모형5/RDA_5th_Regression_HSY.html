@@ -729,7 +729,42 @@ which.min(ms0.summary$bic) </code></pre>
 <pre class="r"><code>par(mfrow=c(1,1))</code></pre>
 <ul>
 <li>전체적으로 변수가 11~13개 정도면 안정화되는 경향이 보인다.</li>
+<li>분석결과 <span class="math inline">\(R_{adj}^2\)</span>와 <span class="math inline">\(Cp\)</span>는 변수의 개수 13인 모형, 그리고 <span class="math inline">\(BIC\)</span>는 변수의 개수 11인 모형을 최적으로 판단하고 있다. 이에 따라 변수의 개수 11인 모형을 선택하도록 한다.</li>
 </ul>
+<pre class="r"><code>summary(lm(내외부상대습도차~외부기온+외부풍속+외부일사량+환기창면적+외부기온*외부상대습도+외부기온*환기창면적+외부상대습도*외부풍속+외부상대습도*외부일사량+외부풍속*외부일사량+외부풍속*환기창면적+외부일사량*환기창면적,data=plantno))</code></pre>
+<pre><code>## 
+## Call:
+## lm(formula = 내외부상대습도차 ~ 외부기온 + 외부풍속 + 외부일사량 + 
+##     환기창면적 + 외부기온 * 외부상대습도 + 외부기온 * 환기창면적 + 
+##     외부상대습도 * 외부풍속 + 외부상대습도 * 외부일사량 + 외부풍속 * 
+##     외부일사량 + 외부풍속 * 환기창면적 + 외부일사량 * 환기창면적, 
+##     data = plantno)
+## 
+## Residuals:
+##     Min      1Q  Median      3Q     Max 
+## -7.4619 -0.8133  0.0320  0.8984  7.6574 
+## 
+## Coefficients:
+##                           Estimate Std. Error t value Pr(&gt;|t|)    
+## (Intercept)             -2.285e+01  4.714e+00  -4.846 1.54e-06 ***
+## 외부기온                 7.464e-01  2.279e-01   3.276 0.001104 ** 
+## 외부풍속                 5.253e+00  5.929e-01   8.860  &lt; 2e-16 ***
+## 외부일사량               9.659e-03  2.951e-03   3.273 0.001116 ** 
+## 환기창면적               8.753e+01  1.443e+01   6.066 2.12e-09 ***
+## 외부상대습도             7.991e-02  1.042e-01   0.767 0.443361    
+## 외부기온:외부상대습도    6.998e-03  5.770e-03   1.213 0.225598    
+## 외부기온:환기창면적     -3.969e+00  6.818e-01  -5.822 8.76e-09 ***
+## 외부풍속:외부상대습도   -6.861e-02  1.158e-02  -5.926 4.80e-09 ***
+## 외부일사량:외부상대습도  2.829e-04  6.970e-05   4.060 5.45e-05 ***
+## 외부풍속:외부일사량     -3.911e-03  4.381e-04  -8.926  &lt; 2e-16 ***
+## 외부풍속:환기창면적     -6.986e+00  1.377e+00  -5.074 4.96e-07 ***
+## 외부일사량:환기창면적   -2.897e-02  8.707e-03  -3.327 0.000921 ***
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+## Residual standard error: 1.714 on 722 degrees of freedom
+## Multiple R-squared:  0.7627, Adjusted R-squared:  0.7588 
+## F-statistic: 193.4 on 12 and 722 DF,  p-value: &lt; 2.2e-16</code></pre>
 </div>
 <div id="교차타당검증에-의한-모형-비교" class="section level4">
 <h4>교차타당검증에 의한 모형 비교</h4>
@@ -744,7 +779,7 @@ which.min(ms0.summary$bic) </code></pre>
 train.index &lt;- sample(1:nrow(plantno), round(nrow(plantno)*7/10), replace=F)
 ex1_train &lt;- plantno[train.index,]
 ex1_test &lt;- plantno[-train.index,]</code></pre>
-<pre class="r"><code># 모든 주효과 및 교호작용을 포함한 모형
+<pre class="r"><code># model1 : 모든 주효과 및 교호작용을 포함한 모형
 m0 &lt;- lm(내외부상대습도차~(외부기온+외부상대습도+외부풍속+외부일사량+환기창면적)^2,data=ex1_train)
 y_hat0 &lt;- predict(m0,ex1_test)
 RMSE0 &lt;- sqrt(mean((ex1_test$내외부상대습도차-y_hat0)^2)) 
@@ -770,19 +805,45 @@ RMSE0 # test RMSE</code></pre>
 ## 51  9.6 12.323260 -2.723260199
 ## 60 19.7 16.412074  3.287926064
 ## 62 20.1 16.678396  3.421604230</code></pre>
-<pre class="r"><code># 모든 주효과, 그리고 주요한 2개의 교호작용을 포함한 모형
-m0 &lt;- lm(내외부상대습도차~외부기온+외부상대습도+외부풍속+외부일사량+환기창면적+외부풍속*외부일사량+외부기온*환기창면적,data=ex1_train) 
+<pre class="r"><code># model2 : Adj R^2, Cp, BIC 기준에 의하여 선택된 모형
+m0 &lt;- lm(내외부상대습도차~외부기온+외부풍속+외부일사량+환기창면적+외부기온*외부상대습도+외부기온*환기창면적+외부상대습도*외부풍속+외부상대습도*외부일사량+외부풍속*외부일사량+외부풍속*환기창면적+외부일사량*환기창면적,data=ex1_train)
 y_hat0 &lt;- predict(m0,ex1_test)
-RMSE1 &lt;- sqrt(mean((ex1_test$내외부상대습도차-y_hat0)^2))
+RMSE1 &lt;- sqrt(mean((ex1_test$내외부상대습도차-y_hat0)^2)) 
 SSE1 &lt;- sum((ex1_test$내외부상대습도차-y_hat0)^2) 
 SST1 &lt;- sum((ex1_test$내외부상대습도차-mean(ex1_test$내외부상대습도차))^2) 
 result1 &lt;- data.frame(ex1_test$내외부상대습도차, y_hat0, ex1_test$내외부상대습도차-y_hat0)
 colnames(result1) &lt;- c(&#39;y&#39;,&#39;yhat&#39;,&#39;y-yhat&#39;)
 RMSE1 # test RMSE</code></pre>
-<pre><code>## [1] 1.698344</code></pre>
+<pre><code>## [1] 1.651247</code></pre>
 <pre class="r"><code>SSE1/SST1 # SSE/SST</code></pre>
-<pre><code>## [1] 0.2206582</code></pre>
+<pre><code>## [1] 0.2085897</code></pre>
 <pre class="r"><code>head(result1,12)</code></pre>
+<pre><code>##       y      yhat       y-yhat
+## 3   9.7  9.255386  0.444613765
+## 5   8.4  9.531322 -1.131321949
+## 7  10.5 10.088638  0.411361876
+## 10 13.5 10.921477  2.578522920
+## 12 12.8 12.227196  0.572803828
+## 17 15.0 13.378349  1.621651448
+## 20 14.3 13.739209  0.560790860
+## 24 15.0 14.991940  0.008059546
+## 33 13.5 14.851624 -1.351623958
+## 51  9.6 12.275547 -2.675547116
+## 60 19.7 16.261774  3.438225837
+## 62 20.1 16.542099  3.557900873</code></pre>
+<pre class="r"><code># model3 : 모든 주효과, 그리고 중요한 2개의 교호작용을 포함한 모형
+m0 &lt;- lm(내외부상대습도차~외부기온+외부상대습도+외부풍속+외부일사량+환기창면적+외부풍속*외부일사량+외부기온*환기창면적,data=ex1_train) 
+y_hat0 &lt;- predict(m0,ex1_test)
+RMSE2 &lt;- sqrt(mean((ex1_test$내외부상대습도차-y_hat0)^2))
+SSE2 &lt;- sum((ex1_test$내외부상대습도차-y_hat0)^2) 
+SST2 &lt;- sum((ex1_test$내외부상대습도차-mean(ex1_test$내외부상대습도차))^2) 
+result2 &lt;- data.frame(ex1_test$내외부상대습도차, y_hat0, ex1_test$내외부상대습도차-y_hat0)
+colnames(result2) &lt;- c(&#39;y&#39;,&#39;yhat&#39;,&#39;y-yhat&#39;)
+RMSE2 # test RMSE</code></pre>
+<pre><code>## [1] 1.698344</code></pre>
+<pre class="r"><code>SSE2/SST2 # SSE/SST</code></pre>
+<pre><code>## [1] 0.2206582</code></pre>
+<pre class="r"><code>head(result2,12)</code></pre>
 <pre><code>##       y      yhat     y-yhat
 ## 3   9.7  9.822171 -0.1221710
 ## 5   8.4  9.356787 -0.9567873
@@ -796,19 +857,19 @@ RMSE1 # test RMSE</code></pre>
 ## 51  9.6 12.537721 -2.9377212
 ## 60 19.7 16.382681  3.3173190
 ## 62 20.1 16.704355  3.3956449</code></pre>
-<pre class="r"><code># 모든 주효과, 그리고 외부풍속과 외부일사량과의 교호작용 1개만을 포함한 모형
+<pre class="r"><code># model4 : 모든 주효과, 그리고 외부풍속과 외부일사량과의 교호작용 1개만을 포함한 모형
 m0 &lt;- lm(내외부상대습도차~외부기온+외부상대습도+외부풍속+외부일사량+환기창면적+외부풍속*외부일사량,data=ex1_train) 
 y_hat0 &lt;- predict(m0,ex1_test)
-RMSE2 &lt;- sqrt(mean((ex1_test$내외부상대습도차-y_hat0)^2))
-SSE2 &lt;- sum((ex1_test$내외부상대습도차-y_hat0)^2) 
-SST2 &lt;- sum((ex1_test$내외부상대습도차-mean(ex1_test$내외부상대습도차))^2) 
-result2 &lt;- data.frame(ex1_test$내외부상대습도차, y_hat0, ex1_test$내외부상대습도차-y_hat0)
-colnames(result2) &lt;- c(&#39;y&#39;,&#39;yhat&#39;,&#39;y-yhat&#39;)
-RMSE2 # test RMSE</code></pre>
+RMSE3 &lt;- sqrt(mean((ex1_test$내외부상대습도차-y_hat0)^2))
+SSE3 &lt;- sum((ex1_test$내외부상대습도차-y_hat0)^2) 
+SST3 &lt;- sum((ex1_test$내외부상대습도차-mean(ex1_test$내외부상대습도차))^2) 
+result3 &lt;- data.frame(ex1_test$내외부상대습도차, y_hat0, ex1_test$내외부상대습도차-y_hat0)
+colnames(result3) &lt;- c(&#39;y&#39;,&#39;yhat&#39;,&#39;y-yhat&#39;)
+RMSE3 # test RMSE</code></pre>
 <pre><code>## [1] 1.752224</code></pre>
-<pre class="r"><code>SSE2/SST2 # SSE/SST</code></pre>
+<pre class="r"><code>SSE3/SST3 # SSE/SST</code></pre>
 <pre><code>## [1] 0.234881</code></pre>
-<pre class="r"><code>head(result2,12)</code></pre>
+<pre class="r"><code>head(result3,12)</code></pre>
 <pre><code>##       y     yhat      y-yhat
 ## 3   9.7 11.70312 -2.00312328
 ## 5   8.4 11.15504 -2.75503749
@@ -822,19 +883,19 @@ RMSE2 # test RMSE</code></pre>
 ## 51  9.6 14.21037 -4.61036573
 ## 60 19.7 17.04332  2.65668280
 ## 62 20.1 17.20407  2.89592546</code></pre>
-<pre class="r"><code># 모든 주효과, 그리고 외부기온과 환기창면적과의 교호작용 1개만을 포함한 모형
+<pre class="r"><code># model5 : 모든 주효과, 그리고 외부기온과 환기창면적과의 교호작용 1개만을 포함한 모형
 m0 &lt;- lm(내외부상대습도차~외부기온+외부상대습도+외부풍속+외부일사량+환기창면적+외부기온*환기창면적,data=ex1_train) 
 y_hat0 &lt;- predict(m0,ex1_test)
-RMSE3 &lt;- sqrt(mean((ex1_test$내외부상대습도차-y_hat0)^2))
-SSE3 &lt;- sum((ex1_test$내외부상대습도차-y_hat0)^2) 
-SST3 &lt;- sum((ex1_test$내외부상대습도차-mean(ex1_test$내외부상대습도차))^2) 
-result3 &lt;- data.frame(ex1_test$내외부상대습도차, y_hat0, ex1_test$내외부상대습도차-y_hat0)
-colnames(result3) &lt;- c(&#39;y&#39;,&#39;yhat&#39;,&#39;y-yhat&#39;)
-RMSE3 # test RMSE</code></pre>
+RMSE4 &lt;- sqrt(mean((ex1_test$내외부상대습도차-y_hat0)^2))
+SSE4 &lt;- sum((ex1_test$내외부상대습도차-y_hat0)^2) 
+SST4 &lt;- sum((ex1_test$내외부상대습도차-mean(ex1_test$내외부상대습도차))^2) 
+result4 &lt;- data.frame(ex1_test$내외부상대습도차, y_hat0, ex1_test$내외부상대습도차-y_hat0)
+colnames(result4) &lt;- c(&#39;y&#39;,&#39;yhat&#39;,&#39;y-yhat&#39;)
+RMSE4 # test RMSE</code></pre>
 <pre><code>## [1] 1.764174</code></pre>
-<pre class="r"><code>SSE3/SST3 # SSE/SST</code></pre>
+<pre class="r"><code>SSE4/SST4 # SSE/SST</code></pre>
 <pre><code>## [1] 0.2380959</code></pre>
-<pre class="r"><code>head(result3,12)</code></pre>
+<pre class="r"><code>head(result4,12)</code></pre>
 <pre><code>##       y      yhat     y-yhat
 ## 3   9.7  9.828266 -0.1282661
 ## 5   8.4  8.872308 -0.4723080
@@ -849,7 +910,38 @@ RMSE3 # test RMSE</code></pre>
 ## 60 19.7 15.573335  4.1266649
 ## 62 20.1 15.836565  4.2634347</code></pre>
 <ul>
-<li>결과적으로 4가지 모형들 중 모든 주효과 및 교호작용을 포함한 모형이 가장 우수하였다.</li>
+<li><p>결과적으로 5가지 모형들 중 모든 주효과 및 교호작용을 포함한 모형이 가장 우수하였다.</p></li>
+<li><p><code>:</code>표시는 교호작용을 의미함.</p></li>
+<li><p>model1 : 모든 주효과 및 교호작용을 포함한 모형</p>
+<ul>
+<li>반응변수 : 내외부상대습도차</li>
+<li>설명변수 : 외부기온, 외부상대습도, 외부풍속, 외부일사량, 환기창면적, 외부기온:외부상대습도, 외부기온:외부풍속, 외부기온:외부일사량, 외부기온:환기창면적, 외부상대습도:외부풍속, 외부상대습도:외부일사량, 외부상대습도:환기창면적, 외부풍속:외부일사량, 외부풍속:환기창면적, 외부일사량:환기창면적</li>
+<li>RMSE=1.6420, SSE/SST=0.2063</li>
+</ul></li>
+<li><p>model2 : Adj R^2, Cp, BIC 기준에 의하여 선택된 모형</p>
+<ul>
+<li>반응변수 : 내외부상대습도차</li>
+<li>설명변수 : 외부기온, 외부풍속, 외부일사량, 환기창면적, 외부기온:외부상대습도, 외부기온:환기창면적, 외부상대습도:외부풍속, 외부상대습도:외부일사량, 외부풍속:외부일사량, 외부풍속:환기창면적, 외부일사량:환기창면적</li>
+<li>RMSE=1.6512, SSE/SST=0.2086</li>
+</ul></li>
+<li><p>model3 : 모든 주효과, 그리고 중요한 2개의 교호작용을 포함한 모형</p>
+<ul>
+<li>반응변수 : 내외부상대습도차</li>
+<li>설명변수 : 외부기온, 외부상대습도, 외부풍속, 외부일사량, 환기창면적, 외부풍속:외부일사량, 외부기온:환기창면적</li>
+<li>RMSE=1.6983, SSE/SST=0.2207</li>
+</ul></li>
+<li><p>model4 : 모든 주효과, 그리고 외부풍속과 외부일사량과의 교호작용 1개만을 포함한 모형</p>
+<ul>
+<li>반응변수 : 내외부상대습도차</li>
+<li>설명변수 : 외부기온, 외부상대습도, 외부풍속, 외부일사량, 환기창면적, 외부풍속:외부일사량</li>
+<li>RMSE=1.7522, SSE/SST=0.2349</li>
+</ul></li>
+<li><p>model5 : 모든 주효과, 그리고 외부기온과 환기창면적과의 교호작용 1개만을 포함한 모형</p>
+<ul>
+<li>반응변수 : 내외부상대습도차</li>
+<li>설명변수 : 외부기온, 외부상대습도, 외부풍속, 외부일사량, 환기창면적, 외부기온:환기창면적</li>
+<li>RMSE=1.7642, SSE/SST=0.2381</li>
+</ul></li>
 </ul>
 <pre class="r"><code>summary(lm(내외부상대습도차~(외부기온+외부상대습도+외부풍속+외부일사량+환기창면적)^2,data=plantno))</code></pre>
 <pre><code>## 
@@ -1133,7 +1225,43 @@ which.min(ms0.summary$bic) </code></pre>
 <pre class="r"><code>par(mfrow=c(1,1))</code></pre>
 <ul>
 <li>전체적으로 변수의 개수가 11~13일 때 안정화되는 경향이 있다.</li>
+<li>분석결과 <span class="math inline">\(R_{adj}^2\)</span>, <span class="math inline">\(Cp\)</span>, 그리고 <span class="math inline">\(BIC\)</span> 모두 변수의 개수 12인 모형을 최적으로 판단하고 있다. 이에 따라 변수의 개수 12인 모형을 선택하도록 한다.</li>
 </ul>
+<pre class="r"><code>summary(lm(내외부상대습도차~외부기온+외부상대습도+외부풍속+외부일사량+외부기온*외부상대습도+외부기온*외부일사량+외부상대습도*외부풍속+외부상대습도*외부일사량+외부기온*외부풍속+외부풍속*외부일사량+외부풍속*환기창면적+외부일사량*환기창면적,data=plantyes))</code></pre>
+<pre><code>## 
+## Call:
+## lm(formula = 내외부상대습도차 ~ 외부기온 + 외부상대습도 + 외부풍속 + 
+##     외부일사량 + 외부기온 * 외부상대습도 + 외부기온 * 외부일사량 + 
+##     외부상대습도 * 외부풍속 + 외부상대습도 * 외부일사량 + 외부기온 * 
+##     외부풍속 + 외부풍속 * 외부일사량 + 외부풍속 * 환기창면적 + 
+##     외부일사량 * 환기창면적, data = plantyes)
+## 
+## Residuals:
+##      Min       1Q   Median       3Q      Max 
+## -10.0926  -1.5582  -0.1118   1.4214  11.1590 
+## 
+## Coefficients:
+##                           Estimate Std. Error t value Pr(&gt;|t|)    
+## (Intercept)             -7.934e+01  6.386e+00 -12.424  &lt; 2e-16 ***
+## 외부기온                 3.043e+00  2.135e-01  14.254  &lt; 2e-16 ***
+## 외부상대습도             7.735e-01  6.762e-02  11.440  &lt; 2e-16 ***
+## 외부풍속                 1.450e+01  1.672e+00   8.669  &lt; 2e-16 ***
+## 외부일사량               3.511e-02  7.363e-03   4.769 2.12e-06 ***
+## 환기창면적              -3.089e-01  7.892e+00  -0.039    0.969    
+## 외부기온:외부상대습도   -2.702e-02  2.573e-03 -10.503  &lt; 2e-16 ***
+## 외부기온:외부일사량     -1.700e-03  2.053e-04  -8.282 3.68e-16 ***
+## 외부상대습도:외부풍속   -5.719e-02  9.565e-03  -5.979 3.08e-09 ***
+## 외부상대습도:외부일사량  8.148e-04  3.952e-05  20.619  &lt; 2e-16 ***
+## 외부기온:외부풍속       -3.332e-01  4.165e-02  -8.001 3.26e-15 ***
+## 외부풍속:외부일사량     -2.636e-03  4.887e-04  -5.393 8.56e-08 ***
+## 외부풍속:환기창면적     -1.046e+01  2.641e+00  -3.961 7.97e-05 ***
+## 외부일사량:환기창면적   -6.591e-02  1.190e-02  -5.536 3.91e-08 ***
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+## Residual standard error: 2.533 on 1041 degrees of freedom
+## Multiple R-squared:  0.8354, Adjusted R-squared:  0.8334 
+## F-statistic: 406.5 on 13 and 1041 DF,  p-value: &lt; 2.2e-16</code></pre>
 </div>
 <div id="교차타당검증에-의한-모형-비교-1" class="section level4">
 <h4>교차타당검증에 의한 모형 비교</h4>
@@ -1148,7 +1276,7 @@ which.min(ms0.summary$bic) </code></pre>
 train.index &lt;- sample(1:nrow(plantyes), round(nrow(plantyes)*7/10), replace=F)
 ex1_train &lt;- plantyes[train.index,]
 ex1_test &lt;- plantyes[-train.index,]</code></pre>
-<pre class="r"><code># 모든 주효과 및 교호작용을 포함한 모형
+<pre class="r"><code># model1 : 모든 주효과 및 교호작용을 포함한 모형
 m0 &lt;- lm(내외부상대습도차~(외부기온+외부상대습도+외부풍속+외부일사량+환기창면적)^2,data=ex1_train) 
 y_hat0 &lt;- predict(m0,ex1_test)
 RMSE0 &lt;- sqrt(mean((ex1_test$내외부상대습도차-y_hat0)^2)) 
@@ -1174,19 +1302,45 @@ RMSE0 # test RMSE</code></pre>
 ## 39 12.9 14.200438 -1.3004378
 ## 45 14.5 12.714157  1.7858425
 ## 54  6.9  7.968793 -1.0687930</code></pre>
-<pre class="r"><code># 모든 주효과, 그리고 주요한 3개의 교호작용을 포함한 모형
-m0 &lt;- lm(내외부상대습도차~외부기온+외부상대습도+외부풍속+외부일사량+환기창면적+외부상대습도*외부일사량+외부기온*외부상대습도+외부기온*외부일사량,data=ex1_train) 
+<pre class="r"><code># model2 : Adj R^2, Cp, BIC 기준에 의하여 선택된 모형
+m0 &lt;- lm(내외부상대습도차~외부기온+외부상대습도+외부풍속+외부일사량+외부기온*외부상대습도+외부기온*외부일사량+외부상대습도*외부풍속+외부상대습도*외부일사량+외부기온*외부풍속+외부풍속*외부일사량+외부풍속*환기창면적+외부일사량*환기창면적,data=ex1_train) 
 y_hat0 &lt;- predict(m0,ex1_test)
-RMSE1 &lt;- sqrt(mean((ex1_test$내외부상대습도차-y_hat0)^2))
+RMSE1 &lt;- sqrt(mean((ex1_test$내외부상대습도차-y_hat0)^2)) 
 SSE1 &lt;- sum((ex1_test$내외부상대습도차-y_hat0)^2) 
 SST1 &lt;- sum((ex1_test$내외부상대습도차-mean(ex1_test$내외부상대습도차))^2) 
 result1 &lt;- data.frame(ex1_test$내외부상대습도차, y_hat0, ex1_test$내외부상대습도차-y_hat0)
 colnames(result1) &lt;- c(&#39;y&#39;,&#39;yhat&#39;,&#39;y-yhat&#39;)
 RMSE1 # test RMSE</code></pre>
-<pre><code>## [1] 2.785837</code></pre>
+<pre><code>## [1] 2.552447</code></pre>
 <pre class="r"><code>SSE1/SST1 # SSE/SST</code></pre>
-<pre><code>## [1] 0.178281</code></pre>
+<pre><code>## [1] 0.1496605</code></pre>
 <pre class="r"><code>head(result1,12)</code></pre>
+<pre><code>##       y      yhat     y-yhat
+## 3  17.1 16.109415  0.9905852
+## 5  14.8 16.734182 -1.9341819
+## 10 17.7 21.878552 -4.1785517
+## 12 20.6 22.161257 -1.5612568
+## 17 16.6 17.802644 -1.2026436
+## 20 17.9 18.452034 -0.5520337
+## 23 12.7 15.793502 -3.0935022
+## 24 15.3 16.574913 -1.2749133
+## 33 16.1 15.154448  0.9455517
+## 39 12.9 14.452000 -1.5520001
+## 45 14.5 12.867439  1.6325614
+## 54  6.9  7.956208 -1.0562075</code></pre>
+<pre class="r"><code># model3 : 모든 주효과, 그리고 중요한 3개의 교호작용을 포함한 모형
+m0 &lt;- lm(내외부상대습도차~외부기온+외부상대습도+외부풍속+외부일사량+환기창면적+외부상대습도*외부일사량+외부기온*외부상대습도+외부기온*외부일사량,data=ex1_train) 
+y_hat0 &lt;- predict(m0,ex1_test)
+RMSE2 &lt;- sqrt(mean((ex1_test$내외부상대습도차-y_hat0)^2))
+SSE2 &lt;- sum((ex1_test$내외부상대습도차-y_hat0)^2) 
+SST2 &lt;- sum((ex1_test$내외부상대습도차-mean(ex1_test$내외부상대습도차))^2) 
+result2 &lt;- data.frame(ex1_test$내외부상대습도차, y_hat0, ex1_test$내외부상대습도차-y_hat0)
+colnames(result2) &lt;- c(&#39;y&#39;,&#39;yhat&#39;,&#39;y-yhat&#39;)
+RMSE2 # test RMSE</code></pre>
+<pre><code>## [1] 2.785837</code></pre>
+<pre class="r"><code>SSE2/SST2 # SSE/SST</code></pre>
+<pre><code>## [1] 0.178281</code></pre>
+<pre class="r"><code>head(result2,12)</code></pre>
 <pre><code>##       y      yhat     y-yhat
 ## 3  17.1 16.069803  1.0301971
 ## 5  14.8 16.353117 -1.5531167
@@ -1200,19 +1354,19 @@ RMSE1 # test RMSE</code></pre>
 ## 39 12.9 14.617547 -1.7175466
 ## 45 14.5 12.745069  1.7549313
 ## 54  6.9  7.240863 -0.3408634</code></pre>
-<pre class="r"><code># 모든 주효과, 그리고 외부상대습도와 외부일사량과의 교호작용 1개만을 포함한 모형
+<pre class="r"><code># model4 : 모든 주효과, 그리고 외부상대습도와 외부일사량과의 교호작용 1개만을 포함한 모형
 m0 &lt;- lm(내외부상대습도차~외부기온+외부상대습도+외부풍속+외부일사량+환기창면적+외부상대습도*외부일사량,data=ex1_train) 
 y_hat0 &lt;- predict(m0,ex1_test)
-RMSE2 &lt;- sqrt(mean((ex1_test$내외부상대습도차-y_hat0)^2))
-SSE2 &lt;- sum((ex1_test$내외부상대습도차-y_hat0)^2) 
-SST2 &lt;- sum((ex1_test$내외부상대습도차-mean(ex1_test$내외부상대습도차))^2) 
-result2 &lt;- data.frame(ex1_test$내외부상대습도차, y_hat0, ex1_test$내외부상대습도차-y_hat0)
-colnames(result2) &lt;- c(&#39;y&#39;,&#39;yhat&#39;,&#39;y-yhat&#39;)
-RMSE2 # test RMSE</code></pre>
+RMSE3 &lt;- sqrt(mean((ex1_test$내외부상대습도차-y_hat0)^2))
+SSE3 &lt;- sum((ex1_test$내외부상대습도차-y_hat0)^2) 
+SST3 &lt;- sum((ex1_test$내외부상대습도차-mean(ex1_test$내외부상대습도차))^2) 
+result3 &lt;- data.frame(ex1_test$내외부상대습도차, y_hat0, ex1_test$내외부상대습도차-y_hat0)
+colnames(result3) &lt;- c(&#39;y&#39;,&#39;yhat&#39;,&#39;y-yhat&#39;)
+RMSE3 # test RMSE</code></pre>
 <pre><code>## [1] 2.843424</code></pre>
-<pre class="r"><code>SSE2/SST2 # SSE/SST</code></pre>
+<pre class="r"><code>SSE3/SST3 # SSE/SST</code></pre>
 <pre><code>## [1] 0.1857278</code></pre>
-<pre class="r"><code>head(result2,12)</code></pre>
+<pre class="r"><code>head(result3,12)</code></pre>
 <pre><code>##       y      yhat      y-yhat
 ## 3  17.1 15.972348  1.12765236
 ## 5  14.8 16.553665 -1.75366476
@@ -1226,19 +1380,19 @@ RMSE2 # test RMSE</code></pre>
 ## 39 12.9 13.084157 -0.18415685
 ## 45 14.5 11.697525  2.80247451
 ## 54  6.9  5.603496  1.29650391</code></pre>
-<pre class="r"><code># 모든 주효과, 그리고 외부일사량과 환기창면적과의 교호작용 1개만을 포함한 모형
+<pre class="r"><code># model5 : 모든 주효과, 그리고 외부일사량과 환기창면적과의 교호작용 1개만을 포함한 모형
 m0 &lt;- lm(내외부상대습도차~외부기온+외부상대습도+외부풍속+외부일사량+환기창면적+환기창면적*외부일사량,data=ex1_train) 
 y_hat0 &lt;- predict(m0,ex1_test)
-RMSE3 &lt;- sqrt(mean((ex1_test$내외부상대습도차-y_hat0)^2))
-SSE3 &lt;- sum((ex1_test$내외부상대습도차-y_hat0)^2) 
-SST3 &lt;- sum((ex1_test$내외부상대습도차-mean(ex1_test$내외부상대습도차))^2) 
-result3 &lt;- data.frame(ex1_test$내외부상대습도차, y_hat0, ex1_test$내외부상대습도차-y_hat0)
-colnames(result3) &lt;- c(&#39;y&#39;,&#39;yhat&#39;,&#39;y-yhat&#39;)
-RMSE3 # test RMSE</code></pre>
+RMSE4 &lt;- sqrt(mean((ex1_test$내외부상대습도차-y_hat0)^2))
+SSE4 &lt;- sum((ex1_test$내외부상대습도차-y_hat0)^2) 
+SST4 &lt;- sum((ex1_test$내외부상대습도차-mean(ex1_test$내외부상대습도차))^2) 
+result4 &lt;- data.frame(ex1_test$내외부상대습도차, y_hat0, ex1_test$내외부상대습도차-y_hat0)
+colnames(result4) &lt;- c(&#39;y&#39;,&#39;yhat&#39;,&#39;y-yhat&#39;)
+RMSE4 # test RMSE</code></pre>
 <pre><code>## [1] 3.725771</code></pre>
-<pre class="r"><code>SSE3/SST3 # SSE/SST</code></pre>
+<pre class="r"><code>SSE4/SST4 # SSE/SST</code></pre>
 <pre><code>## [1] 0.3188791</code></pre>
-<pre class="r"><code>head(result3,12)</code></pre>
+<pre class="r"><code>head(result4,12)</code></pre>
 <pre><code>##       y      yhat     y-yhat
 ## 3  17.1 16.305226  0.7947743
 ## 5  14.8 15.566199 -0.7661989
@@ -1253,42 +1407,74 @@ RMSE3 # test RMSE</code></pre>
 ## 45 14.5  9.560847  4.9391533
 ## 54  6.9 14.458294 -7.5582940</code></pre>
 <ul>
-<li>결과적으로 모든 주효과 및 교호작용을 포함한 모형이 가장 우수하였다.</li>
+<li><p>결과적으로 Adj R^2, Cp, BIC 기준에 의하여 선택된 모형이 가장 우수하였다.</p></li>
+<li><p><code>:</code>표시는 교호작용을 의미함.</p></li>
+<li><p>model1 : 모든 주효과 및 교호작용을 포함한 모형</p>
+<ul>
+<li>반응변수 : 내외부상대습도차</li>
+<li>설명변수 : 외부기온, 외부상대습도, 외부풍속, 외부일사량, 환기창면적, 외부기온:외부상대습도, 외부기온:외부풍속, 외부기온:외부일사량, 외부기온:환기창면적, 외부상대습도:외부풍속, 외부상대습도:외부일사량, 외부상대습도:환기창면적, 외부풍속:외부일사량, 외부풍속:환기창면적, 외부일사량:환기창면적</li>
+<li>RMSE=2.5638, SSE/SST=0.1510</li>
+</ul></li>
+<li><p>model2 : Adj R^2, Cp, BIC 기준에 의하여 선택된 모형</p>
+<ul>
+<li>반응변수 : 내외부상대습도차</li>
+<li>설명변수 : 외부기온, 외부상대습도, 외부풍속, 외부일사량, 외부기온:외부상대습도, 외부기온:외부일사량, 외부상대습도:외부풍속, 외부상대습도:외부일사량, 외부기온:외부풍속, 외부풍속:외부일사량, 외부풍속:환기창면적, 외부일사량:환기창면적</li>
+<li>RMSE=2.5524, SSE/SST=0.1497</li>
+</ul></li>
+<li><p>model3 : 모든 주효과, 그리고 중요한 3개의 교호작용을 포함한 모형</p>
+<ul>
+<li>반응변수 : 내외부상대습도차</li>
+<li>설명변수 : 외부기온, 외부상대습도, 외부풍속, 외부일사량, 환기창면적, 외부상대습도:외부일사량, 외부기온:외부상대습도, 외부기온:외부일사량</li>
+<li>RMSE=2.7858, SSE/SST=0.1783</li>
+</ul></li>
+<li><p>model4 : 모든 주효과, 그리고 외부상대습도와 외부일사량과의 교호작용 1개만을 포함한 모형</p>
+<ul>
+<li>반응변수 : 내외부상대습도차</li>
+<li>설명변수 : 외부기온, 외부상대습도, 외부풍속, 외부일사량, 환기창면적, 외부상대습도:외부일사량</li>
+<li>RMSE=2.8434, SSE/SST=0.1857</li>
+</ul></li>
+<li><p>model5 : 모든 주효과, 그리고 외부일사량과 환기창면적과의 교호작용 1개만을 포함한 모형</p>
+<ul>
+<li>반응변수 : 내외부상대습도차</li>
+<li>설명변수 : 외부기온, 외부상대습도, 외부풍속, 외부일사량, 환기창면적, 환기창면적:외부일사량</li>
+<li>RMSE=3.7258, SSE/SST=0.3189</li>
+</ul></li>
 </ul>
-<pre class="r"><code>summary(lm(내외부상대습도차~(외부기온+외부상대습도+외부풍속+외부일사량+환기창면적)^2,data=plantyes))</code></pre>
+<pre class="r"><code>summary(lm(내외부상대습도차~외부기온+외부상대습도+외부풍속+외부일사량+외부기온*외부상대습도+외부기온*외부일사량+외부상대습도*외부풍속+외부상대습도*외부일사량+외부기온*외부풍속+외부풍속*외부일사량+외부풍속*환기창면적+외부일사량*환기창면적,data=plantyes))</code></pre>
 <pre><code>## 
 ## Call:
-## lm(formula = 내외부상대습도차 ~ (외부기온 + 외부상대습도 + 외부풍속 + 
-##     외부일사량 + 환기창면적)^2, data = plantyes)
+## lm(formula = 내외부상대습도차 ~ 외부기온 + 외부상대습도 + 외부풍속 + 
+##     외부일사량 + 외부기온 * 외부상대습도 + 외부기온 * 외부일사량 + 
+##     외부상대습도 * 외부풍속 + 외부상대습도 * 외부일사량 + 외부기온 * 
+##     외부풍속 + 외부풍속 * 외부일사량 + 외부풍속 * 환기창면적 + 
+##     외부일사량 * 환기창면적, data = plantyes)
 ## 
 ## Residuals:
 ##      Min       1Q   Median       3Q      Max 
-## -10.1057  -1.5820  -0.1209   1.4222  11.1897 
+## -10.0926  -1.5582  -0.1118   1.4214  11.1590 
 ## 
 ## Coefficients:
 ##                           Estimate Std. Error t value Pr(&gt;|t|)    
-## (Intercept)             -8.009e+01  9.240e+00  -8.667  &lt; 2e-16 ***
-## 외부기온                 3.110e+00  2.653e-01  11.722  &lt; 2e-16 ***
-## 외부상대습도             7.573e-01  7.762e-02   9.756  &lt; 2e-16 ***
-## 외부풍속                 1.458e+01  1.753e+00   8.320 2.75e-16 ***
-## 외부일사량               3.445e-02  7.423e-03   4.641 3.92e-06 ***
-## 환기창면적               7.120e+00  5.891e+01   0.121 0.903829    
-## 외부기온:외부상대습도   -2.686e-02  2.594e-03 -10.353  &lt; 2e-16 ***
-## 외부기온:외부풍속       -3.322e-01  4.263e-02  -7.793 1.58e-14 ***
-## 외부기온:외부일사량     -1.700e-03  2.054e-04  -8.277 3.86e-16 ***
-## 외부기온:환기창면적     -6.245e-01  1.464e+00  -0.427 0.669765    
-## 외부상대습도:외부풍속   -5.983e-02  1.045e-02  -5.728 1.33e-08 ***
-## 외부상대습도:외부일사량  8.166e-04  3.983e-05  20.501  &lt; 2e-16 ***
-## 외부상대습도:환기창면적  1.087e-01  3.523e-01   0.309 0.757747    
-## 외부풍속:외부일사량     -2.733e-03  4.994e-04  -5.473 5.54e-08 ***
-## 외부풍속:환기창면적     -9.936e+00  2.703e+00  -3.676 0.000249 ***
-## 외부일사량:환기창면적   -6.053e-02  1.353e-02  -4.473 8.56e-06 ***
+## (Intercept)             -7.934e+01  6.386e+00 -12.424  &lt; 2e-16 ***
+## 외부기온                 3.043e+00  2.135e-01  14.254  &lt; 2e-16 ***
+## 외부상대습도             7.735e-01  6.762e-02  11.440  &lt; 2e-16 ***
+## 외부풍속                 1.450e+01  1.672e+00   8.669  &lt; 2e-16 ***
+## 외부일사량               3.511e-02  7.363e-03   4.769 2.12e-06 ***
+## 환기창면적              -3.089e-01  7.892e+00  -0.039    0.969    
+## 외부기온:외부상대습도   -2.702e-02  2.573e-03 -10.503  &lt; 2e-16 ***
+## 외부기온:외부일사량     -1.700e-03  2.053e-04  -8.282 3.68e-16 ***
+## 외부상대습도:외부풍속   -5.719e-02  9.565e-03  -5.979 3.08e-09 ***
+## 외부상대습도:외부일사량  8.148e-04  3.952e-05  20.619  &lt; 2e-16 ***
+## 외부기온:외부풍속       -3.332e-01  4.165e-02  -8.001 3.26e-15 ***
+## 외부풍속:외부일사량     -2.636e-03  4.887e-04  -5.393 8.56e-08 ***
+## 외부풍속:환기창면적     -1.046e+01  2.641e+00  -3.961 7.97e-05 ***
+## 외부일사량:환기창면적   -6.591e-02  1.190e-02  -5.536 3.91e-08 ***
 ## ---
 ## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
 ## 
-## Residual standard error: 2.534 on 1039 degrees of freedom
-## Multiple R-squared:  0.8356, Adjusted R-squared:  0.8332 
-## F-statistic: 352.1 on 15 and 1039 DF,  p-value: &lt; 2.2e-16</code></pre>
+## Residual standard error: 2.533 on 1041 degrees of freedom
+## Multiple R-squared:  0.8354, Adjusted R-squared:  0.8334 
+## F-statistic: 406.5 on 13 and 1041 DF,  p-value: &lt; 2.2e-16</code></pre>
 </div>
 </div>
 <div id="작물유무-데이터를-합친-경우" class="section level3">
@@ -1508,7 +1694,7 @@ which.min(ms0.summary$bic) </code></pre>
 train.index &lt;- sample(1:nrow(plant), round(nrow(plant)*7/10), replace=F)
 ex1_train &lt;- plant[train.index,]
 ex1_test &lt;- plant[-train.index,]</code></pre>
-<pre class="r"><code># 최초로 고려한 모형
+<pre class="r"><code># model1 : 최초로 고려한 모형
 m0 &lt;- lm(내외부상대습도차~외부기온+외부상대습도+외부풍속+외부일사량+환기창면적+작물유무+외부풍속*외부일사량+외부상대습도*외부일사량+작물유무*외부기온+작물유무*외부상대습도+작물유무*외부풍속+작물유무*외부일사량+작물유무*환기창면적,data=ex1_train)
 y_hat0 &lt;- predict(m0,ex1_test)
 RMSE0 &lt;- sqrt(mean((ex1_test$내외부상대습도차-y_hat0)^2)) 
@@ -1534,7 +1720,7 @@ RMSE0 # test RMSE</code></pre>
 ## 48 10.0 11.63734 -1.63734060
 ## 51  9.6 14.58033 -4.98033083
 ## 57 16.6 16.61464 -0.01464369</code></pre>
-<pre class="r"><code># Adj R^2, Cp, BIC 등의 기준을 바탕으로 선택된 모형 (외부일사량과 작물유무 사이의 교호작용 제외)
+<pre class="r"><code># model2 : Adj R^2, Cp, BIC 등의 기준을 바탕으로 선택된 모형 (외부일사량과 작물유무 사이의 교호작용 제외)
 m0 &lt;- lm(내외부상대습도차~외부기온+외부상대습도+외부풍속+외부일사량+환기창면적+작물유무+외부풍속*외부일사량+외부상대습도*외부일사량+작물유무*외부기온+작물유무*외부상대습도+작물유무*외부풍속+작물유무*환기창면적,data=ex1_train)
 y_hat0 &lt;- predict(m0,ex1_test)
 RMSE1 &lt;- sqrt(mean((ex1_test$내외부상대습도차-y_hat0)^2))
@@ -1560,7 +1746,7 @@ RMSE1 # test RMSE</code></pre>
 ## 48 10.0 11.86151 -1.8615057
 ## 51  9.6 14.59788 -4.9978827
 ## 57 16.6 16.46228  0.1377232</code></pre>
-<pre class="r"><code># 모든 주효과와 가장 중요한 교호작용 1가지(외부상대습도과 외부일사량)를 포함한 모형
+<pre class="r"><code># model3 : 모든 주효과와 가장 중요한 교호작용 1가지(외부상대습도과 외부일사량)를 포함한 모형
 m0 &lt;- lm(내외부상대습도차~외부기온+외부상대습도+외부풍속+외부일사량+환기창면적+작물유무+외부상대습도*외부일사량,data=ex1_train)
 y_hat0 &lt;- predict(m0,ex1_test)
 RMSE2 &lt;- sqrt(mean((ex1_test$내외부상대습도차-y_hat0)^2))
@@ -1586,7 +1772,7 @@ RMSE2 # test RMSE</code></pre>
 ## 48 10.0 11.20299 -1.2029938
 ## 51  9.6 17.48297 -7.8829748
 ## 57 16.6 17.80772 -1.2077219</code></pre>
-<pre class="r"><code># 모든 주효과와 가장 중요한 교호작용 2가지(외부상대습도과 외부일사량, 외부풍속과 외부일사량)를 포함한 모형
+<pre class="r"><code># model4 : 모든 주효과와 가장 중요한 교호작용 2가지(외부상대습도과 외부일사량, 외부풍속과 외부일사량)를 포함한 모형
 m0 &lt;- lm(내외부상대습도차~외부기온+외부상대습도+외부풍속+외부일사량+환기창면적+작물유무+외부상대습도*외부일사량+외부풍속*외부일사량,data=ex1_train)
 y_hat0 &lt;- predict(m0,ex1_test)
 RMSE3 &lt;- sqrt(mean((ex1_test$내외부상대습도차-y_hat0)^2))
@@ -1612,8 +1798,97 @@ RMSE3 # test RMSE</code></pre>
 ## 48 10.0 11.55622 -1.5562162
 ## 51  9.6 17.58158 -7.9815751
 ## 57 16.6 18.16841 -1.5684066</code></pre>
+<pre class="r"><code># model5 : 모든 주효과, 그리고 외부상대습도와 작물유무 사이의 교호작용을 포함한 모형
+m0 &lt;- lm(내외부상대습도차~외부기온+외부상대습도+외부풍속+외부일사량+환기창면적+작물유무+외부상대습도*작물유무,data=ex1_train)
+y_hat0 &lt;- predict(m0,ex1_test)
+RMSE4 &lt;- sqrt(mean((ex1_test$내외부상대습도차-y_hat0)^2))
+SSE4 &lt;- sum((ex1_test$내외부상대습도차-y_hat0)^2) 
+SST4 &lt;- sum((ex1_test$내외부상대습도차-mean(ex1_test$내외부상대습도차))^2) 
+result4 &lt;- data.frame(ex1_test$내외부상대습도차, y_hat0, ex1_test$내외부상대습도차-y_hat0)
+colnames(result4) &lt;- c(&#39;y&#39;,&#39;yhat&#39;,&#39;y-yhat&#39;)
+RMSE4 # test RMSE</code></pre>
+<pre><code>## [1] 3.419131</code></pre>
+<pre class="r"><code>SSE4/SST4 # SSE/SST</code></pre>
+<pre><code>## [1] 0.3859458</code></pre>
+<pre class="r"><code>head(result4,12)</code></pre>
+<pre><code>##       y      yhat      y-yhat
+## 3   9.7 14.001103 -4.30110258
+## 12 12.8 15.839125 -3.03912529
+## 15 13.8 15.790016 -1.99001642
+## 17 15.0 16.738447 -1.73844702
+## 23 14.3 17.597862 -3.29786221
+## 24 15.0 17.374725 -2.37472525
+## 37 13.6 14.074050 -0.47404969
+## 39 12.9 12.922261 -0.02226051
+## 43 13.2 10.661274  2.53872614
+## 48 10.0  7.721405  2.27859540
+## 51  9.6 16.084540 -6.48454029
+## 57 16.6 17.642783 -1.04278267</code></pre>
+<pre class="r"><code># model6 : 모든 주효과, 그리고 환기창면적과 작물유무 사이의 교호작용을 포함한 모형
+m0 &lt;- lm(내외부상대습도차~외부기온+외부상대습도+외부풍속+외부일사량+환기창면적+작물유무+환기창면적*작물유무,data=ex1_train)
+y_hat0 &lt;- predict(m0,ex1_test)
+RMSE5 &lt;- sqrt(mean((ex1_test$내외부상대습도차-y_hat0)^2))
+SSE5 &lt;- sum((ex1_test$내외부상대습도차-y_hat0)^2) 
+SST5 &lt;- sum((ex1_test$내외부상대습도차-mean(ex1_test$내외부상대습도차))^2) 
+result5 &lt;- data.frame(ex1_test$내외부상대습도차, y_hat0, ex1_test$내외부상대습도차-y_hat0)
+colnames(result5) &lt;- c(&#39;y&#39;,&#39;yhat&#39;,&#39;y-yhat&#39;)
+RMSE5 # test RMSE</code></pre>
+<pre><code>## [1] 3.411434</code></pre>
+<pre class="r"><code>SSE5/SST5 # SSE/SST</code></pre>
+<pre><code>## [1] 0.3842102</code></pre>
+<pre class="r"><code>head(result5,12)</code></pre>
+<pre><code>##       y      yhat     y-yhat
+## 3   9.7 13.786192 -4.0861921
+## 12 12.8 15.622917 -2.8229172
+## 15 13.8 15.581761 -1.7817614
+## 17 15.0 16.526411 -1.5264110
+## 23 14.3 17.332698 -3.0326978
+## 24 15.0 17.128001 -2.1280013
+## 37 13.6 13.786876 -0.1868762
+## 39 12.9 12.643896  0.2561039
+## 43 13.2 10.396596  2.8034042
+## 48 10.0  7.446965  2.5530350
+## 51  9.6 15.946959 -6.3469586
+## 57 16.6 17.450554 -0.8505537</code></pre>
 <ul>
-<li>결과적으로 4가지 모형들 중 최초로 고려한 모형이 가장 우수하였다. 하지만 test RMSE의 값은 4가지 모형 모두 거의 비슷하였다.</li>
+<li><p>결과적으로 6가지 모형들 중 최초로 고려한 모형이 가장 우수하였다. 하지만 test RMSE의 값은 4가지 모형 모두 거의 비슷하였다.</p></li>
+<li><p><code>:</code>표시는 교호작용을 의미함.</p></li>
+<li><p>model1 : 최초로 고려한 모형</p>
+<ul>
+<li>반응변수 : 내외부상대습도차</li>
+<li>설명변수 : 외부기온, 외부상대습도, 외부풍속, 외부일사량, 환기창면적, 작물유무, 외부풍속:외부일사량, 외부상대습도:외부일사량, 작물유무:외부기온, 작물유무:외부상대습도, 작물유무:외부풍속, 작물유무:외부일사량, 작물유무:환기창면적</li>
+<li>RMSE=2.5668, SSE/SST=0.2175</li>
+</ul></li>
+<li><p>model2 : Adj R^2, Cp, BIC 등의 기준을 바탕으로 선택된 모형 (외부일사량과 작물유무 사이의 교호작용 제외)</p>
+<ul>
+<li>반응변수 : 내외부상대습도차</li>
+<li>설명변수 : 외부기온, 외부상대습도, 외부풍속, 외부일사량, 환기창면적, 작물유무, 외부풍속:외부일사량, 외부상대습도:외부일사량, 작물유무:외부기온, 작물유무:외부상대습도, 작물유무:외부풍속, 작물유무:환기창면적</li>
+<li>RMSE=2.5702, SSE/SST=0.2181</li>
+</ul></li>
+<li><p>model3 : 모든 주효과와 가장 중요한 교호작용 1가지(외부상대습도과 외부일사량)를 포함한 모형</p>
+<ul>
+<li>반응변수 : 내외부상대습도차</li>
+<li>설명변수 : 외부기온, 외부상대습도, 외부풍속, 외부일사량, 환기창면적, 작물유무, 외부상대습도:외부일사량</li>
+<li>RMSE=2.7748, SSE/SST=0.2542</li>
+</ul></li>
+<li><p>model4 : 모든 주효과와 가장 중요한 교호작용 2가지(외부상대습도과 외부일사량, 외부풍속과 외부일사량)를 포함한 모형</p>
+<ul>
+<li>반응변수 : 내외부상대습도차</li>
+<li>설명변수 : 외부기온, 외부상대습도, 외부풍속, 외부일사량, 환기창면적, 작물유무, 외부상대습도:외부일사량, 외부풍속:외부일사량</li>
+<li>RMSE=2.7668, SSE/SST=0.2527</li>
+</ul></li>
+<li><p>model5 : 모든 주효과, 그리고 외부상대습도와 작물유무 사이의 교호작용을 포함한 모형</p>
+<ul>
+<li>반응변수 : 내외부상대습도차</li>
+<li>설명변수 : 외부기온, 외부상대습도, 외부풍속, 외부일사량, 환기창면적, 작물유무, 외부상대습도:작물유무</li>
+<li>RMSE=3.4191, SSE/SST=0.3859</li>
+</ul></li>
+<li><p>model6 : 모든 주효과, 그리고 환기창면적과 작물유무 사이의 교호작용을 포함한 모형</p>
+<ul>
+<li>반응변수 : 내외부상대습도차</li>
+<li>설명변수 : 외부기온, 외부상대습도, 외부풍속, 외부일사량, 환기창면적, 작물유무, 환기창면적*작물유무</li>
+<li>RMSE=3.4114, SSE/SST=0.3842</li>
+</ul></li>
 </ul>
 <pre class="r"><code>summary(lm(내외부상대습도차~외부기온+외부상대습도+외부풍속+외부일사량+환기창면적+작물유무+외부풍속*외부일사량+외부상대습도*외부일사량+작물유무*외부기온+작물유무*외부상대습도+작물유무*외부풍속+작물유무*외부일사량+작물유무*환기창면적,data=plant))</code></pre>
 <pre><code>## 

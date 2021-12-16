@@ -756,7 +756,7 @@ which.min(ms0.summary$bic) </code></pre>
 train.index &lt;- sample(1:nrow(plantno), round(nrow(plantno)*7/10), replace=F)
 ex1_train &lt;- plantno[train.index,]
 ex1_test &lt;- plantno[-train.index,]</code></pre>
-<pre class="r"><code># 모든 주효과 및 교호작용을 포함한 모형
+<pre class="r"><code># model1 : 모든 주효과 및 교호작용을 포함한 모형
 m0 &lt;- lm(내외부CO2차~(외부기온+외부CO2+외부풍속+외부일사량+환기창면적)^2,data=ex1_train) 
 y_hat0 &lt;- predict(m0,ex1_test)
 RMSE0 &lt;- sqrt(mean((ex1_test$내외부CO2차-y_hat0)^2)) 
@@ -782,7 +782,7 @@ RMSE0 # test RMSE</code></pre>
 ## 51 73.5 67.05172   6.44828386
 ## 60 69.5 68.17347   1.32653252
 ## 62 72.0 70.14366   1.85634009</code></pre>
-<pre class="r"><code># Adj R^2, Cp, BIC 등의 기준을 바탕으로 선택된 모형 (교호작용이 있는 경우는 주효과 포함)
+<pre class="r"><code># model2 : Adj R^2, Cp, BIC 등의 기준을 바탕으로 선택된 모형 (교호작용이 있는 경우는 주효과 포함)
 m0 &lt;- lm(내외부CO2차~외부기온+외부CO2+환기창면적+외부기온*환기창면적+외부CO2*환기창면적+외부풍속*환기창면적+외부풍속*환기창면적+외부일사량*환기창면적,data=ex1_train) 
 y_hat0 &lt;- predict(m0,ex1_test)
 RMSE1 &lt;- sqrt(mean((ex1_test$내외부CO2차-y_hat0)^2))
@@ -808,7 +808,7 @@ RMSE1 # test RMSE</code></pre>
 ## 51 73.5 68.92116   4.578836
 ## 60 69.5 67.03276   2.467236
 ## 62 72.0 68.53838   3.461619</code></pre>
-<pre class="r"><code># 모든 주효과와 가장 중요한 교호작용 1가지를 포함한 모형 (외부CO2와 환기창면적 사이의 교호작용)
+<pre class="r"><code># model3 : 모든 주효과와 가장 중요한 교호작용 1가지를 포함한 모형 (외부CO2와 환기창면적 사이의 교호작용)
 m0 &lt;- lm(내외부CO2차~외부기온+외부CO2+외부풍속+외부일사량+환기창면적+환기창면적*외부CO2,data=ex1_train) 
 y_hat0 &lt;- predict(m0,ex1_test)
 RMSE2 &lt;- sqrt(mean((ex1_test$내외부CO2차-y_hat0)^2))
@@ -835,7 +835,26 @@ RMSE2 # test RMSE</code></pre>
 ## 60 69.5 66.94599   2.55401229
 ## 62 72.0 69.44066   2.55933758</code></pre>
 <ul>
-<li>결과적으로 모든 주효과 및 교호작용을 포함한 모형이 가장 우수하였다.</li>
+<li><p>결과적으로 모든 주효과 및 교호작용을 포함한 모형이 가장 우수하였다.</p></li>
+<li><p><code>:</code>표시는 교호작용을 의미함.</p></li>
+<li><p>model1 : 모든 주효과 및 교호작용을 포함한 모형</p>
+<ul>
+<li>반응변수 : 내외부CO2차</li>
+<li>설명변수 : 외부기온, 외부CO2, 외부풍속, 외부일사량, 환기창면적, 외부기온:외부CO2, 외부기온:외부풍속, 외부기온:외부일사량, 외부기온:환기창면적, 외부CO2:외부풍속, 외부CO2:외부일사량, 외부CO2:환기창면적, 외부풍속:외부일사량, 외부풍속:환기창면적, 외부일사량:환기창면적</li>
+<li>RMSE=12.8444, SSE/SST=0.5136</li>
+</ul></li>
+<li><p>model2 : Adj R^2, Cp, BIC 등의 기준을 바탕으로 선택된 모형 (교호작용이 있는 경우는 주효과 포함)</p>
+<ul>
+<li>반응변수 : 내외부CO2차</li>
+<li>설명변수 : 외부기온, 외부CO2, 환기창면적, 외부기온:환기창면적, 외부CO2:환기창면적, 외부풍속:환기창면적, 외부풍속:환기창면적, 외부일사량:환기창면적</li>
+<li>RMSE=12.9880, SSE/SST=0.5252</li>
+</ul></li>
+<li><p>model3 : 모든 주효과와 가장 중요한 교호작용 1가지를 포함한 모형 (외부CO2와 환기창면적 사이의 교호작용)</p>
+<ul>
+<li>반응변수 : 내외부CO2차</li>
+<li>설명변수 : 외부기온, 외부CO2, 외부풍속, 외부일사량, 환기창면적, 환기창면적:외부CO2</li>
+<li>RMSE=13.6628, SSE/SST=0.5812</li>
+</ul></li>
 </ul>
 <pre class="r"><code>summary(lm(내외부CO2차~(외부기온+외부CO2+외부풍속+외부일사량+환기창면적)^2,data=plantno))</code></pre>
 <pre><code>## 
@@ -1153,9 +1172,9 @@ train.index &lt;- sample(1:nrow(plantyes), round(nrow(plantyes)*7/10), replace=F
 ex1_train &lt;- plantyes[train.index,]
 ex1_test &lt;- plantyes[-train.index,]</code></pre>
 <ul>
-<li>모형을 적합한 결과 수치적인 문제로 인하여 예측값이 NA로 출력되는 경우가 발생함을 확인하였다. 이는 작물이 있는 경우 내외부CO2차에 대한 예측모형으로서 다중회귀모형이 그다지 바람직한 모형은 아닐수도 있음을 보여주는 것으로 보여진다. 다만 선택한 모형을 평가하기 위하여 예측값이 NA인 경우는 제외하고 척도를 계산하였다.</li>
+<li>모형을 적합한 결과 수치적인 문제로 인하여 예측값이 NA로 출력되는 경우가 발생함을 확인하였다. 변수에 대한 상관관계를 분석 시 외부CO2의 경우 다른 변수들과의 상관계수가 출력되지 않는다는 사실이 원인 중 하나라고 판단된다. 또한 이러한 상황은 작물이 있는 경우 내외부CO2차에 대한 예측모형으로서 다중회귀모형이 그다지 바람직한 모형은 아닐수도 있음을 보여주는 것으로 보여진다. 다만 선택한 모형을 평가하기 위하여 예측값이 NA인 경우는 제외하고 척도를 계산하였다.</li>
 </ul>
-<pre class="r"><code># 모든 주효과 및 교호작용을 포함한 모형
+<pre class="r"><code># model1 : 모든 주효과 및 교호작용을 포함한 모형
 m0 &lt;- lm(내외부CO2차~(외부기온+외부CO2+외부풍속+외부일사량+환기창면적)^2,data=ex1_train) 
 y_hat0 &lt;- predict(m0,ex1_test)
 RMSE0 &lt;- sqrt(mean((ex1_test$내외부CO2차-y_hat0)^2, na.rm=TRUE))
@@ -1181,8 +1200,8 @@ RMSE0 # test RMSE</code></pre>
 ## 39  9.7 14.329131  -4.6291314
 ## 45 11.8  6.647781   5.1522190
 ## 54 14.2 25.293343 -11.0933432</code></pre>
-<pre class="r"><code># 모든 주효과, 그리고 주요한 3개의 교호작용을 포함한 모형
-m0 &lt;- lm(내외부CO2차~외부기온+외부CO2+외부풍속+외부일사량+환기창면적+외부CO2*환기창면적+외부CO2*외부일사량+외부CO2*외부기온,data=ex1_train) 
+<pre class="r"><code># model2 : Adj R^2, Cp, BIC에 의하여 선택된 모형
+m0 &lt;- lm(내외부CO2차~외부기온+외부CO2+외부일사량+환기창면적+외부기온*외부CO2+외부기온*외부일사량+외부기온*환기창면적+외부CO2*외부일사량+외부CO2*환기창면적+외부풍속*환기창면적,data=ex1_train) 
 y_hat0 &lt;- predict(m0,ex1_test)
 RMSE1 &lt;- sqrt(mean((ex1_test$내외부CO2차-y_hat0)^2, na.rm=TRUE))
 SSE1 &lt;- sum((ex1_test$내외부CO2차-y_hat0)^2, na.rm=TRUE) 
@@ -1190,10 +1209,36 @@ SST1 &lt;- sum((ex1_test$내외부CO2차-mean(ex1_test$내외부CO2차))^2, na.r
 result1 &lt;- data.frame(ex1_test$내외부CO2차, y_hat0, ex1_test$내외부CO2차-y_hat0)
 colnames(result1) &lt;- c(&#39;y&#39;,&#39;yhat&#39;,&#39;y-yhat&#39;)
 RMSE1 # test RMSE</code></pre>
-<pre><code>## [1] 8.00608</code></pre>
+<pre><code>## [1] 8.138355</code></pre>
 <pre class="r"><code>SSE1/SST1 # SSE/SST</code></pre>
-<pre><code>## [1] 0.1731502</code></pre>
+<pre><code>## [1] 0.178919</code></pre>
 <pre class="r"><code>head(result1,12)</code></pre>
+<pre><code>##       y      yhat      y-yhat
+## 3   6.2 18.750175 -12.5501746
+## 5   5.8 17.067220 -11.2672203
+## 10  7.2 18.613039 -11.4130388
+## 12  4.5 16.919484 -12.4194838
+## 17  0.7 11.149943 -10.4499427
+## 20  7.0  8.180282  -1.1802819
+## 23  7.3  7.067522   0.2324784
+## 24  2.7 10.817785  -8.1177851
+## 33 12.7 18.376918  -5.6769184
+## 39  9.7 14.464317  -4.7643173
+## 45 11.8  8.161933   3.6380670
+## 54 14.2 27.071061 -12.8710612</code></pre>
+<pre class="r"><code># model3 : 모든 주효과, 그리고 중요한 3개의 교호작용을 포함한 모형
+m0 &lt;- lm(내외부CO2차~외부기온+외부CO2+외부풍속+외부일사량+환기창면적+외부CO2*환기창면적+외부CO2*외부일사량+외부CO2*외부기온,data=ex1_train) 
+y_hat0 &lt;- predict(m0,ex1_test)
+RMSE2 &lt;- sqrt(mean((ex1_test$내외부CO2차-y_hat0)^2, na.rm=TRUE))
+SSE2 &lt;- sum((ex1_test$내외부CO2차-y_hat0)^2, na.rm=TRUE) 
+SST2 &lt;- sum((ex1_test$내외부CO2차-mean(ex1_test$내외부CO2차))^2, na.rm=TRUE) 
+result2 &lt;- data.frame(ex1_test$내외부CO2차, y_hat0, ex1_test$내외부CO2차-y_hat0)
+colnames(result2) &lt;- c(&#39;y&#39;,&#39;yhat&#39;,&#39;y-yhat&#39;)
+RMSE2 # test RMSE</code></pre>
+<pre><code>## [1] 8.00608</code></pre>
+<pre class="r"><code>SSE2/SST2 # SSE/SST</code></pre>
+<pre><code>## [1] 0.1731502</code></pre>
+<pre class="r"><code>head(result2,12)</code></pre>
 <pre><code>##       y      yhat       y-yhat
 ## 3   6.2 20.220762 -14.02076215
 ## 5   5.8 18.364076 -12.56407603
@@ -1207,19 +1252,19 @@ RMSE1 # test RMSE</code></pre>
 ## 39  9.7 11.910385  -2.21038536
 ## 45 11.8  9.516143   2.28385701
 ## 54 14.2 27.035179 -12.83517893</code></pre>
-<pre class="r"><code># 모든 주효과, 그리고 외부CO2와 환기창면적과의 교호작용 1개만을 포함한 모형
+<pre class="r"><code># model4 : 모든 주효과, 그리고 외부CO2와 환기창면적과의 교호작용 1개만을 포함한 모형
 m0 &lt;- lm(내외부CO2차~외부기온+외부CO2+외부풍속+외부일사량+환기창면적+외부CO2*환기창면적,data=ex1_train) 
 y_hat0 &lt;- predict(m0,ex1_test)
-RMSE2 &lt;- sqrt(mean((ex1_test$내외부CO2차-y_hat0)^2, na.rm=TRUE))
-SSE2 &lt;- sum((ex1_test$내외부CO2차-y_hat0)^2, na.rm=TRUE) 
-SST2 &lt;- sum((ex1_test$내외부CO2차-mean(ex1_test$내외부CO2차))^2, na.rm=TRUE) 
-result2 &lt;- data.frame(ex1_test$내외부CO2차, y_hat0, ex1_test$내외부CO2차-y_hat0)
-colnames(result2) &lt;- c(&#39;y&#39;,&#39;yhat&#39;,&#39;y-yhat&#39;)
-RMSE2 # test RMSE</code></pre>
+RMSE3 &lt;- sqrt(mean((ex1_test$내외부CO2차-y_hat0)^2, na.rm=TRUE))
+SSE3 &lt;- sum((ex1_test$내외부CO2차-y_hat0)^2, na.rm=TRUE) 
+SST3 &lt;- sum((ex1_test$내외부CO2차-mean(ex1_test$내외부CO2차))^2, na.rm=TRUE) 
+result3 &lt;- data.frame(ex1_test$내외부CO2차, y_hat0, ex1_test$내외부CO2차-y_hat0)
+colnames(result3) &lt;- c(&#39;y&#39;,&#39;yhat&#39;,&#39;y-yhat&#39;)
+RMSE3 # test RMSE</code></pre>
 <pre><code>## [1] 8.35231</code></pre>
-<pre class="r"><code>SSE2/SST2 # SSE/SST</code></pre>
+<pre class="r"><code>SSE3/SST3 # SSE/SST</code></pre>
 <pre><code>## [1] 0.1884501</code></pre>
-<pre class="r"><code>head(result2,12)</code></pre>
+<pre class="r"><code>head(result3,12)</code></pre>
 <pre><code>##       y      yhat     y-yhat
 ## 3   6.2 25.217716 -19.017716
 ## 5   5.8 22.963993 -17.163993
@@ -1233,19 +1278,19 @@ RMSE2 # test RMSE</code></pre>
 ## 39  9.7 11.100314  -1.400314
 ## 45 11.8  6.269343   5.530657
 ## 54 14.2 40.046231 -25.846231</code></pre>
-<pre class="r"><code># 모든 주효과, 그리고 외부CO2와 외부일사량과의 교호작용 1개만을 포함한 모형
+<pre class="r"><code># model5 : 모든 주효과, 그리고 외부CO2와 외부일사량과의 교호작용 1개만을 포함한 모형
 m0 &lt;- lm(내외부CO2차~외부기온+외부CO2+외부풍속+외부일사량+환기창면적+외부CO2*외부일사량,data=ex1_train) 
 y_hat0 &lt;- predict(m0,ex1_test)
-RMSE3 &lt;- sqrt(mean((ex1_test$내외부CO2차-y_hat0)^2, na.rm=TRUE))
-SSE3 &lt;- sum((ex1_test$내외부CO2차-y_hat0)^2, na.rm=TRUE) 
-SST3 &lt;- sum((ex1_test$내외부CO2차-mean(ex1_test$내외부CO2차))^2, na.rm=TRUE) 
-result3 &lt;- data.frame(ex1_test$내외부CO2차, y_hat0, ex1_test$내외부CO2차-y_hat0)
-colnames(result3) &lt;- c(&#39;y&#39;,&#39;yhat&#39;,&#39;y-yhat&#39;)
-RMSE3 # test RMSE</code></pre>
+RMSE4 &lt;- sqrt(mean((ex1_test$내외부CO2차-y_hat0)^2, na.rm=TRUE))
+SSE4 &lt;- sum((ex1_test$내외부CO2차-y_hat0)^2, na.rm=TRUE) 
+SST4 &lt;- sum((ex1_test$내외부CO2차-mean(ex1_test$내외부CO2차))^2, na.rm=TRUE) 
+result4 &lt;- data.frame(ex1_test$내외부CO2차, y_hat0, ex1_test$내외부CO2차-y_hat0)
+colnames(result4) &lt;- c(&#39;y&#39;,&#39;yhat&#39;,&#39;y-yhat&#39;)
+RMSE4 # test RMSE</code></pre>
 <pre><code>## [1] 11.83282</code></pre>
-<pre class="r"><code>SSE3/SST3 # SSE/SST</code></pre>
+<pre class="r"><code>SSE4/SST4 # SSE/SST</code></pre>
 <pre><code>## [1] 0.3782332</code></pre>
-<pre class="r"><code>head(result3,12)</code></pre>
+<pre class="r"><code>head(result4,12)</code></pre>
 <pre><code>##       y      yhat     y-yhat
 ## 3   6.2 29.713132 -23.513132
 ## 5   5.8 28.034298 -22.234298
@@ -1259,19 +1304,19 @@ RMSE3 # test RMSE</code></pre>
 ## 39  9.7 13.775007  -4.075007
 ## 45 11.8  9.911909   1.888091
 ## 54 14.2 45.115592 -30.915592</code></pre>
-<pre class="r"><code># 모든 주효과, 그리고 외부CO2와 외부기온과의 교호작용 1개만을 포함한 모형
+<pre class="r"><code># model6 : 모든 주효과, 그리고 외부CO2와 외부기온과의 교호작용 1개만을 포함한 모형
 m0 &lt;- lm(내외부CO2차~외부기온+외부CO2+외부풍속+외부일사량+환기창면적+외부CO2*외부기온,data=ex1_train) 
 y_hat0 &lt;- predict(m0,ex1_test)
-RMSE4 &lt;- sqrt(mean((ex1_test$내외부CO2차-y_hat0)^2, na.rm=TRUE))
-SSE4 &lt;- sum((ex1_test$내외부CO2차-y_hat0)^2, na.rm=TRUE) 
-SST4 &lt;- sum((ex1_test$내외부CO2차-mean(ex1_test$내외부CO2차))^2, na.rm=TRUE) 
-result4 &lt;- data.frame(ex1_test$내외부CO2차, y_hat0, ex1_test$내외부CO2차-y_hat0)
-colnames(result4) &lt;- c(&#39;y&#39;,&#39;yhat&#39;,&#39;y-yhat&#39;)
-RMSE4 # test RMSE</code></pre>
+RMSE5 &lt;- sqrt(mean((ex1_test$내외부CO2차-y_hat0)^2, na.rm=TRUE))
+SSE5 &lt;- sum((ex1_test$내외부CO2차-y_hat0)^2, na.rm=TRUE) 
+SST5 &lt;- sum((ex1_test$내외부CO2차-mean(ex1_test$내외부CO2차))^2, na.rm=TRUE) 
+result5 &lt;- data.frame(ex1_test$내외부CO2차, y_hat0, ex1_test$내외부CO2차-y_hat0)
+colnames(result5) &lt;- c(&#39;y&#39;,&#39;yhat&#39;,&#39;y-yhat&#39;)
+RMSE5 # test RMSE</code></pre>
 <pre><code>## [1] 12.04868</code></pre>
-<pre class="r"><code>SSE4/SST4 # SSE/SST</code></pre>
+<pre class="r"><code>SSE5/SST5 # SSE/SST</code></pre>
 <pre><code>## [1] 0.3921589</code></pre>
-<pre class="r"><code>head(result4,12)</code></pre>
+<pre class="r"><code>head(result5,12)</code></pre>
 <pre><code>##       y      yhat      y-yhat
 ## 3   6.2 30.023830 -23.8238296
 ## 5   5.8 25.826113 -20.0261126
@@ -1286,33 +1331,73 @@ RMSE4 # test RMSE</code></pre>
 ## 45 11.8 11.003369   0.7966308
 ## 54 14.2 56.398787 -42.1987867</code></pre>
 <ul>
-<li>결과적으로 5가지 모형들 중 모든 주효과, 그리고 외부CO2와 환기창면적과의 교호작용 1개만을 포함한 모형이 가장 우수하였다.</li>
+<li><p>결과적으로 6가지 모형들 중 모든 주효과, 그리고 중요한 3개의 교호작용을 포함한 모형이 가장 우수하였다.</p></li>
+<li><p><code>:</code>표시는 교호작용을 의미함.</p></li>
+<li><p>model1 : 모든 주효과 및 교호작용을 포함한 모형</p>
+<ul>
+<li>반응변수 : 내외부CO2차</li>
+<li>설명변수 : 외부기온, 외부CO2, 외부풍속, 외부일사량, 환기창면적, 외부기온:외부CO2, 외부기온:외부풍속, 외부기온:외부일사량, 외부기온:환기창면적, 외부CO2:외부풍속, 외부CO2:외부일사량, 외부CO2:환기창면적, 외부풍속:외부일사량, 외부풍속:환기창면적, 외부일사량:환기창면적</li>
+<li>RMSE=9.0607, SSE/SST=0.2218</li>
+</ul></li>
+<li><p>model2 : Adj R^2, Cp, BIC에 의하여 선택된 모형</p>
+<ul>
+<li>반응변수 : 내외부CO2차</li>
+<li>설명변수 : 외부기온, 외부CO2, 외부일사량, 환기창면적, 외부기온:외부CO2, 외부기온:외부일사량, 외부기온:환기창면적, 외부CO2:외부일사량, 외부CO2:환기창면적, 외부풍속:환기창면적</li>
+<li>RMSE=8.1384, SSE/SST=0.1789</li>
+</ul></li>
+<li><p>model3 : 모든 주효과, 그리고 중요한 3개의 교호작용을 포함한 모형</p>
+<ul>
+<li>반응변수 : 내외부CO2차</li>
+<li>설명변수 : 외부기온, 외부CO2, 외부풍속, 외부일사량, 환기창면적, 외부CO2:환기창면적, 외부CO2:외부일사량, 외부CO2:외부기온</li>
+<li>RMSE=8.0061, SSE/SST=0.1732</li>
+</ul></li>
+<li><p>model4 : 모든 주효과, 그리고 외부CO2와 환기창면적과의 교호작용 1개만을 포함한 모형</p>
+<ul>
+<li>반응변수 : 내외부CO2차</li>
+<li>설명변수 : 외부기온, 외부CO2, 외부풍속, 외부일사량, 환기창면적, 외부CO2:환기창면적</li>
+<li>RMSE=8.3523, SSE/SST=0.1885</li>
+</ul></li>
+<li><p>model5 : 모든 주효과, 그리고 외부CO2와 외부일사량과의 교호작용 1개만을 포함한 모형</p>
+<ul>
+<li>반응변수 : 내외부CO2차</li>
+<li>설명변수 : 외부기온, 외부CO2, 외부풍속, 외부일사량, 환기창면적, 외부CO2:외부일사량</li>
+<li>RMSE=11.8328, SSE/SST=0.3782</li>
+</ul></li>
+<li><p>model6 : 모든 주효과, 그리고 외부CO2와 외부기온과의 교호작용 1개만을 포함한 모형</p>
+<ul>
+<li>반응변수 : 내외부CO2차</li>
+<li>설명변수 : 외부기온, 외부CO2, 외부풍속, 외부일사량, 환기창면적, 외부CO2:외부기온</li>
+<li>RMSE=12.0487, SSE/SST=0.3922</li>
+</ul></li>
 </ul>
-<pre class="r"><code>summary(lm(내외부CO2차~외부기온+외부CO2+외부풍속+외부일사량+환기창면적+외부CO2*환기창면적,data=plantyes))</code></pre>
+<pre class="r"><code>summary(lm(내외부CO2차~외부기온+외부CO2+외부풍속+외부일사량+환기창면적+외부CO2*환기창면적+외부CO2*외부일사량+외부CO2*외부기온,data=plantyes))</code></pre>
 <pre><code>## 
 ## Call:
 ## lm(formula = 내외부CO2차 ~ 외부기온 + 외부CO2 + 외부풍속 + 외부일사량 + 
-##     환기창면적 + 외부CO2 * 환기창면적, data = plantyes)
+##     환기창면적 + 외부CO2 * 환기창면적 + 외부CO2 * 외부일사량 + 
+##     외부CO2 * 외부기온, data = plantyes)
 ## 
 ## Residuals:
-##      Min       1Q   Median       3Q      Max 
-## -27.2742  -3.9635  -0.1532   4.1570  29.0576 
+##     Min      1Q  Median      3Q     Max 
+## -28.803  -4.003  -0.340   3.612  38.595 
 ## 
 ## Coefficients:
 ##                      Estimate Std. Error t value Pr(&gt;|t|)    
-## (Intercept)         5.880e+02  2.558e+01  22.990  &lt; 2e-16 ***
-## 외부기온            5.402e-01  1.081e-01   4.995 6.88e-07 ***
-## 외부CO2            -1.447e+00  5.950e-02 -24.322  &lt; 2e-16 ***
-## 외부풍속            2.577e+00  2.832e-01   9.098  &lt; 2e-16 ***
-## 외부일사량          4.369e-03  1.306e-03   3.346  0.00085 ***
-## 환기창면적         -5.259e+03  1.463e+02 -35.949  &lt; 2e-16 ***
-## 외부CO2:환기창면적  1.271e+01  3.530e-01  36.005  &lt; 2e-16 ***
+## (Intercept)         1.138e+02  4.626e+01   2.461  0.01403 *  
+## 외부기온            2.018e+01  1.580e+00  12.774  &lt; 2e-16 ***
+## 외부CO2            -3.042e-01  1.103e-01  -2.759  0.00589 ** 
+## 외부풍속            1.835e+00  2.711e-01   6.769 2.16e-11 ***
+## 외부일사량         -2.168e-01  1.823e-02 -11.896  &lt; 2e-16 ***
+## 환기창면적         -4.468e+03  1.461e+02 -30.577  &lt; 2e-16 ***
+## 외부CO2:환기창면적  1.081e+01  3.525e-01  30.666  &lt; 2e-16 ***
+## 외부CO2:외부일사량  5.375e-04  4.411e-05  12.185  &lt; 2e-16 ***
+## 외부기온:외부CO2   -4.744e-02  3.798e-03 -12.491  &lt; 2e-16 ***
 ## ---
 ## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
 ## 
-## Residual standard error: 8.177 on 1048 degrees of freedom
-## Multiple R-squared:  0.8417, Adjusted R-squared:  0.8408 
-## F-statistic: 929.1 on 6 and 1048 DF,  p-value: &lt; 2.2e-16</code></pre>
+## Residual standard error: 7.522 on 1046 degrees of freedom
+## Multiple R-squared:  0.8664, Adjusted R-squared:  0.8653 
+## F-statistic: 847.6 on 8 and 1046 DF,  p-value: &lt; 2.2e-16</code></pre>
 </div>
 </div>
 <div id="작물유무-데이터를-합친-경우" class="section level3">
@@ -1542,7 +1627,7 @@ ex1_test &lt;- plant[-train.index,]</code></pre>
 <ul>
 <li>작물이 있을때와 마찬가지로 모형을 적합한 결과 수치적인 문제로 인하여 예측값이 NA로 출력되는 경우가 발생함을 확인하였다. 이는 작물이 있는 경우 내외부CO2차에 대한 예측모형으로서 다중회귀모형이 그다지 바람직한 모형은 아닐수도 있음을 보여주는 것으로 보여진다. 다만 선택한 모형을 평가하기 위하여 예측값이 NA인 경우는 제외하고 척도를 계산하였다.</li>
 </ul>
-<pre class="r"><code># 최초로 고려한 모형
+<pre class="r"><code># model1 : 최초로 고려한 모형
 m0 &lt;- lm(내외부CO2차~외부기온+외부CO2+외부풍속+외부일사량+환기창면적+작물유무+외부CO2*환기창면적+외부CO2*외부일사량+외부CO2*외부기온+작물유무*외부기온+작물유무*외부CO2+작물유무*외부풍속+작물유무*외부일사량+작물유무*환기창면적,data=ex1_train)
 y_hat0 &lt;- predict(m0,ex1_test)
 RMSE0 &lt;- sqrt(mean((ex1_test$내외부CO2차-y_hat0)^2, na.rm=TRUE)) 
@@ -1568,7 +1653,7 @@ RMSE0 # test RMSE</code></pre>
 ## 48 74.5 57.43399  17.06601405
 ## 51 73.5 64.94569   8.55430821
 ## 57 77.0 69.21576   7.78423592</code></pre>
-<pre class="r"><code># Adj R^2, Cp, BIC 등의 기준을 바탕으로 선택된 모형 (교호작용이 있는 경우는 주효과 포함)
+<pre class="r"><code># model2 : Adj R^2, Cp, BIC 등의 기준을 바탕으로 선택된 모형 (교호작용이 있는 경우는 주효과 포함)
 m0 &lt;- lm(내외부CO2차~외부기온+외부CO2+외부일사량+환기창면적+작물유무+외부CO2*환기창면적+외부CO2*외부일사량+외부CO2*외부기온+작물유무*외부기온+작물유무*외부풍속+작물유무*외부일사량+작물유무*환기창면적,data=ex1_train)
 y_hat0 &lt;- predict(m0,ex1_test)
 RMSE1 &lt;- sqrt(mean((ex1_test$내외부CO2차-y_hat0)^2, na.rm=TRUE))
@@ -1594,7 +1679,7 @@ RMSE1 # test RMSE</code></pre>
 ## 48 74.5 57.73578  16.7642235
 ## 51 73.5 63.79698   9.7030189
 ## 57 77.0 68.10098   8.8990195</code></pre>
-<pre class="r"><code># 모든 주효과와 가장 중요한 교호작용 1가지(작물유무와 환기창면적)를 포함한 모형
+<pre class="r"><code># model3 : 모든 주효과와 가장 중요한 교호작용 1가지(작물유무와 환기창면적)를 포함한 모형
 m0 &lt;- lm(내외부CO2차~외부기온+외부CO2+외부풍속+외부일사량+환기창면적+작물유무+작물유무*환기창면적,data=ex1_train)
 y_hat0 &lt;- predict(m0,ex1_test)
 RMSE2 &lt;- sqrt(mean((ex1_test$내외부CO2차-y_hat0)^2, na.rm=TRUE))
@@ -1620,7 +1705,7 @@ RMSE2 # test RMSE</code></pre>
 ## 48 74.5 66.87067   7.629330
 ## 51 73.5 56.50849  16.991507
 ## 57 77.0 57.75982  19.240175</code></pre>
-<pre class="r"><code># 모든 주효과와 가장 중요한 교호작용 2가지(작물유무와 환기창면적, 외부CO2와 환기창면적)를 포함한 모형
+<pre class="r"><code># model4 : 모든 주효과와 가장 중요한 교호작용 2가지(작물유무와 환기창면적, 외부CO2와 환기창면적)를 포함한 모형
 m0 &lt;- lm(내외부CO2차~외부기온+외부CO2+외부풍속+외부일사량+환기창면적+작물유무+작물유무*환기창면적+외부CO2*환기창면적,data=ex1_train)
 y_hat0 &lt;- predict(m0,ex1_test)
 RMSE3 &lt;- sqrt(mean((ex1_test$내외부CO2차-y_hat0)^2, na.rm=TRUE))
@@ -1647,43 +1732,69 @@ RMSE3 # test RMSE</code></pre>
 ## 51 73.5 60.08508  13.4149205
 ## 57 77.0 64.51722  12.4827759</code></pre>
 <ul>
-<li>결과적으로 4가지 모형들 중 Adj R^2, Cp, BIC 등의 기준을 바탕으로 선택된 모형이 가장 우수하였다.</li>
+<li><p>결과적으로 최초로 고려한 모형이 가장 우수하였다.</p></li>
+<li><p><code>:</code>표시는 교호작용을 의미함.</p></li>
+<li><p>model1 : 최초로 고려한 모형</p>
+<ul>
+<li>반응변수 : 내외부CO2차</li>
+<li>설명변수 : 외부기온, 외부CO2, 외부풍속, 외부일사량, 환기창면적, 작물유무, 외부CO2:환기창면적, 외부CO2:외부일사량, 외부CO2:외부기온, 작물유무:외부기온, 작물유무:외부CO2, 작물유무:외부풍속, 작물유무:외부일사량, 작물유무:환기창면적</li>
+<li>RMSE=10.0389, SSE/SST=0.1493</li>
+</ul></li>
+<li><p>model2 : Adj R^2, Cp, BIC 등의 기준을 바탕으로 선택된 모형 (교호작용이 있는 경우는 주효과 포함)</p>
+<ul>
+<li>반응변수 : 내외부CO2차</li>
+<li>설명변수 : 외부기온, 외부CO2, 외부일사량, 환기창면적, 작물유무, 외부CO2:환기창면적, 외부CO2:외부일사량, 외부CO2:외부기온, 작물유무:외부기온, 작물유무:외부풍속, 작물유무:외부일사량, 작물유무:환기창면적</li>
+<li>RMSE=10.0456, SSE/SST=0.1495</li>
+</ul></li>
+<li><p>model3 : 모든 주효과와 가장 중요한 교호작용 1가지(작물유무와 환기창면적)를 포함한 모형</p>
+<ul>
+<li>반응변수 : 내외부CO2차</li>
+<li>설명변수 : 외부기온, 외부CO2, 외부풍속, 외부일사량, 환기창면적, 작물유무, 작물유무:환기창면적</li>
+<li>RMSE=13.0202, SSE/SST=0.2511</li>
+</ul></li>
+<li><p>model4 : 모든 주효과와 가장 중요한 교호작용 2가지(작물유무와 환기창면적, 외부CO2와 환기창면적)를 포함한 모형</p>
+<ul>
+<li>반응변수 : 내외부CO2차</li>
+<li>설명변수 : 외부기온, 외부CO2, 외부풍속, 외부일사량, 환기창면적, 작물유무, 작물유무:환기창면적, 외부CO2:환기창면적</li>
+<li>RMSE=10.4369, SSE/SST=0.1614</li>
+</ul></li>
 </ul>
-<pre class="r"><code>summary(lm(내외부CO2차~외부기온+외부CO2+외부일사량+환기창면적+작물유무+외부CO2*환기창면적+외부CO2*외부일사량+외부CO2*외부기온+작물유무*외부기온+작물유무*외부풍속+작물유무*외부일사량+작물유무*환기창면적,data=plant))</code></pre>
+<pre class="r"><code>summary(lm(내외부CO2차~외부기온+외부CO2+외부풍속+외부일사량+환기창면적+작물유무+외부CO2*환기창면적+외부CO2*외부일사량+외부CO2*외부기온+작물유무*외부기온+작물유무*외부CO2+작물유무*외부풍속+작물유무*외부일사량+작물유무*환기창면적,data=plant))</code></pre>
 <pre><code>## 
 ## Call:
-## lm(formula = 내외부CO2차 ~ 외부기온 + 외부CO2 + 외부일사량 + 
+## lm(formula = 내외부CO2차 ~ 외부기온 + 외부CO2 + 외부풍속 + 외부일사량 + 
 ##     환기창면적 + 작물유무 + 외부CO2 * 환기창면적 + 외부CO2 * 
 ##     외부일사량 + 외부CO2 * 외부기온 + 작물유무 * 외부기온 + 작물유무 * 
-##     외부풍속 + 작물유무 * 외부일사량 + 작물유무 * 환기창면적, 
-##     data = plant)
+##     외부CO2 + 작물유무 * 외부풍속 + 작물유무 * 외부일사량 + 작물유무 * 
+##     환기창면적, data = plant)
 ## 
 ## Residuals:
 ##     Min      1Q  Median      3Q     Max 
-## -58.095  -5.310  -0.255   5.304  38.782 
+## -58.509  -5.171  -0.065   5.232  38.808 
 ## 
 ## Coefficients:
 ##                          Estimate Std. Error t value Pr(&gt;|t|)    
-## (Intercept)             3.719e+02  6.319e+01   5.886 4.73e-09 ***
-## 외부기온                2.176e+01  2.494e+00   8.725  &lt; 2e-16 ***
-## 외부CO2                -5.714e-01  1.173e-01  -4.869 1.22e-06 ***
-## 외부일사량             -2.498e-01  2.915e-02  -8.570  &lt; 2e-16 ***
-## 환기창면적             -6.371e+03  1.745e+02 -36.516  &lt; 2e-16 ***
-## 작물유무yes            -1.454e+02  1.503e+01  -9.673  &lt; 2e-16 ***
-## 외부풍속               -1.067e+00  3.951e-01  -2.702  0.00697 ** 
-## 외부CO2:환기창면적      1.158e+01  3.292e-01  35.185  &lt; 2e-16 ***
-## 외부CO2:외부일사량      4.976e-04  5.505e-05   9.040  &lt; 2e-16 ***
-## 외부기온:외부CO2       -4.094e-02  4.662e-03  -8.783  &lt; 2e-16 ***
-## 외부기온:작물유무yes   -4.351e+00  6.020e-01  -7.228 7.27e-13 ***
-## 작물유무yes:외부풍속    2.947e+00  5.350e-01   5.509 4.14e-08 ***
-## 외부일사량:작물유무yes  4.976e-02  6.993e-03   7.116 1.61e-12 ***
-## 환기창면적:작물유무yes  1.582e+03  3.987e+01  39.687  &lt; 2e-16 ***
+## (Intercept)             3.686e+02  6.309e+01   5.842 6.12e-09 ***
+## 외부기온                2.319e+01  2.543e+00   9.118  &lt; 2e-16 ***
+## 외부CO2                -5.600e-01  1.172e-01  -4.778 1.92e-06 ***
+## 외부풍속               -1.573e+00  4.352e-01  -3.614  0.00031 ***
+## 외부일사량             -2.678e-01  2.982e-02  -8.980  &lt; 2e-16 ***
+## 환기창면적             -6.047e+03  2.103e+02 -28.749  &lt; 2e-16 ***
+## 작물유무yes            -2.093e+02  2.767e+01  -7.562 6.31e-14 ***
+## 외부CO2:환기창면적      1.097e+01  3.970e-01  27.634  &lt; 2e-16 ***
+## 외부CO2:외부일사량      5.320e-04  5.635e-05   9.441  &lt; 2e-16 ***
+## 외부기온:외부CO2       -4.376e-02  4.765e-03  -9.184  &lt; 2e-16 ***
+## 외부기온:작물유무yes   -4.546e+00  6.050e-01  -7.514 9.07e-14 ***
+## 외부CO2:작물유무yes     1.470e-01  5.348e-02   2.749  0.00604 ** 
+## 외부풍속:작물유무yes    3.479e+00  5.680e-01   6.125 1.11e-09 ***
+## 외부일사량:작물유무yes  5.317e-02  7.090e-03   7.500 1.00e-13 ***
+## 환기창면적:작물유무yes  1.511e+03  4.744e+01  31.856  &lt; 2e-16 ***
 ## ---
 ## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
 ## 
-## Residual standard error: 10.1 on 1776 degrees of freedom
-## Multiple R-squared:  0.8785, Adjusted R-squared:  0.8776 
-## F-statistic: 987.5 on 13 and 1776 DF,  p-value: &lt; 2.2e-16</code></pre>
+## Residual standard error: 10.08 on 1775 degrees of freedom
+## Multiple R-squared:  0.879,  Adjusted R-squared:  0.878 
+## F-statistic: 920.8 on 14 and 1775 DF,  p-value: &lt; 2.2e-16</code></pre>
 </div>
 </div>
 </div>
