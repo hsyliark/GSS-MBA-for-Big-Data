@@ -13,11 +13,11 @@ output: html_document
 - 작물있음 데이터에서 외부CO2의 값이 결측치인 경우는 제외하였음.
 
 ```{r}
-plantyes <- read.csv("C:/Users/stat/Desktop/작물있음.csv",sep=",",header=T)
+plantyes <- read.csv("C:/Users/HSY/Desktop/작물있음.csv",sep=",",header=T)
 plantyes <- plantyes[is.na(plantyes$외부CO2)==FALSE,]
 head(plantyes,10)
 plantyes$작물유무 <- as.factor(plantyes$작물유무)
-plantno <- read.csv("C:/Users/stat/Desktop/작물없음.csv",sep=",",header=T)
+plantno <- read.csv("C:/Users/HSY/Desktop/작물없음.csv",sep=",",header=T)
 head(plantno,10) 
 plantno$작물유무 <- as.factor(plantno$작물유무)
 plant <- rbind(plantno,plantyes)
@@ -90,6 +90,7 @@ SSE/SST # SSE/SST
 head(result,12)
 ```
 
+- RMSE=11.53383, SSE/SST=0.00000001470603
 - 적합결과 test RMSE와 SSE/SST의 값이 다중회귀모형과 비교했을 때 더 작은 값이므로 이 ANN 모형이 다중회귀모형보다 예측력이 좋다고 해석할 수 있다.
 
 #### 두번째 모형
@@ -119,6 +120,7 @@ SSE/SST # SSE/SST
 head(result,12)
 ```
 
+- RMSE=12.275, SSE/SST=0.00000001665679
 - 적합결과 test RMSE와 SSE/SST의 값이 다중회귀모형과 비교했을 때 더 작은 값이므로 이 ANN 모형이 다중회귀모형보다 예측력이 좋다고 해석할 수 있다. 첫번째 모형과 동일한 결과이다.
 
 
@@ -164,6 +166,7 @@ SSE/SST # SSE/SST
 head(result,12)
 ```
 
+- RMSE=4.069568, SSE/SST=0.000000008437932
 - 적합결과 test RMSE와 SSE/SST의 값이 다중회귀모형과 비교했을 때 더 작은 값이므로 이 ANN 모형이 다중회귀모형보다 예측력이 좋다고 해석할 수 있다. 
 
 #### 두번째 모형
@@ -193,6 +196,7 @@ SSE/SST # SSE/SST
 head(result,12)
 ```
 
+- RMSE=3.317978, SSE/SST=0.000000005609013
 - 적합결과 test RMSE와 SSE/SST의 값이 다중회귀모형과 비교했을 때 더 작은 값이므로 이 ANN 모형이 다중회귀모형보다 예측력이 좋다고 해석할 수 있다. 첫번째 모형과 동일한 결과이다. 
 
 
