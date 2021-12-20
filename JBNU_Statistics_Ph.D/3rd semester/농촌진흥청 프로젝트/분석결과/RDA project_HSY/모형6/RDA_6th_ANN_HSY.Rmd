@@ -90,6 +90,8 @@ SSE/SST # SSE/SST
 head(result,12)
 ```
 
+![](모형6 ANN 작물없음 첫번째 모형.png)
+
 - RMSE=11.69821, SSE/SST=0.0000000151282
 - 적합결과 test RMSE와 SSE/SST의 값이 다중회귀모형과 비교했을 때 더 작은 값이므로 이 ANN 모형이 다중회귀모형보다 예측력이 좋다고 해석할 수 있다.
 
@@ -119,6 +121,8 @@ RMSE # test RMSE
 SSE/SST # SSE/SST
 head(result,12)
 ```
+
+![](모형6 ANN 작물없음 두번째 모형.png)
 
 - RMSE=11.71952, SSE/SST=0.00000001518337
 - 적합결과 test RMSE와 SSE/SST의 값이 다중회귀모형과 비교했을 때 더 작은 값이므로 이 ANN 모형이 다중회귀모형보다 예측력이 좋다고 해석할 수 있다. 첫번째 모형과 동일한 결과이다.
@@ -166,6 +170,8 @@ SSE/SST # SSE/SST
 head(result,12)
 ```
 
+![](모형6 ANN 작물있음 첫번째 모형.png)
+
 - RMSE=4.140058, SSE/SST=0.000000008732776
 - 적합결과 test RMSE와 SSE/SST의 값이 다중회귀모형과 비교했을 때 더 작은 값이므로 이 ANN 모형이 다중회귀모형보다 예측력이 좋다고 해석할 수 있다. 
 
@@ -195,6 +201,8 @@ RMSE # test RMSE
 SSE/SST # SSE/SST
 head(result,12)
 ```
+
+![](모형6 ANN 작물있음 두번째 모형.png)
 
 - RMSE=4.434662, SSE/SST=0.00000001001983
 - 적합결과 test RMSE와 SSE/SST의 값이 다중회귀모형과 비교했을 때 더 작은 값이므로 이 ANN 모형이 다중회귀모형보다 예측력이 좋다고 해석할 수 있다. 첫번째 모형과 동일한 결과이다. 
