@@ -292,7 +292,7 @@ library(NeuralNetTools)</code></pre>
 <div id="첫번째-모형" class="section level4">
 <h4>첫번째 모형</h4>
 <ul>
-<li>첫번째로 고려한 적합모형은 hidden layer 3개, 각 layer에 대한 node 10개인 모형이다.</li>
+<li>첫번째로 고려한 적합모형은 hidden layer 1개, 각 layer에 대한 node 6개인 모형이다.</li>
 <li>activation function은 <code>logistic</code>으로 설정하였다.</li>
 </ul>
 <pre class="r"><code>set.seed(5790)
@@ -300,7 +300,7 @@ train.index &lt;- sample(1:nrow(plantno_scale), round(nrow(plantno_scale)*7/10),
 ex1_train &lt;-as.data.frame(plantno_scale[train.index,])
 ex1_test &lt;- as.data.frame(plantno_scale[-train.index,])
 set.seed(1234)
-ann1 &lt;- neuralnet(내외부기온차~외부기온+외부풍속+외부일사량+환기창면적, data=ex1_train, hidden=rep(10,3), threshold = 0.01, stepmax = 1e+08, act.fct=&#39;logistic&#39;)
+ann1 &lt;- neuralnet(내외부기온차~외부기온+외부풍속+외부일사량+환기창면적, data=ex1_train, hidden=rep(6,1), threshold = 0.01, stepmax = 1e+08, act.fct=&#39;logistic&#39;)
 summary(ann1)</code></pre>
 <pre><code>##                     Length Class      Mode    
 ## call                   7   -none-     call    
@@ -316,7 +316,7 @@ summary(ann1)</code></pre>
 ## weights                1   -none-     list    
 ## generalized.weights    1   -none-     list    
 ## startweights           1   -none-     list    
-## result.matrix        284   -none-     numeric</code></pre>
+## result.matrix         40   -none-     numeric</code></pre>
 <pre class="r"><code># plot(ann1)
 y &lt;- (ex1_test$내외부기온차)*(max(plantno$내외부기온차)-min(plantno$내외부기온차))+min(plantno$내외부기온차)
 y_hat_ann1 &lt;- (compute(ann1, ex1_test)$net.result)*(max(plantno$내외부기온차)-min(plantno$내외부기온차))+min(plantno$내외부기온차)
@@ -327,32 +327,32 @@ SST &lt;- sum((y-y_bar)^2)
 result &lt;- data.frame(y, y_hat_ann1, y-y_hat_ann1)
 colnames(result) &lt;- c(&#39;y&#39;,&#39;yhat&#39;,&#39;y-yhat&#39;)
 RMSE # test RMSE</code></pre>
-<pre><code>## [1] 0.7802675</code></pre>
+<pre><code>## [1] 0.8414093</code></pre>
 <pre class="r"><code>SSE/SST # SSE/SST</code></pre>
-<pre><code>## [1] 1.750339e-05</code></pre>
+<pre><code>## [1] 2.035401e-05</code></pre>
 <pre class="r"><code>head(result,12)</code></pre>
 <pre><code>##       y     yhat      y-yhat
-## 3  11.5 11.45212  0.04787601
-## 5  12.7 12.94453 -0.24453230
-## 7  13.7 13.67465  0.02535040
-## 10 14.3 14.70830 -0.40829889
-## 12 15.5 15.36265  0.13734746
-## 17 16.2 16.78320 -0.58319505
-## 20 17.2 17.86791 -0.66791417
-## 24 18.3 17.80615  0.49384795
-## 33 15.6 14.89669  0.70330974
-## 51 10.4 10.68155 -0.28155221
-## 60 17.5 17.68114 -0.18114167
-## 62 19.0 18.16976  0.83024352</code></pre>
+## 3  11.5 12.06826 -0.56825534
+## 5  12.7 11.80487  0.89512857
+## 7  13.7 12.80152  0.89848055
+## 10 14.3 14.35116 -0.05116241
+## 12 15.5 15.95667 -0.45666839
+## 17 16.2 17.19836 -0.99836003
+## 20 17.2 17.75183 -0.55182723
+## 24 18.3 17.85466  0.44534207
+## 33 15.6 15.05597  0.54402683
+## 51 10.4 11.26492 -0.86492029
+## 60 17.5 17.63096 -0.13095607
+## 62 19.0 18.63321  0.36678614</code></pre>
 <ul>
-<li>RMSE=0.7802675, SSE/SST=0.00001750339</li>
+<li>RMSE=0.8414093, SSE/SST=0.00002035401</li>
 <li>적합결과 test RMSE와 SSE/SST의 값이 다중회귀모형과 비교했을 때 더 작은 값이므로 이 ANN 모형이 다중회귀모형보다 예측력이 좋다고 해석할 수 있다.</li>
 </ul>
 </div>
 <div id="두번째-모형" class="section level4">
 <h4>두번째 모형</h4>
 <ul>
-<li>두번째로 고려한 적합모형은 hidden layer 5개, 각 layer에 대한 node 7개인 모형이다.</li>
+<li>두번째로 고려한 적합모형은 hidden layer 2개, 각 layer에 대한 node 7개인 모형이다.</li>
 <li>activation function은 <code>logistic</code>으로 설정하였다.</li>
 </ul>
 <pre class="r"><code>set.seed(5790)
@@ -360,7 +360,7 @@ train.index &lt;- sample(1:nrow(plantno_scale), round(nrow(plantno_scale)*7/10),
 ex1_train &lt;-as.data.frame(plantno_scale[train.index,])
 ex1_test &lt;- as.data.frame(plantno_scale[-train.index,])
 set.seed(1234)
-ann1 &lt;- neuralnet(내외부기온차~외부기온+외부풍속+외부일사량+환기창면적, data=ex1_train, hidden=rep(7,5), threshold = 0.01, stepmax = 1e+08, act.fct=&#39;logistic&#39;)
+ann1 &lt;- neuralnet(내외부기온차~외부기온+외부풍속+외부일사량+환기창면적, data=ex1_train, hidden=rep(7,2), threshold = 0.01, stepmax = 1e+08, act.fct=&#39;logistic&#39;)
 summary(ann1)</code></pre>
 <pre><code>##                     Length Class      Mode    
 ## call                   7   -none-     call    
@@ -376,7 +376,7 @@ summary(ann1)</code></pre>
 ## weights                1   -none-     list    
 ## generalized.weights    1   -none-     list    
 ## startweights           1   -none-     list    
-## result.matrix        270   -none-     numeric</code></pre>
+## result.matrix        102   -none-     numeric</code></pre>
 <pre class="r"><code># plot(ann1)
 y &lt;- (ex1_test$내외부기온차)*(max(plantno$내외부기온차)-min(plantno$내외부기온차))+min(plantno$내외부기온차)
 y_hat_ann1 &lt;- (compute(ann1, ex1_test)$net.result)*(max(plantno$내외부기온차)-min(plantno$내외부기온차))+min(plantno$내외부기온차)
@@ -387,25 +387,25 @@ SST &lt;- sum((y-y_bar)^2)
 result &lt;- data.frame(y, y_hat_ann1, y-y_hat_ann1)
 colnames(result) &lt;- c(&#39;y&#39;,&#39;yhat&#39;,&#39;y-yhat&#39;)
 RMSE # test RMSE</code></pre>
-<pre><code>## [1] 0.771152</code></pre>
+<pre><code>## [1] 0.7938016</code></pre>
 <pre class="r"><code>SSE/SST # SSE/SST</code></pre>
-<pre><code>## [1] 1.709682e-05</code></pre>
+<pre><code>## [1] 1.811587e-05</code></pre>
 <pre class="r"><code>head(result,12)</code></pre>
-<pre><code>##       y     yhat        y-yhat
-## 3  11.5 11.81254 -0.3125376410
-## 5  12.7 12.69939  0.0006126697
-## 7  13.7 13.62501  0.0749930337
-## 10 14.3 15.04345 -0.7434505079
-## 12 15.5 15.83228 -0.3322770591
-## 17 16.2 16.80693 -0.6069344003
-## 20 17.2 17.30455 -0.1045476070
-## 24 18.3 17.36442  0.9355758089
-## 33 15.6 15.06222  0.5377799267
-## 51 10.4 10.81307 -0.4130722707
-## 60 17.5 17.52136 -0.0213629410
-## 62 19.0 18.16615  0.8338505297</code></pre>
+<pre><code>##       y     yhat     y-yhat
+## 3  11.5 12.26712 -0.7671216
+## 5  12.7 12.48440  0.2155988
+## 7  13.7 13.56064  0.1393610
+## 10 14.3 15.22466 -0.9246648
+## 12 15.5 15.96083 -0.4608304
+## 17 16.2 16.94925 -0.7492484
+## 20 17.2 17.33518 -0.1351751
+## 24 18.3 17.29402  1.0059816
+## 33 15.6 14.97886  0.6211428
+## 51 10.4 11.20238 -0.8023813
+## 60 17.5 17.33933  0.1606651
+## 62 19.0 17.91000  1.0900021</code></pre>
 <ul>
-<li>RMSE=0.771152, SSE/SST=0.00001709682</li>
+<li>RMSE=0.7938016, SSE/SST=0.00001811587</li>
 <li>적합결과 test RMSE와 SSE/SST의 값이 다중회귀모형과 비교했을 때 더 작은 값이므로 이 ANN 모형이 다중회귀모형보다 예측력이 좋다고 해석할 수 있다. 첫번째 모형과 동일한 결과이다.</li>
 </ul>
 </div>
@@ -423,7 +423,7 @@ RMSE # test RMSE</code></pre>
 <div id="첫번째-모형-1" class="section level4">
 <h4>첫번째 모형</h4>
 <ul>
-<li>첫번째로 고려한 적합모형은 hidden layer 2개, 각 layer에 대한 node 6개인 모형이다.</li>
+<li>첫번째로 고려한 적합모형은 hidden layer 1개, 각 layer에 대한 node 6개인 모형이다.</li>
 <li>activation function은 <code>logistic</code>으로 설정하였다.</li>
 </ul>
 <pre class="r"><code>set.seed(5790)
@@ -431,7 +431,7 @@ train.index &lt;- sample(1:nrow(plantyes_scale), round(nrow(plantyes_scale)*7/10
 ex1_train &lt;- as.data.frame(plantyes_scale[train.index,])
 ex1_test &lt;- as.data.frame(plantyes_scale[-train.index,])
 set.seed(1234)
-ann1 &lt;- neuralnet(내외부기온차~외부기온+외부풍속+외부일사량+환기창면적, data=ex1_train, hidden=rep(6,2), threshold = 0.01, stepmax = 1e+08)
+ann1 &lt;- neuralnet(내외부기온차~외부기온+외부풍속+외부일사량+환기창면적, data=ex1_train, hidden=rep(6,1), threshold = 0.01, stepmax = 1e+08)
 summary(ann1)</code></pre>
 <pre><code>##                     Length Class      Mode    
 ## call                   6   -none-     call    
@@ -447,7 +447,7 @@ summary(ann1)</code></pre>
 ## weights                1   -none-     list    
 ## generalized.weights    1   -none-     list    
 ## startweights           1   -none-     list    
-## result.matrix         82   -none-     numeric</code></pre>
+## result.matrix         40   -none-     numeric</code></pre>
 <pre class="r"><code># plot(ann1)
 y &lt;- (ex1_test$내외부기온차)*(max(plantyes$내외부기온차)-min(plantyes$내외부기온차))+min(plantyes$내외부기온차)
 y_hat_ann1 &lt;- (compute(ann1, ex1_test)$net.result)*(max(plantyes$내외부기온차)-min(plantyes$내외부기온차))+min(plantyes$내외부기온차)
@@ -458,32 +458,32 @@ SST &lt;- sum((y-y_bar)^2)
 result &lt;- data.frame(y, y_hat_ann1, y-y_hat_ann1)
 colnames(result) &lt;- c(&#39;y&#39;,&#39;yhat&#39;,&#39;y-yhat&#39;)
 RMSE # test RMSE</code></pre>
-<pre><code>## [1] 1.089788</code></pre>
+<pre><code>## [1] 1.248356</code></pre>
 <pre class="r"><code>SSE/SST # SSE/SST</code></pre>
-<pre><code>## [1] 6.212187e-05</code></pre>
+<pre><code>## [1] 8.151495e-05</code></pre>
 <pre class="r"><code>head(result,12)</code></pre>
-<pre><code>##       y      yhat      y-yhat
-## 3   6.4  5.499727  0.90027349
-## 5   6.0  6.439778 -0.43977765
-## 10  9.1 10.716770 -1.61676994
-## 12 11.1 11.055274  0.04472646
-## 17  9.1  9.542166 -0.44216622
-## 20  9.5  9.136945  0.36305460
-## 23  8.7  8.270487  0.42951304
-## 24  9.3 10.384584 -1.08458437
-## 33 13.0 12.372096  0.62790417
-## 39 11.0 11.340969 -0.34096907
-## 45  6.2  5.557771  0.64222926
-## 54  1.0  1.148659 -0.14865871</code></pre>
+<pre><code>##       y      yhat     y-yhat
+## 3   6.4  6.241275  0.1587253
+## 5   6.0  6.766946 -0.7669456
+## 10  9.1 10.227193 -1.1271934
+## 12 11.1 10.845913  0.2540866
+## 17  9.1  8.947977  0.1520231
+## 20  9.5  9.612109 -0.1121089
+## 23  8.7  8.006128  0.6938719
+## 24  9.3  9.066942  0.2330581
+## 33 13.0 11.949755  1.0502447
+## 39 11.0  9.771421  1.2285790
+## 45  6.2  4.536128  1.6638717
+## 54  1.0  1.506533 -0.5065328</code></pre>
 <ul>
-<li>RMSE=1.089788, SSE/SST=0.00006212187</li>
+<li>RMSE=1.248356, SSE/SST=0.00008151495</li>
 <li>적합결과 test RMSE와 SSE/SST의 값이 다중회귀모형과 비교했을 때 더 작은 값이므로 이 ANN 모형이 다중회귀모형보다 예측력이 좋다고 해석할 수 있다.</li>
 </ul>
 </div>
 <div id="두번째-모형-1" class="section level4">
 <h4>두번째 모형</h4>
 <ul>
-<li>두번째로 고려한 적합모형은 hidden layer 5개, 각 layer에 대한 node 5개인 모형이다.</li>
+<li>두번째로 고려한 적합모형은 hidden layer 2개, 각 layer에 대한 node 7개인 모형이다.</li>
 <li>activation function은 <code>logistic</code>으로 설정하였다.</li>
 </ul>
 <pre class="r"><code>set.seed(5790)
@@ -491,7 +491,7 @@ train.index &lt;- sample(1:nrow(plantyes_scale), round(nrow(plantyes_scale)*7/10
 ex1_train &lt;- as.data.frame(plantyes_scale[train.index,])
 ex1_test &lt;- as.data.frame(plantyes_scale[-train.index,])
 set.seed(1234)
-ann1 &lt;- neuralnet(내외부기온차~외부기온+외부풍속+외부일사량+환기창면적, data=ex1_train, hidden=rep(5,5), threshold = 0.01, stepmax = 1e+08)
+ann1 &lt;- neuralnet(내외부기온차~외부기온+외부풍속+외부일사량+환기창면적, data=ex1_train, hidden=rep(7,2), threshold = 0.01, stepmax = 1e+08)
 summary(ann1)</code></pre>
 <pre><code>##                     Length Class      Mode    
 ## call                   6   -none-     call    
@@ -507,7 +507,7 @@ summary(ann1)</code></pre>
 ## weights                1   -none-     list    
 ## generalized.weights    1   -none-     list    
 ## startweights           1   -none-     list    
-## result.matrix        154   -none-     numeric</code></pre>
+## result.matrix        102   -none-     numeric</code></pre>
 <pre class="r"><code># plot(ann1)
 y &lt;- (ex1_test$내외부기온차)*(max(plantyes$내외부기온차)-min(plantyes$내외부기온차))+min(plantyes$내외부기온차)
 y_hat_ann1 &lt;- (compute(ann1, ex1_test)$net.result)*(max(plantyes$내외부기온차)-min(plantyes$내외부기온차))+min(plantyes$내외부기온차)
@@ -518,25 +518,25 @@ SST &lt;- sum((y-y_bar)^2)
 result &lt;- data.frame(y, y_hat_ann1, y-y_hat_ann1)
 colnames(result) &lt;- c(&#39;y&#39;,&#39;yhat&#39;,&#39;y-yhat&#39;)
 RMSE # test RMSE</code></pre>
-<pre><code>## [1] 1.183795</code></pre>
+<pre><code>## [1] 1.056562</code></pre>
 <pre class="r"><code>SSE/SST # SSE/SST</code></pre>
-<pre><code>## [1] 7.330155e-05</code></pre>
+<pre><code>## [1] 5.839159e-05</code></pre>
 <pre class="r"><code>head(result,12)</code></pre>
-<pre><code>##       y      yhat      y-yhat
-## 3   6.4  6.122159  0.27784053
-## 5   6.0  7.150128 -1.15012766
-## 10  9.1 10.558356 -1.45835559
-## 12 11.1 10.942929  0.15707133
-## 17  9.1  9.456323 -0.35632255
-## 20  9.5  9.557385 -0.05738514
-## 23  8.7  7.887969  0.81203065
-## 24  9.3  9.684050 -0.38404980
-## 33 13.0 11.962648  1.03735216
-## 39 11.0 10.157434  0.84256565
-## 45  6.2  4.645183  1.55481712
-## 54  1.0  1.298135 -0.29813548</code></pre>
+<pre><code>##       y       yhat      y-yhat
+## 3   6.4  5.4594928  0.94050723
+## 5   6.0  6.7131352 -0.71313524
+## 10  9.1  9.9548257 -0.85482567
+## 12 11.1 10.2698648  0.83013525
+## 17  9.1  9.0732829  0.02671706
+## 20  9.5  9.6047854 -0.10478537
+## 23  8.7  8.8568404 -0.15684041
+## 24  9.3  9.9786150 -0.67861503
+## 33 13.0 12.8699693  0.13003073
+## 39 11.0 11.1530321 -0.15303213
+## 45  6.2  5.3013079  0.89869211
+## 54  1.0  0.9121953  0.08780469</code></pre>
 <ul>
-<li>RMSE=1.183795, SSE/SST=0.00007330155</li>
+<li>RMSE=1.056562, SSE/SST=0.00005839159</li>
 <li>적합결과 test RMSE와 SSE/SST의 값이 다중회귀모형과 비교했을 때 더 작은 값이므로 이 ANN 모형이 다중회귀모형보다 예측력이 좋다고 해석할 수 있다. 첫번째 모형과 동일한 결과이다.</li>
 </ul>
 </div>

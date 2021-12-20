@@ -62,7 +62,7 @@ plantno_scale <- transform(plantno[,c(12,1,10,11,13)],
 
 #### 첫번째 모형
 
-- 첫번째로 고려한 적합모형은 hidden layer 3개, 각 layer에 대한 node 10개인 모형이다.
+- 첫번째로 고려한 적합모형은 hidden layer 1개, 각 layer에 대한 node 5개인 모형이다.
 - activation function은 `logistic`으로 설정하였다.
 
 ```{r}
@@ -71,7 +71,7 @@ train.index <- sample(1:nrow(plantno_scale), round(nrow(plantno_scale)*7/10), re
 ex1_train <-as.data.frame(plantno_scale[train.index,])
 ex1_test <- as.data.frame(plantno_scale[-train.index,])
 set.seed(1234)
-ann1 <- neuralnet(환기율~외부기온+외부풍속+외부일사량+환기창면적, data=ex1_train, hidden=rep(10,3), threshold = 0.01, stepmax = 1e+08, act.fct='logistic')
+ann1 <- neuralnet(환기율~외부기온+외부풍속+외부일사량+환기창면적, data=ex1_train, hidden=rep(5,1), threshold = 0.01, stepmax = 1e+08, act.fct='logistic')
 summary(ann1)
 # plot(ann1)
 y <- (ex1_test$환기율)*(max(plantno$환기율)-min(plantno$환기율))+min(plantno$환기율)
@@ -87,12 +87,12 @@ SSE/SST # SSE/SST
 head(result,12)
 ```
 
-- RMSE=0.05447467, SSE/SST=0.00001084696
+- RMSE=0.06305906, SSE/SST=0.00001453496
 - 적합결과 test RMSE와 SSE/SST의 값이 다중회귀모형과 비교했을 때 더 작은 값이므로 이 ANN 모형이 다중회귀모형보다 예측력이 좋다고 해석할 수 있다.
 
 #### 두번째 모형
 
-- 두번째로 고려한 적합모형은 hidden layer 5개, 각 layer에 대한 node 7개인 모형이다.
+- 두번째로 고려한 적합모형은 hidden layer 2개, 각 layer에 대한 node 3개인 모형이다.
 - activation function은 `logistic`으로 설정하였다.
 
 ```{r}
@@ -101,7 +101,7 @@ train.index <- sample(1:nrow(plantno_scale), round(nrow(plantno_scale)*7/10), re
 ex1_train <-as.data.frame(plantno_scale[train.index,])
 ex1_test <- as.data.frame(plantno_scale[-train.index,])
 set.seed(1234)
-ann1 <- neuralnet(환기율~외부기온+외부풍속+외부일사량+환기창면적, data=ex1_train, hidden=rep(7,5), threshold = 0.01, stepmax = 1e+08, act.fct='logistic')
+ann1 <- neuralnet(환기율~외부기온+외부풍속+외부일사량+환기창면적, data=ex1_train, hidden=rep(3,2), threshold = 0.01, stepmax = 1e+08, act.fct='logistic')
 summary(ann1)
 # plot(ann1)
 y <- (ex1_test$환기율)*(max(plantno$환기율)-min(plantno$환기율))+min(plantno$환기율)
@@ -117,7 +117,7 @@ SSE/SST # SSE/SST
 head(result,12)
 ```
 
-- RMSE=0.05925576, SSE/SST=0.00001283453
+- RMSE=0.05678333, SSE/SST=0.00001178584
 - 적합결과 test RMSE와 SSE/SST의 값이 다중회귀모형과 비교했을 때 더 작은 값이므로 이 ANN 모형이 다중회귀모형보다 예측력이 좋다고 해석할 수 있다. 첫번째 모형과 동일한 결과이다.
 
 
@@ -136,7 +136,7 @@ plantyes_scale <- transform(plantyes[,c(12,1,10,11,13)],                        
 
 #### 첫번째 모형
 
-- 첫번째로 고려한 적합모형은 hidden layer 2개, 각 layer에 대한 node 6개인 모형이다.
+- 첫번째로 고려한 적합모형은 hidden layer 1개, 각 layer에 대한 node 5개인 모형이다.
 - activation function은 `logistic`으로 설정하였다.
 
 ```{r}
@@ -145,7 +145,7 @@ train.index <- sample(1:nrow(plantyes_scale), round(nrow(plantyes_scale)*7/10), 
 ex1_train <- as.data.frame(plantyes_scale[train.index,])
 ex1_test <- as.data.frame(plantyes_scale[-train.index,])
 set.seed(1234)
-ann1 <- neuralnet(환기율~외부기온+외부풍속+외부일사량+환기창면적, data=ex1_train, hidden=rep(6,2), threshold = 0.01, stepmax = 1e+08)
+ann1 <- neuralnet(환기율~외부기온+외부풍속+외부일사량+환기창면적, data=ex1_train, hidden=rep(5,1), threshold = 0.01, stepmax = 1e+08)
 summary(ann1)
 # plot(ann1)
 y <- (ex1_test$환기율)*(max(plantyes$환기율)-min(plantyes$환기율))+min(plantyes$환기율)
@@ -161,12 +161,12 @@ SSE/SST # SSE/SST
 head(result,12)
 ```
 
-- RMSE=0.3000035, SSE/SST=0.00001009733
+- RMSE=0.2384669, SSE/SST=0.00000637985
 - 적합결과 test RMSE와 SSE/SST의 값이 다중회귀모형과 비교했을 때 거의 비슷하지만 더 작음을 확인할 수 있다. 이에 따라 일반적으로 ANN 모형이 다중회귀모형보다 예측력이 좋다고 해석할 수 있다. 
 
 #### 두번째 모형
 
-- 두번째로 고려한 적합모형은 hidden layer 5개, 각 layer에 대한 node 5개인 모형이다.
+- 두번째로 고려한 적합모형은 hidden layer 2개, 각 layer에 대한 node 3개인 모형이다.
 - activation function은 `logistic`으로 설정하였다.
 
 ```{r}
@@ -175,7 +175,7 @@ train.index <- sample(1:nrow(plantyes_scale), round(nrow(plantyes_scale)*7/10), 
 ex1_train <- as.data.frame(plantyes_scale[train.index,])
 ex1_test <- as.data.frame(plantyes_scale[-train.index,])
 set.seed(1234)
-ann1 <- neuralnet(환기율~외부기온+외부풍속+외부일사량+환기창면적, data=ex1_train, hidden=rep(5,5), threshold = 0.01, stepmax = 1e+08)
+ann1 <- neuralnet(환기율~외부기온+외부풍속+외부일사량+환기창면적, data=ex1_train, hidden=rep(3,2), threshold = 0.01, stepmax = 1e+08)
 summary(ann1)
 # plot(ann1)
 y <- (ex1_test$환기율)*(max(plantyes$환기율)-min(plantyes$환기율))+min(plantyes$환기율)
@@ -191,6 +191,6 @@ SSE/SST # SSE/SST
 head(result,12)
 ```
 
-- RMSE=0.3200161, SSE/SST=0.00001148941
+- RMSE=0.2593626, SSE/SST=0.000007546905
 - 적합결과 test RMSE와 SSE/SST의 값이 다중회귀모형과 비교했을 때 약간 크지만 거의 비슷하다는 것을 확인할 수 있다. 이에 따라 일반적으로 ANN 모형이 다중회귀모형보다 예측력이 좋다고 해석할 수 있다.
   

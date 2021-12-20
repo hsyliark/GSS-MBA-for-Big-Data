@@ -65,7 +65,7 @@ plantno_scale <- transform(plantno[,c(6,1,4,10,11,13)],
 
 #### 첫번째 모형
 
-- 첫번째로 고려한 적합모형은 hidden layer 2개, 각 layer에 대한 node 10개인 모형이다.
+- 첫번째로 고려한 적합모형은 hidden layer 1개, 각 layer에 대한 node 6개인 모형이다.
 - activation function은 `logistic`으로 설정하였다.
 
 ```{r}
@@ -74,7 +74,7 @@ train.index <- sample(1:nrow(plantno_scale), round(nrow(plantno_scale)*7/10), re
 ex1_train <-as.data.frame(plantno_scale[train.index,])
 ex1_test <- as.data.frame(plantno_scale[-train.index,])
 set.seed(1234)
-ann1 <- neuralnet(내외부상대습도차~외부기온+외부상대습도+외부풍속+외부일사량+환기창면적, data=ex1_train, hidden=rep(10,2), threshold = 0.01, stepmax = 1e+08, act.fct='logistic')
+ann1 <- neuralnet(내외부상대습도차~외부기온+외부상대습도+외부풍속+외부일사량+환기창면적, data=ex1_train, hidden=rep(6,1), threshold = 0.01, stepmax = 1e+08, act.fct='logistic')
 summary(ann1)
 # plot(ann1)
 y <- (ex1_test$내외부상대습도차)*(max(plantno$내외부상대습도차)-min(plantno$내외부상대습도차))+min(plantno$내외부상대습도차)
@@ -90,12 +90,12 @@ SSE/SST # SSE/SST
 head(result,12)
 ```
 
-- RMSE=0.9681898, SSE/SST=0.00001461461
+- RMSE=1.113862, SSE/SST=0.00001934321
 - 적합결과 test RMSE와 SSE/SST의 값이 다중회귀모형과 비교했을 때 더 작은 값이므로 이 ANN 모형이 다중회귀모형보다 예측력이 좋다고 해석할 수 있다. 
 
 #### 두번째 모형
 
-- 두번째로 고려한 적합모형은 hidden layer 6개, 각 layer에 대한 node 4개인 모형이다.
+- 두번째로 고려한 적합모형은 hidden layer 2개, 각 layer에 대한 node 5개인 모형이다.
 - activation function은 `logistic`으로 설정하였다.
 
 ```{r}
@@ -104,7 +104,7 @@ train.index <- sample(1:nrow(plantno_scale), round(nrow(plantno_scale)*7/10), re
 ex1_train <-as.data.frame(plantno_scale[train.index,])
 ex1_test <- as.data.frame(plantno_scale[-train.index,])
 set.seed(1234)
-ann1 <- neuralnet(내외부상대습도차~외부기온+외부상대습도+외부풍속+외부일사량+환기창면적, data=ex1_train, hidden=rep(4,6), threshold = 0.01, stepmax = 1e+08, act.fct='logistic')
+ann1 <- neuralnet(내외부상대습도차~외부기온+외부상대습도+외부풍속+외부일사량+환기창면적, data=ex1_train, hidden=rep(5,2), threshold = 0.01, stepmax = 1e+08, act.fct='logistic')
 summary(ann1)
 # plot(ann1)
 y <- (ex1_test$내외부상대습도차)*(max(plantno$내외부상대습도차)-min(plantno$내외부상대습도차))+min(plantno$내외부상대습도차)
@@ -120,7 +120,7 @@ SSE/SST # SSE/SST
 head(result,12)
 ```
 
-- RMSE=1.172026, SSE/SST=0.00002141611
+- RMSE=1.011524, SSE/SST=0.00001595214
 - 적합결과 test RMSE와 SSE/SST의 값이 다중회귀모형과 비교했을 때 더 작은 값이므로 이 ANN 모형이 다중회귀모형보다 예측력이 좋다고 해석할 수 있다. 첫번째 모형과 동일한 결과이다.
 
 
@@ -141,7 +141,7 @@ plantyes_scale <- transform(plantyes[,c(6,1,4,10,11,13)],
 
 #### 첫번째 모형
 
-- 첫번째로 고려한 적합모형은 hidden layer 4개, 각 layer에 대한 node 8개인 모형이다.
+- 첫번째로 고려한 적합모형은 hidden layer 1개, 각 layer에 대한 node 6개인 모형이다.
 - activation function은 `logistic`으로 설정하였다.
 
 ```{r}
@@ -150,7 +150,7 @@ train.index <- sample(1:nrow(plantyes_scale), round(nrow(plantyes_scale)*7/10), 
 ex1_train <- as.data.frame(plantyes_scale[train.index,])
 ex1_test <- as.data.frame(plantyes_scale[-train.index,])
 set.seed(1234)
-ann1 <- neuralnet(내외부상대습도차~외부기온+외부상대습도+외부풍속+외부일사량+환기창면적, data=ex1_train, hidden=rep(8,4), threshold = 0.01, stepmax = 1e+08, act.fct='logistic')
+ann1 <- neuralnet(내외부상대습도차~외부기온+외부상대습도+외부풍속+외부일사량+환기창면적, data=ex1_train, hidden=rep(6,1), threshold = 0.01, stepmax = 1e+08, act.fct='logistic')
 summary(ann1)
 # plot(ann1)
 y <- (ex1_test$내외부상대습도차)*(max(plantyes$내외부상대습도차)-min(plantyes$내외부상대습도차))+min(plantyes$내외부상대습도차)
@@ -166,12 +166,12 @@ SSE/SST # SSE/SST
 head(result,12)
 ```
 
-- RMSE=2.311042, SSE/SST=0.00001677701
+- RMSE=2.414533, SSE/SST=0.00001831324
 - 적합결과 test RMSE와 SSE/SST의 값이 다중회귀모형과 비교했을 때 더 작은 값이므로 이 ANN 모형이 다중회귀모형보다 예측력이 좋다고 해석할 수 있다.
 
 #### 두번째 모형
 
-- 두번째로 고려한 적합모형은 hidden layer 7개, 각 layer에 대한 node 7개인 모형이다.
+- 두번째로 고려한 적합모형은 hidden layer 2개, 각 layer에 대한 node 5개인 모형이다.
 - activation function은 `logistic`으로 설정하였다.
 
 ```{r}
@@ -180,7 +180,7 @@ train.index <- sample(1:nrow(plantyes_scale), round(nrow(plantyes_scale)*7/10), 
 ex1_train <- as.data.frame(plantyes_scale[train.index,])
 ex1_test <- as.data.frame(plantyes_scale[-train.index,])
 set.seed(1234)
-ann1 <- neuralnet(내외부상대습도차~외부기온+외부상대습도+외부풍속+외부일사량+환기창면적, data=ex1_train, hidden=rep(7,7), threshold = 0.01, stepmax = 1e+08, act.fct='logistic')
+ann1 <- neuralnet(내외부상대습도차~외부기온+외부상대습도+외부풍속+외부일사량+환기창면적, data=ex1_train, hidden=rep(5,2), threshold = 0.01, stepmax = 1e+08, act.fct='logistic')
 summary(ann1)
 # plot(ann1)
 y <- (ex1_test$내외부상대습도차)*(max(plantyes$내외부상대습도차)-min(plantyes$내외부상대습도차))+min(plantyes$내외부상대습도차)
@@ -196,7 +196,7 @@ SSE/SST # SSE/SST
 head(result,12)
 ```
 
-- RMSE=2.431062, SSE/SST=0.00001856483
+- RMSE=2.509176, SSE/SST=0.00001977703
 - 적합결과 test RMSE와 SSE/SST의 값이 최종적으로 선택된 다중회귀모형과 비교했을 때 거의 비슷한 수준이지만 더 작다. 그러므로 전체적으로 판단한다면 ANN 모형이 다중회귀모형보다 일반적으로 예측력이 좋다고 할 수 있겠다.
 
 
