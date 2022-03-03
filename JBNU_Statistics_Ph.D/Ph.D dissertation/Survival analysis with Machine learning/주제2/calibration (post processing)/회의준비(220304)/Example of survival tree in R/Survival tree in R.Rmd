@@ -1,0 +1,208 @@
+---
+title: "Survival tree in R"
+author: "Hwang Seong-Yun"
+date: '2022 3 3 '
+output: html_document
+---
+
+# Usage of R package LTRCtrees
+
+- Reference : https://cran.r-project.org/web/packages/LTRCtrees/vignettes/LTRCtrees.html
+
+## Example of fitting survival trees for LTRC data
+
+### The assay of serum free light chain data example
+
+```{r}
+## Adjust data & clean data
+library(survival)
+set.seed(0)
+## Since LTRCART uses cross-validation to prune the tree, specifying the seed 
+## guarantees that the results given here will be duplicated in other analyses
+Data <- flchain
+Data <- Data[!is.na(Data$creatinine),]
+Data$End <- Data$age + Data$futime/365
+DATA <- Data[Data$End > Data$age,]
+names(DATA)[6] <- "FLC"
+head(DATA)
+```
+
+```{r}
+## Setup training set and test set
+Train = DATA[1:500,]
+Test = DATA[1000:1020,]
+```
+
+```{r}
+## Fit LTRCART and LTRCIT survival tree
+library(LTRCtrees)
+LTRCART.obj <- LTRCART(Surv(age, End, death) ~ sex + FLC + creatinine, Train) # Fit a relative risk survival tree for LTRC(left-truncated and right censored) data
+LTRCIT.obj <- LTRCIT(Surv(age, End, death) ~ sex + FLC + creatinine, Train) # Fit a conditional inference survival tree for LTRC data
+```
+
+```{r}
+## Putting Surv(End, death) in formula would result an error message
+## since both LTRCART and LTRCIT are expecting Surv(time1, time2, event)
+ 
+## Plot the fitted LTRCART tree using rpart.plot function in rpart.plot[6] package
+library(rpart.plot)
+prp(LTRCART.obj, roundint=FALSE)
+
+## Plot the fitted LTRCIT tree
+plot(LTRCIT.obj)
+```
+
+```{r}
+library(partykit)
+LTRCART.obj.party <- as.party(LTRCART.obj) 
+LTRCART.obj.party$fitted[["(response)"]]<- Surv(Train$age, Train$End, Train$death)
+plot(LTRCART.obj.party)
+```
+
+```{r}
+## predict median survival time on test data using fitted LTRCIT tree
+LTRCIT.pred <- predict(LTRCIT.obj, newdata=Test, type = "response")
+head(LTRCIT.pred)
+```
+
+```{r}
+## predict Kaplan Meier survival curve on test data
+## return a list of survfit objects -- the predicted KM curves
+LTRCIT.pred <- predict(LTRCIT.obj, newdata=Test, type = "prob")
+head(LTRCIT.pred,2)
+```
+
+```{r}
+## Predict relative risk on test set
+LTRCART.pred <- predict(LTRCART.obj, newdata=Test)
+head(LTRCART.pred)
+```
+
+```{r}
+## Predict median survival time and Kaplan Meier survival curve
+## on test data using Pred.rpart
+LTRCART.pred <- Pred.rpart(Surv(age, End, death) ~ sex + FLC + creatinine, Train, Test)
+head(LTRCART.pred$KMcurves, 2)  ## list of predicted KM curves
+```
+
+```{r}
+head(LTRCART.pred$Medians)  ## vector of predicted median survival time
+```
+
+## Examples of fitting survival trees with time-varying covariates
+
+### The Mayo Clinic Primary Biliary Cirrhosis Data example
+
+```{r}
+set.seed(0)
+library(survival)
+## Create the start-stop-event triplet needed for coxph and LTRC trees
+first <- with(pbcseq, c(TRUE, diff(id) !=0)) #first id for each subject
+last <- c(first[-1], TRUE) #last id
+time1 <- with(pbcseq, ifelse(first, 0, day))
+time2 <- with(pbcseq, ifelse(last, futime, c(day[-1], 0)))
+event <- with(pbcseq, ifelse(last, status, 0))
+event <- 1*(event==2)
+
+pbcseq$time1 <- time1
+pbcseq$time2 <- time2
+pbcseq$event <-  event
+
+head(pbcseq)
+```
+
+```{r}
+## Fit the Cox model and LTRC trees with time-varying covariates
+fit.cox <- coxph(Surv(time1, time2, event) ~ age + sex + log(bili), pbcseq)
+LTRCIT.fit <- LTRCIT(Surv(time1, time2, event) ~ age + sex + log(bili), pbcseq)
+LTRCART.fit <- LTRCART(Surv(time1, time2, event) ~ age + sex + log(bili), pbcseq)
+
+## Result of the Cox model with time-varying covariates
+fit.cox 
+```
+
+```{r}
+## plots of fitted survival trees with time-varying covariates
+prp(LTRCART.fit, type=0, roundint=FALSE)
+plot(LTRCIT.fit)
+```
+
+### The Stanford Heart Transplant data example
+
+```{r}
+library(survival)
+### transform the wide format data into the long format data using tmerge function
+### from survival package on Stanford Heart Transplant data
+jasa$subject <- 1:nrow(jasa)
+
+tdata <- with(jasa, data.frame(subject = subject,
+    futime= pmax(.5, fu.date - accept.dt),
+    txtime= ifelse(tx.date== fu.date,
+    (tx.date -accept.dt) -.5,
+    (tx.date - accept.dt)),
+    fustat = fustat))
+
+sdata <- tmerge(jasa, tdata, id=subject,death = event(futime, fustat),trt = tdc(txtime), options= list(idname="subject"))
+
+sdata$age <- sdata$age - 48
+
+sdata$year <- as.numeric(sdata$accept.dt - as.Date("1967-10-01"))/365.25
+
+head(sdata)
+```
+
+```{r}
+Cox.fit <- coxph(Surv(tstart, tstop, death) ~ age + surgery, data= sdata)
+LTRCART.fit <- LTRCART(Surv(tstart, tstop, death) ~ age + transplant, data = sdata)
+LTRCIT.fit <- LTRCIT(Surv(tstart, tstop, death) ~ age + transplant, data = sdata)
+
+## results
+Cox.fit
+```
+
+```{r}
+prp(LTRCART.fit, roundint=FALSE)
+plot(LTRCIT.fit)
+```
+
+## SurvCART: Constructing Survival Tree in R
+
+- Reference : https://www.r-bloggers.com/2022/01/survcart-constructing-survival-tree-in-r/
+
+### The GBSG2 dataset
+
+```{r}
+library(LongCART)
+
+data(GBSG2)
+
+GBSG2$horTh1<- as.numeric(GBSG2$horTh)
+GBSG2$tgrade1<- as.numeric(GBSG2$tgrade)
+GBSG2$menostat1<- as.numeric(GBSG2$menostat)
+GBSG2$subjid<- 1:nrow(GBSG2)
+
+head(GBSG2)
+
+```
+
+```{r warning = FALSE, message = FALSE}
+out.tree<- SurvCART(data=GBSG2, patid="subjid", 
+                censorvar="cens", timevar="time", 
+                gvars=c('horTh1', 'age', 'menostat1', 'tsize',          
+                        'tgrade1', 'pnodes', 'progrec', 'estrec'),  
+                tgvars=c(0,1,0,1,0,1,1,1), 
+                time.dist="exponential", 
+                event.ind=1, alpha=0.05, minsplit=80, minbucket=40, 
+                print=TRUE)
+```
+
+```{r}
+par(xpd = TRUE)
+plot(out.tree, compress = TRUE)
+text(out.tree, use.n = TRUE)
+```
+
+```{r}
+KMPlot.SurvCART(out.tree, scale.time=365.25, type=1)
+```
+
