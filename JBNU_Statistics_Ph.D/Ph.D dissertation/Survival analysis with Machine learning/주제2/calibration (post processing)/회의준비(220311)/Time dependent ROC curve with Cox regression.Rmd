@@ -19,7 +19,7 @@ library(timereg)
 
 ```{r}
 data(pbc)
-pbc<-pbc[!is.na(pbc$trt),] # select only randomized subjects
+pbc<-pbc[,-1] # delete ID
 pbc$status<-as.numeric(pbc$status==2) # create event indicator: 1 for death, 0 for censored
 head(pbc)
 ```
@@ -31,6 +31,7 @@ cox.pbc <- coxph(Surv(time,status) ~ ., data=pbc)
 summary(cox.pbc)
 risk.pbc <- predict(object=cox.pbc, newdata=pbc, type="risk") # risk score
 pbc$risk <- risk.pbc
+pbc <- pbc[!is.na(pbc$risk),]
 head(pbc)
 ```
 
@@ -41,9 +42,22 @@ ROC.risk.marginal <- timeROC(T=pbc$time,
                          delta=pbc$status,marker=pbc$risk,
                          cause=1,weighting="marginal",
                          times=pbc$time)
+ROC.risk.marginal
+
+# plot all ROC curves 
+plot(ROC.risk.marginal,time=1191,lwd=2,title=FALSE)
+plot(ROC.risk.marginal,time=1786,col="blue",add=TRUE,lwd=2,lty=2)
+plot(ROC.risk.marginal,time=2689,col="black",add=TRUE,lwd=2,lty=3)
+# add legend
+legend("bottomright",c("t=1191","t=1786","t=2689"),
+       col=c("red","blue","black"),lty=1:3)
+
 plot(x=ROC.risk.marginal[["times"]],y=ROC.risk.marginal[["AUC"]],
      type='l',xlab="times",ylab="AUC",
-     main="Time dependent AUC with risk score")
+     main="Time dependent AUC with risk score (pbc data)")
+plot(x=ROC.risk.marginal[["times"]],y=ROC.risk.marginal[["AUC"]],
+     type='l',xlab="times",ylab="AUC",ylim=c(0,1),
+     main="Time dependent AUC with risk score (pbc data) / ylim=c(0,1)")
 ```
 
 
