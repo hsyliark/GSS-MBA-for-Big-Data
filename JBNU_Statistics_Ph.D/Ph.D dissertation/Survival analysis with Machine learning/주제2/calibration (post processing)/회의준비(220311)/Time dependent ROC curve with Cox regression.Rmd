@@ -1,0 +1,34 @@
+---
+title: "Time dependent ROC curve with Cox regression"
+author: "Hwang Seong-Yun"
+date: '2022 3 4 '
+output: html_document
+---
+
+# Time dependent ROC curve with Cox regression
+
+## Loading packages
+
+```{r}
+library(survival)
+library(timeROC)
+library(timereg)
+```
+
+## pbc data
+
+```{r}
+data(pbc)
+pbc<-pbc[!is.na(pbc$trt),] # select only randomized subjects
+pbc$status<-as.numeric(pbc$status==2) # create event indicator: 1 for death, 0 for censored
+head(pbc)
+```
+
+## Cox proportional hazard model
+
+```{r}
+cox.pbc <- coxph(Surv(time,status) ~ ., data=pbc)
+summary(cox.pbc)
+risk.pbc <- predict(object=cox.pbc, newdata=pbc, type="risk")
+```
+
