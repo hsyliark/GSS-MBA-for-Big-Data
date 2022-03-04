@@ -24,11 +24,26 @@ pbc$status<-as.numeric(pbc$status==2) # create event indicator: 1 for death, 0 f
 head(pbc)
 ```
 
-## Cox proportional hazard model
+### Calculate risk score with Cox proportional hazard model
 
 ```{r}
 cox.pbc <- coxph(Surv(time,status) ~ ., data=pbc)
 summary(cox.pbc)
-risk.pbc <- predict(object=cox.pbc, newdata=pbc, type="risk")
+risk.pbc <- predict(object=cox.pbc, newdata=pbc, type="risk") # risk score
+pbc$risk <- risk.pbc
+head(pbc)
 ```
+
+### Time dependent AUC with risk score
+
+```{r}
+ROC.risk.marginal <- timeROC(T=pbc$time,
+                         delta=pbc$status,marker=pbc$risk,
+                         cause=1,weighting="marginal",
+                         times=pbc$time)
+plot(x=ROC.risk.marginal[["times"]],y=ROC.risk.marginal[["AUC"]],
+     type='l',xlab="times",ylab="AUC",
+     main="Time dependent AUC with risk score")
+```
+
 
