@@ -1,0 +1,25 @@
+안녕하세요,
+
+제가 깜빡하고 강의중 실습환경을 소개 하지 않았는데요 
+
+실습은 구글코랩에 접속하셔서 하시면 됩니다. 
+
+ 
+
+구글코랩: https://colab.research.google.com/notebooks/welcome.ipynb?hl=ko
+
+ 
+
+코랩사용방법이 익숙지 않은학생 or 
+
+주피터노트북에서 하고싶으신분은 저에게 카카오톡 / email로 문의주시기 바랍니다. 
+
+ 
+
+카카오톡 문의처: http://pf.kakao.com/_lxixkFb/chat
+
+email: guebin@jbnu.ac.kr 
+
+ 
+
+최규빈 드림 
