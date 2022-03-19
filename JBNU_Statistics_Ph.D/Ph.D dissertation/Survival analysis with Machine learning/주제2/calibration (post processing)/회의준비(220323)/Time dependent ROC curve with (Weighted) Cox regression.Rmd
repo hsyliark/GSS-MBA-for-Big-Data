@@ -1,0 +1,91 @@
+---
+title: "Time dependent ROC curve with (Weighted) Cox regression"
+author: "Hwang Seong-Yun"
+date: '2022 3 19 '
+output: html_document
+---
+
+# Time dependent ROC curve with (Weighted) Cox regression
+
+## Loading packages
+
+```{r}
+library(survival)
+library(timeROC)
+library(timereg)
+library(coxphw)
+```
+
+## pbc data
+
+```{r}
+data(pbc)
+pbc<-pbc[,-1] # delete ID
+pbc$status<-as.numeric(pbc$status==2) # create event indicator: 1 for death, 0 for censored
+pbc <- na.omit(pbc)
+head(pbc)
+```
+
+### Calculate risk score with Cox proportional hazard model
+
+```{r}
+cox.pbc <- coxph(Surv(time,status) ~ ., data=pbc)
+summary(cox.pbc)
+risk.pbc <- predict(object=cox.pbc, newdata=pbc, type="risk") # risk score
+pbc$risk <- risk.pbc
+```
+
+### Calculate risk score with Weighted Cox regression
+
+```{r}
+# weighted estimation of average hazard ratio
+wcox.pbc <- coxphw(Surv(time,status) ~ trt+age+sex+ascites+hepato+spiders+edema+
+                     bili+chol+albumin+copper+alk.phos+ast+trig+platelet+
+                     protime+stage, data=pbc, template="AHR")
+summary(wcox.pbc)
+wrisk.pbc <- predict(object=wcox.pbc, newdata=pbc, type="risk")
+pbc$wrisk <- wrisk.pbc
+```
+
+### Time dependent AUC with risk score
+
+```{r}
+## Cox proportional hazard model
+ROC.risk.marginal <- timeROC(T=pbc$time,
+                         delta=pbc$status,marker=pbc$risk,
+                         cause=1,weighting="marginal",
+                         times=pbc$time)
+ROC.risk.marginal
+# plot all ROC curves 
+plot(ROC.risk.marginal,time=1191,lwd=2,title=FALSE)
+plot(ROC.risk.marginal,time=1786,col="blue",add=TRUE,lwd=2,lty=2)
+plot(ROC.risk.marginal,time=2689,col="black",add=TRUE,lwd=2,lty=3)
+# add legend
+legend("bottomright",c("t=1191","t=1786","t=2689"),
+       col=c("red","blue","black"),lty=1:3)
+
+## Weighted Cox regression
+ROC.wrisk.marginal <- timeROC(T=pbc$time,
+                          delta=pbc$status,marker=pbc$wrisk,
+                          cause=1,weighting="marginal",
+                          times=pbc$time)
+ROC.wrisk.marginal
+# plot all ROC curves 
+plot(ROC.wrisk.marginal,time=1191,lwd=2,title=FALSE)
+plot(ROC.wrisk.marginal,time=1786,col="blue",add=TRUE,lwd=2,lty=2)
+plot(ROC.wrisk.marginal,time=2689,col="black",add=TRUE,lwd=2,lty=3)
+# add legend
+legend("bottomright",c("t=1191","t=1786","t=2689"),
+       col=c("red","blue","black"),lty=1:3)
+
+## Compare
+plot(x=ROC.risk.marginal[["times"]],y=ROC.risk.marginal[["AUC"]],
+     type='l',xlab="times",ylab="AUC",col="red",lty=1,
+     main="Time dependent AUC with risk score (pbc data)")
+lines(x=ROC.wrisk.marginal[["times"]],y=ROC.wrisk.marginal[["AUC"]],
+     type='l',col="blue",lty=2)
+legend("bottomleft",c("Cox proportional hazard model","Weighted Cox regression"),
+       col=c("red","blue"),lty=1:2)
+```
+
+
