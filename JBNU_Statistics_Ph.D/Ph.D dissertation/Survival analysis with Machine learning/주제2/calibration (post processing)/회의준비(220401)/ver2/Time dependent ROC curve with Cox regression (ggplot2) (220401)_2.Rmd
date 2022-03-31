@@ -1,0 +1,1124 @@
+---
+title: "Time dependent ROC curve with Cox regression (ggplot2)"
+author: "Hwang Seong-Yun"
+date: '2022 4 1 '
+output: html_document
+---
+
+# Time dependent ROC curve with Cox regression
+
+
+## Loading packages
+
+```{r}
+library(survival)
+library(timeROC)
+library(timereg)
+```
+
+
+## pbc data
+
+```{r}
+data(pbc)
+pbc<-pbc[,-1] # delete ID
+pbc$status<-as.numeric(pbc$status==2) # create event indicator: 1 for death, 0 for censored
+head(pbc)
+```
+
+### Calculate risk score with Cox proportional hazard model
+
+```{r}
+cox.pbc <- coxph(Surv(time,status) ~ ., data=pbc)
+summary(cox.pbc)
+risk.pbc <- predict(object=cox.pbc, newdata=pbc, type="risk") # risk score
+pbc$risk <- risk.pbc
+pbc <- pbc[!is.na(pbc$risk),]
+```
+
+### Time dependent AUC with risk score
+
+```{r}
+ROC.risk.marginal <- timeROC(T=pbc$time,
+                         delta=pbc$status,marker=pbc$risk,
+                         cause=1,weighting="marginal",
+                         times=pbc$time)
+ROC.risk.marginal
+
+# plot all ROC curves 
+par(mar=c(4,4,3,1))
+plot(ROC.risk.marginal,time=1191,lwd=2,title=FALSE)
+plot(ROC.risk.marginal,time=1786,col="blue",add=TRUE,lwd=2,lty=2)
+plot(ROC.risk.marginal,time=2689,col="black",add=TRUE,lwd=2,lty=3)
+# add legend
+legend("bottomright",c("t=1191","t=1786","t=2689"),
+       col=c("red","blue","black"),lty=1:3)
+```
+
+
+### time VS AUC
+
+#### Make density of time 
+
+```{r}
+time.density <- density(ROC.risk.marginal[["times"]])
+data1 <- data.frame(time=time.density[["x"]], density=time.density[["y"]])
+data1$density.normal1 <- 0.9*(time.density[["y"]]-min(time.density[["y"]]))/(max(time.density[["y"]])-min(time.density[["y"]]))
+data1$density.normal2 <- 0.9*(max(na.omit(ROC.risk.marginal[["AUC"]]))-min(na.omit(ROC.risk.marginal[["AUC"]])))*(time.density[["y"]]-min(time.density[["y"]]))/(max(time.density[["y"]])-min(time.density[["y"]]))+min(na.omit(ROC.risk.marginal[["AUC"]])) 
+```
+
+#### Plot of density of time 
+
+```{r}
+par(mar=c(4,4,3,1))
+plot(time.density)
+rug(jitter(ROC.risk.marginal[["times"]]))
+```
+
+#### Coloring status
+
+```{r}
+pbc$status.color <- ifelse(pbc$status==1,"seagreen","darkred")
+pbc$status1 <- ifelse(pbc$status==1,1,min(na.omit(ROC.risk.marginal[["AUC"]])))
+```
+
+#### Plot of Time dependent AUC with Adjusted Density of time and Status of censoring
+
+```{r}
+par(mar=c(4,4,3,1))
+plot(x=ROC.risk.marginal[["times"]],y=ROC.risk.marginal[["AUC"]],
+     type="l",xlab="times",ylab="AUC",lwd=2,
+     main="Time dependent AUC with risk score (pbc data)")
+lines(x=data1$time,y=data1$density.normal2,col="steelblue",type="l",lwd=2)
+points(x=pbc$time,y=pbc$status1,col=pbc$status.color,pch=20)
+abline(v=seq(0,5000,500),col="lightgray",lty=1)
+rug(jitter(ROC.risk.marginal[["times"]]))
+legend(450,0.84,c("AUC","Density of time(adjusted)","censored(status=0)"),
+       col=c("black","steelblue","darkred"),lwd=c(2,2,2),lty=c(1,1,2))
+```
+
+```{r}
+par(mar=c(4,4,3,1))
+plot(x=ROC.risk.marginal[["times"]],y=ROC.risk.marginal[["AUC"]],
+     type="l",xlab="times",ylab="AUC",ylim=c(0,1),lwd=2,
+     main="Time dependent AUC with risk score (pbc data) / ylim=c(0,1)")
+lines(x=data1$time,y=data1$density.normal1,col="steelblue",type="l",lwd=2)
+points(x=pbc$time,y=pbc$status,col=pbc$status.color,pch=20)
+abline(v=seq(0,5000,500),col="lightgray",lty=1)
+rug(jitter(ROC.risk.marginal[["times"]]))
+legend(750,0.5,c("AUC","Density of time(adjusted)","censored(status=0)"),
+       col=c("black","steelblue","darkred"),lwd=c(2,2,2),lty=c(1,1,2))
+```
+
+#### Using ggplot2
+
+```{r}
+library(ggplot2)
+data2 <- data.frame(time=ROC.risk.marginal[["times"]],
+                    AUC=ROC.risk.marginal[["AUC"]])
+ggplot() +
+  geom_line(data=data2, aes(x=time, y=AUC), size=1.5, colour='black') +
+  geom_point(data=pbc, aes(x=time, y=status1, color=as.factor(status))) +
+  geom_line(data=data1, aes(x=time, y=density.normal2), size=1, colour='blue') +
+  scale_x_continuous(limits = c(0, max(pbc$time))) +
+  labs(title="Time dependent AUC with risk score (pbc data)") +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+#### Counting censored data
+
+```{r}
+library(tidyverse)
+pbc.censor <- pbc[pbc$status==0,]
+pbc.censor <- pbc.censor %>%
+  mutate(n.cen=cut(pbc.censor$time, 
+                   breaks=seq(from=0,to=5000,by=500)))
+table(pbc.censor$n.cen)
+```
+
+
+### Variable selection (backward)
+
+#### 유의확률을 기준으로 유의하지 않은 변수들을 순차적으로 제거
+
+#### All explanatory variables
+
+```{r}
+data(pbc)
+pbc<-pbc[,-1] # delete ID
+pbc$status<-as.numeric(pbc$status==2) # create event indicator: 1 for death, 0 for censored
+cox.pbc0 <- coxph(Surv(time,status) ~ trt+age+sex+ascites+hepato+spiders+edema
+                 +bili+chol+albumin+copper+alk.phos+ast+trig
+                 +platelet+protime+stage, data=pbc)
+summary(cox.pbc0)
+risk.pbc0 <- predict(object=cox.pbc0, newdata=pbc, type="risk") # risk score
+pbc$risk0 <- risk.pbc0
+pbc <- pbc[!is.na(pbc$risk0),]
+```
+
+#### Except explanatory variables with (p-value > 0.5)
+
+```{r}
+cox.pbc1 <- coxph(Surv(time,status) ~ age+sex+edema
+                 +bili+chol+albumin+copper+ast+trig
+                 +platelet+protime+stage, data=pbc)
+summary(cox.pbc1)
+risk.pbc1 <- predict(object=cox.pbc1, newdata=pbc, type="risk") # risk score
+pbc$risk1 <- risk.pbc1
+```
+
+#### Except explanatory variables with (p-value > 0.5)
+
+```{r}
+cox.pbc2 <- coxph(Surv(time,status) ~ age+sex+edema
+                 +bili+chol+albumin+copper+ast+protime+stage, data=pbc)
+summary(cox.pbc2)
+risk.pbc2 <- predict(object=cox.pbc2, newdata=pbc, type="risk") # risk score
+pbc$risk2 <- risk.pbc2
+```
+
+#### Except explanatory variables with (p-value > 0.3)
+
+```{r}
+cox.pbc3 <- coxph(Surv(time,status) ~ age+edema
+                 +bili+chol+albumin+copper+ast+protime+stage, data=pbc)
+summary(cox.pbc3)
+risk.pbc3 <- predict(object=cox.pbc3, newdata=pbc, type="risk") # risk score
+pbc$risk3 <- risk.pbc3
+```
+
+#### Except explanatory variables with (p-value > 0.1)
+
+```{r}
+cox.pbc4 <- coxph(Surv(time,status) ~ age+edema+bili+albumin+copper+ast+protime+stage, data=pbc)
+summary(cox.pbc4)
+risk.pbc4 <- predict(object=cox.pbc4, newdata=pbc, type="risk") # risk score
+pbc$risk4 <- risk.pbc4
+```
+
+#### Time dependent AUC with Backward elimination
+
+```{r}
+ROC.risk.marginal0 <- timeROC(T=pbc$time,
+                         delta=pbc$status,marker=pbc$risk0,
+                         cause=1,weighting="marginal",
+                         times=pbc$time)
+ROC.risk.marginal0
+ROC.risk.marginal1 <- timeROC(T=pbc$time,
+                         delta=pbc$status,marker=pbc$risk1,
+                         cause=1,weighting="marginal",
+                         times=pbc$time)
+ROC.risk.marginal1
+ROC.risk.marginal2 <- timeROC(T=pbc$time,
+                         delta=pbc$status,marker=pbc$risk2,
+                         cause=1,weighting="marginal",
+                         times=pbc$time)
+ROC.risk.marginal2
+ROC.risk.marginal3 <- timeROC(T=pbc$time,
+                         delta=pbc$status,marker=pbc$risk3,
+                         cause=1,weighting="marginal",
+                         times=pbc$time)
+ROC.risk.marginal3
+ROC.risk.marginal4 <- timeROC(T=pbc$time,
+                         delta=pbc$status,marker=pbc$risk4,
+                         cause=1,weighting="marginal",
+                         times=pbc$time)
+ROC.risk.marginal4
+
+data3 <- data.frame(time=ROC.risk.marginal0[["times"]],
+                    cox.pbc0=ROC.risk.marginal0[["AUC"]],
+                    cox.pbc1=ROC.risk.marginal1[["AUC"]],
+                    cox.pbc2=ROC.risk.marginal2[["AUC"]],
+                    cox.pbc3=ROC.risk.marginal3[["AUC"]],
+                    cox.pbc4=ROC.risk.marginal4[["AUC"]])
+library(reshape)
+library(plyr)
+data3.melt <- melt(data = data3, 
+                   id.vars = "time", 
+                   measure.vars = c("cox.pbc0","cox.pbc1","cox.pbc2",
+                                    "cox.pbc3","cox.pbc4"))
+data3.melt <- rename(data3.melt,
+                     replace=c("variable"="model",
+                               "value"="AUC"))
+```
+
+#### 유의한 설명변수들만 포함한 모형 cox.pbc4에서 각 변수를 하나씩 제거
+
+#### Except each explanatory variables in model cox.pbc4
+
+```{r}
+#Except age
+cox.pbc4_1 <- coxph(Surv(time,status) ~ edema+bili+albumin+copper+ast+protime+stage, data=pbc)
+summary(cox.pbc4_1)
+risk.pbc4_1 <- predict(object=cox.pbc4_1, newdata=pbc, type="risk") # risk score
+pbc$risk4_1 <- risk.pbc4_1
+ROC.risk.marginal4_1 <- timeROC(T=pbc$time,
+                         delta=pbc$status,marker=pbc$risk4_1,
+                         cause=1,weighting="marginal",
+                         times=pbc$time)
+ROC.risk.marginal4_1
+
+#Except edema
+cox.pbc4_2 <- coxph(Surv(time,status) ~ age+bili+albumin+copper+ast+protime+stage, data=pbc)
+summary(cox.pbc4_2)
+risk.pbc4_2 <- predict(object=cox.pbc4_2, newdata=pbc, type="risk") # risk score
+pbc$risk4_2 <- risk.pbc4_2
+ROC.risk.marginal4_2 <- timeROC(T=pbc$time,
+                         delta=pbc$status,marker=pbc$risk4_2,
+                         cause=1,weighting="marginal",
+                         times=pbc$time)
+ROC.risk.marginal4_2
+
+#Except bili
+cox.pbc4_3 <- coxph(Surv(time,status) ~ age+edema+albumin+copper+ast+protime+stage, data=pbc)
+summary(cox.pbc4_3)
+risk.pbc4_3 <- predict(object=cox.pbc4_3, newdata=pbc, type="risk") # risk score
+pbc$risk4_3 <- risk.pbc4_3
+ROC.risk.marginal4_3 <- timeROC(T=pbc$time,
+                         delta=pbc$status,marker=pbc$risk4_3,
+                         cause=1,weighting="marginal",
+                         times=pbc$time)
+ROC.risk.marginal4_3
+
+#Except albumin
+cox.pbc4_4 <- coxph(Surv(time,status) ~ age+edema+bili+copper+ast+protime+stage, data=pbc)
+summary(cox.pbc4_4)
+risk.pbc4_4 <- predict(object=cox.pbc4_4, newdata=pbc, type="risk") # risk score
+pbc$risk4_4 <- risk.pbc4_4
+ROC.risk.marginal4_4 <- timeROC(T=pbc$time,
+                         delta=pbc$status,marker=pbc$risk4_4,
+                         cause=1,weighting="marginal",
+                         times=pbc$time)
+ROC.risk.marginal4_4
+
+#Except copper
+cox.pbc4_5 <- coxph(Surv(time,status) ~ age+edema+bili+albumin+ast+protime+stage, data=pbc)
+summary(cox.pbc4_5)
+risk.pbc4_5 <- predict(object=cox.pbc4_5, newdata=pbc, type="risk") # risk score
+pbc$risk4_5 <- risk.pbc4_5
+ROC.risk.marginal4_5 <- timeROC(T=pbc$time,
+                         delta=pbc$status,marker=pbc$risk4_5,
+                         cause=1,weighting="marginal",
+                         times=pbc$time)
+ROC.risk.marginal4_5
+
+#Except ast
+cox.pbc4_6 <- coxph(Surv(time,status) ~ age+edema+bili+albumin+copper+protime+stage, data=pbc)
+summary(cox.pbc4_6)
+risk.pbc4_6 <- predict(object=cox.pbc4_6, newdata=pbc, type="risk") # risk score
+pbc$risk4_6 <- risk.pbc4_6
+ROC.risk.marginal4_6 <- timeROC(T=pbc$time,
+                         delta=pbc$status,marker=pbc$risk4_6,
+                         cause=1,weighting="marginal",
+                         times=pbc$time)
+ROC.risk.marginal4_6
+
+#Except protime
+cox.pbc4_7 <- coxph(Surv(time,status) ~ age+edema+bili+albumin+copper+ast+stage, data=pbc)
+summary(cox.pbc4_7)
+risk.pbc4_7 <- predict(object=cox.pbc4_7, newdata=pbc, type="risk") # risk score
+pbc$risk4_7 <- risk.pbc4_7
+ROC.risk.marginal4_7 <- timeROC(T=pbc$time,
+                         delta=pbc$status,marker=pbc$risk4_7,
+                         cause=1,weighting="marginal",
+                         times=pbc$time)
+ROC.risk.marginal4_7
+
+#Except stage
+cox.pbc4_8 <- coxph(Surv(time,status) ~ age+edema+bili+albumin+copper+ast+protime, data=pbc)
+summary(cox.pbc4_8)
+risk.pbc4_8 <- predict(object=cox.pbc4_8, newdata=pbc, type="risk") # risk score
+pbc$risk4_8 <- risk.pbc4_8
+ROC.risk.marginal4_8 <- timeROC(T=pbc$time,
+                         delta=pbc$status,marker=pbc$risk4_8,
+                         cause=1,weighting="marginal",
+                         times=pbc$time)
+ROC.risk.marginal4_8
+
+data4 <- data.frame(time=ROC.risk.marginal4[["times"]],
+                    cox.pbc4=ROC.risk.marginal4[["AUC"]],
+                    cox.pbc4_1=ROC.risk.marginal4_1[["AUC"]],
+                    cox.pbc4_2=ROC.risk.marginal4_2[["AUC"]],
+                    cox.pbc4_3=ROC.risk.marginal4_3[["AUC"]],
+                    cox.pbc4_4=ROC.risk.marginal4_4[["AUC"]],
+                    cox.pbc4_5=ROC.risk.marginal4_5[["AUC"]],
+                    cox.pbc4_6=ROC.risk.marginal4_6[["AUC"]],
+                    cox.pbc4_7=ROC.risk.marginal4_7[["AUC"]],
+                    cox.pbc4_8=ROC.risk.marginal4_8[["AUC"]])
+data4.melt <- melt(data = data4, 
+                   id.vars = "time", 
+                   measure.vars = c("cox.pbc4","cox.pbc4_1","cox.pbc4_2",
+                                    "cox.pbc4_3","cox.pbc4_4","cox.pbc4_5",
+                                    "cox.pbc4_6","cox.pbc4_7","cox.pbc4_8"))
+data4.melt <- rename(data4.melt,
+                     replace=c("variable"="model",
+                               "value"="AUC"))
+```
+
+```{r}
+time.density <- density(ROC.risk.marginal[["times"]])
+data1 <- data.frame(time=time.density[["x"]], density=time.density[["y"]])
+data1$density.normal1 <- (time.density[["y"]]-min(time.density[["y"]]))/(max(time.density[["y"]])-min(time.density[["y"]]))
+data1$density.normal2 <- (max(na.omit(ROC.risk.marginal0[["AUC"]]))-min(na.omit(ROC.risk.marginal0[["AUC"]])))*(time.density[["y"]]-min(time.density[["y"]]))/(max(time.density[["y"]])-min(time.density[["y"]]))+min(na.omit(ROC.risk.marginal0[["AUC"]]))
+```
+
+```{r}
+pbc$status.color <- ifelse(pbc$status==1,"seagreen","darkred")
+pbc$status1 <- ifelse(pbc$status==1,1,0.7)
+```
+
+#### Plot of Time dependent AUC with Adjusted Density of time and Status of censoring (cox.pbc0~4)
+
+```{r}
+par(mar=c(4,4,3,1))
+plot(x=ROC.risk.marginal0[["times"]],y=ROC.risk.marginal0[["AUC"]],
+     type="l",xlab="times",ylab="AUC",lwd=1,lty=1,col="black",ylim=c(0.7,1),
+     main="Time dependent AUC with risk score (pbc data)")
+lines(x=ROC.risk.marginal1[["times"]],y=ROC.risk.marginal1[["AUC"]],
+     type="l",lwd=1,lty=1,col="red")
+lines(x=ROC.risk.marginal2[["times"]],y=ROC.risk.marginal2[["AUC"]],
+     type="l",lwd=1,lty=1,col="blue")
+lines(x=ROC.risk.marginal3[["times"]],y=ROC.risk.marginal3[["AUC"]],
+     type="l",lwd=1,lty=1,col="green")
+lines(x=ROC.risk.marginal4[["times"]],y=ROC.risk.marginal4[["AUC"]],
+     type="l",lwd=1,lty=1,col="yellow")
+lines(x=data1$time,y=data1$density.normal2,col="steelblue",type="l",lwd=2)
+points(x=pbc$time,y=pbc$status1,col=pbc$status.color,pch=20)
+abline(v=seq(0,5000,500),col="lightgray",lty=1)
+rug(jitter(ROC.risk.marginal[["times"]]))
+legend(400,0.85,c("AUC(cox.pbc0)","AUC(cox.pbc1)","AUC(cox.pbc2)","AUC(cox.pbc3)","AUC(cox.pbc4)","Density of time(adjusted)","censored(status=0)"),col=c("black","red","blue","green","yellow","steelblue","darkred"),lwd=c(1,1,1,1,1,1,1),lty=c(1,1,1,1,1,1,2))
+```
+
+#### Plot without legend
+
+```{r}
+par(mar=c(4,4,3,1))
+plot(x=ROC.risk.marginal0[["times"]],y=ROC.risk.marginal0[["AUC"]],
+     type="l",xlab="times",ylab="AUC",lwd=1,lty=1,col="black",ylim=c(0.7,1),
+     main="Time dependent AUC with risk score (pbc data)")
+lines(x=ROC.risk.marginal1[["times"]],y=ROC.risk.marginal1[["AUC"]],
+     type="l",lwd=1,lty=1,col="red")
+lines(x=ROC.risk.marginal2[["times"]],y=ROC.risk.marginal2[["AUC"]],
+     type="l",lwd=1,lty=1,col="blue")
+lines(x=ROC.risk.marginal3[["times"]],y=ROC.risk.marginal3[["AUC"]],
+     type="l",lwd=1,lty=1,col="green")
+lines(x=ROC.risk.marginal4[["times"]],y=ROC.risk.marginal4[["AUC"]],
+     type="l",lwd=1,lty=1,col="yellow")
+lines(x=data1$time,y=data1$density.normal2,col="steelblue",type="l",lwd=2)
+points(x=pbc$time,y=pbc$status1,col=pbc$status.color,pch=20)
+abline(v=seq(0,5000,500),col="lightgray",lty=1)
+rug(jitter(ROC.risk.marginal[["times"]]))
+```
+
+#### Using ggplot2 (cox.pbc0~4)
+
+```{r}
+pbc$status1 <- ifelse(pbc$status==1,1,0.7)
+ggplot() +
+  geom_line(data=data3.melt, aes(x=time, y=AUC,
+                            group=model, color=model)) +
+  geom_point(data=pbc, aes(x=time, y=status1, color=as.factor(status))) +
+  geom_line(data=data1, aes(x=time, y=density.normal2), size=1, colour='black') +
+  scale_x_continuous(limits = c(0, max(pbc$time))) +
+  labs(title="Time dependent AUC with risk score (cox.pbc0~4)",
+       xlab="time", ylab="AUC") +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+#### Mean value of Time dependent AUC (cox.pbc0~4)
+
+```{r}
+mean(ROC.risk.marginal0[["AUC"]],na.rm=TRUE)
+mean(ROC.risk.marginal1[["AUC"]],na.rm=TRUE)
+mean(ROC.risk.marginal2[["AUC"]],na.rm=TRUE)
+mean(ROC.risk.marginal3[["AUC"]],na.rm=TRUE)
+mean(ROC.risk.marginal4[["AUC"]],na.rm=TRUE)
+```
+
+#### Plot of Time dependent AUC with Adjusted Density of time and Status of censoring (cox.pbc4~4_8)
+
+```{r}
+par(mar=c(4,4,3,1))
+plot(x=ROC.risk.marginal4[["times"]],y=ROC.risk.marginal4[["AUC"]],
+     type="l",xlab="times",ylab="AUC",lwd=3,lty=1,col="black",ylim=c(0.7,1),
+     main="Time dependent AUC with risk score (pbc data)")
+lines(x=ROC.risk.marginal4_1[["times"]],y=ROC.risk.marginal4_1[["AUC"]],
+     type="l",lwd=1,lty=1,col="red") #Except age
+lines(x=ROC.risk.marginal4_2[["times"]],y=ROC.risk.marginal4_2[["AUC"]],
+     type="l",lwd=1,lty=1,col="blue") #Except edema
+lines(x=ROC.risk.marginal4_3[["times"]],y=ROC.risk.marginal4_3[["AUC"]],
+     type="l",lwd=1,lty=1,col="green") #Except bili
+lines(x=ROC.risk.marginal4_4[["times"]],y=ROC.risk.marginal4_4[["AUC"]],
+     type="l",lwd=1,lty=1,col="yellow") #Except albumin
+lines(x=ROC.risk.marginal4_5[["times"]],y=ROC.risk.marginal4_5[["AUC"]],
+     type="l",lwd=1,lty=1,col="brown") #Except copper  
+lines(x=ROC.risk.marginal4_6[["times"]],y=ROC.risk.marginal4_6[["AUC"]],
+     type="l",lwd=1,lty=1,col="purple") #Except ast
+lines(x=ROC.risk.marginal4_7[["times"]],y=ROC.risk.marginal4_7[["AUC"]],
+     type="l",lwd=1,lty=1,col="navy") #Except protime
+lines(x=ROC.risk.marginal4_8[["times"]],y=ROC.risk.marginal4_8[["AUC"]],
+     type="l",lwd=1,lty=1,col="orange")#Except stage
+lines(x=data1$time,y=data1$density.normal2,col="steelblue",type="l",lwd=2)
+points(x=pbc$time,y=pbc$status1,col=pbc$status.color,pch=20)
+abline(v=seq(0,5000,500),col="lightgray",lty=1)
+rug(jitter(ROC.risk.marginal[["times"]]))
+legend("topright",c("AUC(cox.pbc4)","AUC(cox.pbc4_1)","AUC(cox.pbc4_2)","AUC(cox.pbc4_3)","AUC(cox.pbc4_4)","AUC(cox.pbc4_5)","AUC(cox.pbc4_6)","AUC(cox.pbc4_7)","AUC(cox.pbc4_8)","Density of time(adjusted)","censored(status=0)"),col=c("black","red","blue","green","yellow","brown","purple","navy","orange","steelblue","darkred"),lwd=c(1,1,1,1,1,1,1,1,1,1,1),lty=c(1,1,1,1,1,1,1,1,1,1,2))
+```
+
+#### Plot without legend
+
+```{r}
+par(mar=c(4,4,3,1))
+plot(x=ROC.risk.marginal4[["times"]],y=ROC.risk.marginal4[["AUC"]],
+     type="l",xlab="times",ylab="AUC",lwd=3,lty=1,col="black",ylim=c(0.7,1),
+     main="Time dependent AUC with risk score (pbc data)")
+lines(x=ROC.risk.marginal4_1[["times"]],y=ROC.risk.marginal4_1[["AUC"]],
+     type="l",lwd=1,lty=1,col="red") #Except age
+lines(x=ROC.risk.marginal4_2[["times"]],y=ROC.risk.marginal4_2[["AUC"]],
+     type="l",lwd=1,lty=1,col="blue") #Except edema
+lines(x=ROC.risk.marginal4_3[["times"]],y=ROC.risk.marginal4_3[["AUC"]],
+     type="l",lwd=1,lty=1,col="green") #Except bili
+lines(x=ROC.risk.marginal4_4[["times"]],y=ROC.risk.marginal4_4[["AUC"]],
+     type="l",lwd=1,lty=1,col="yellow") #Except albumin
+lines(x=ROC.risk.marginal4_5[["times"]],y=ROC.risk.marginal4_5[["AUC"]],
+     type="l",lwd=1,lty=1,col="brown") #Except copper  
+lines(x=ROC.risk.marginal4_6[["times"]],y=ROC.risk.marginal4_6[["AUC"]],
+     type="l",lwd=1,lty=1,col="purple") #Except ast
+lines(x=ROC.risk.marginal4_7[["times"]],y=ROC.risk.marginal4_7[["AUC"]],
+     type="l",lwd=1,lty=1,col="navy") #Except protime
+lines(x=ROC.risk.marginal4_8[["times"]],y=ROC.risk.marginal4_8[["AUC"]],
+     type="l",lwd=1,lty=1,col="orange")#Except stage
+lines(x=data1$time,y=data1$density.normal2,col="steelblue",type="l",lwd=2)
+points(x=pbc$time,y=pbc$status1,col=pbc$status.color,pch=20)
+abline(v=seq(0,5000,500),col="lightgray",lty=1)
+rug(jitter(ROC.risk.marginal[["times"]]))
+```
+
+
+#### Using ggplot2 (cox.pbc4~4_8)
+
+```{r}
+pbc$status1 <- ifelse(pbc$status==1,1,0.65)
+ggplot() +
+  geom_line(data=data4.melt, aes(x=time, y=AUC,
+                            group=model, color=model)) +
+  geom_point(data=pbc, aes(x=time, y=status1, color=as.factor(status))) +
+  geom_line(data=data1, aes(x=time, y=density.normal2), size=1, colour='black') +
+  scale_x_continuous(limits = c(0, max(pbc$time))) +
+  labs(title="Time dependent AUC with risk score (cox.pbc4~4_8)",
+       xlab="time", ylab="AUC") +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+#### Mean value of Time dependent AUC (cox.pbc4~4_8)
+
+```{r}
+mean(ROC.risk.marginal4[["AUC"]],na.rm=TRUE) 
+mean(ROC.risk.marginal4_1[["AUC"]],na.rm=TRUE) #Except age
+mean(ROC.risk.marginal4_2[["AUC"]],na.rm=TRUE) #Except edema
+mean(ROC.risk.marginal4_3[["AUC"]],na.rm=TRUE) #Except bili
+mean(ROC.risk.marginal4_4[["AUC"]],na.rm=TRUE) #Except albumin 
+mean(ROC.risk.marginal4_5[["AUC"]],na.rm=TRUE) #Except copper 
+mean(ROC.risk.marginal4_6[["AUC"]],na.rm=TRUE) #Except ast 
+mean(ROC.risk.marginal4_7[["AUC"]],na.rm=TRUE) #Except protime 
+mean(ROC.risk.marginal4_8[["AUC"]],na.rm=TRUE) #Except stage 
+```
+
+
+### Backward Elimination ver2
+
+#### 유의한 설명변수들만 포함한 모형 cox.pbc4에서 유의확률을 기준으로 가장 유의한 변수를 순차적으로 하나씩 제거
+
+#### All significant explanatory variables 
+
+```{r}
+cox.pbc4 <- coxph(Surv(time,status) ~ age+edema+bili+albumin+copper+ast+protime+stage, data=pbc)
+summary(cox.pbc4)
+risk.pbc4 <- predict(object=cox.pbc4, newdata=pbc, type="risk") # risk score
+pbc$risk4 <- risk.pbc4
+ROC.risk.marginal4 <- timeROC(T=pbc$time,
+                         delta=pbc$status,marker=pbc$risk4,
+                         cause=1,weighting="marginal",
+                         times=pbc$time)
+```
+
+#### Except bili
+
+```{r}
+cox.pbc4_11 <- coxph(Surv(time,status) ~ age+edema+albumin+copper+ast+protime+stage, data=pbc)
+summary(cox.pbc4_11)
+risk.pbc4_11 <- predict(object=cox.pbc4_11, newdata=pbc, type="risk") # risk score
+pbc$risk4_11 <- risk.pbc4_11
+ROC.risk.marginal4_11 <- timeROC(T=pbc$time,
+                         delta=pbc$status,marker=pbc$risk4_11,
+                         cause=1,weighting="marginal",
+                         times=pbc$time)
+```
+
+#### Except bili, ast
+
+```{r}
+cox.pbc4_12 <- coxph(Surv(time,status) ~ age+edema+albumin+copper+protime+stage, data=pbc)
+summary(cox.pbc4_12)
+risk.pbc4_12 <- predict(object=cox.pbc4_12, newdata=pbc, type="risk") # risk score
+pbc$risk4_12 <- risk.pbc4_12
+ROC.risk.marginal4_12 <- timeROC(T=pbc$time,
+                         delta=pbc$status,marker=pbc$risk4_12,
+                         cause=1,weighting="marginal",
+                         times=pbc$time)
+```
+
+#### Except bili, ast, copper
+
+```{r}
+cox.pbc4_13 <- coxph(Surv(time,status) ~ age+edema+albumin+protime+stage, data=pbc)
+summary(cox.pbc4_13)
+risk.pbc4_13 <- predict(object=cox.pbc4_13, newdata=pbc, type="risk") # risk score
+pbc$risk4_13 <- risk.pbc4_13
+ROC.risk.marginal4_13 <- timeROC(T=pbc$time,
+                         delta=pbc$status,marker=pbc$risk4_13,
+                         cause=1,weighting="marginal",
+                         times=pbc$time)
+```
+
+#### Except bili, ast, copper, edema
+
+```{r}
+cox.pbc4_14 <- coxph(Surv(time,status) ~ age+albumin+protime+stage, data=pbc)
+summary(cox.pbc4_14)
+risk.pbc4_14 <- predict(object=cox.pbc4_14, newdata=pbc, type="risk") # risk score
+pbc$risk4_14 <- risk.pbc4_14
+ROC.risk.marginal4_14 <- timeROC(T=pbc$time,
+                         delta=pbc$status,marker=pbc$risk4_14,
+                         cause=1,weighting="marginal",
+                         times=pbc$time)
+```
+
+#### Except bili, ast, copper, edema, protime
+
+```{r}
+cox.pbc4_15 <- coxph(Surv(time,status) ~ age+albumin+stage, data=pbc)
+summary(cox.pbc4_15)
+risk.pbc4_15 <- predict(object=cox.pbc4_15, newdata=pbc, type="risk") # risk score
+pbc$risk4_15 <- risk.pbc4_15
+ROC.risk.marginal4_15 <- timeROC(T=pbc$time,
+                         delta=pbc$status,marker=pbc$risk4_15,
+                         cause=1,weighting="marginal",
+                         times=pbc$time)
+```
+
+#### Except bili, ast, copper, edema, protime, albumin
+
+```{r}
+cox.pbc4_16 <- coxph(Surv(time,status) ~ age+stage, data=pbc)
+summary(cox.pbc4_16)
+risk.pbc4_16 <- predict(object=cox.pbc4_16, newdata=pbc, type="risk") # risk score
+pbc$risk4_16 <- risk.pbc4_16
+ROC.risk.marginal4_16 <- timeROC(T=pbc$time,
+                         delta=pbc$status,marker=pbc$risk4_16,
+                         cause=1,weighting="marginal",
+                         times=pbc$time)
+```
+
+#### Except bili, ast, copper, edema, protime, albumin, stage
+
+```{r}
+cox.pbc4_17 <- coxph(Surv(time,status) ~ age, data=pbc)
+summary(cox.pbc4_17)
+risk.pbc4_17 <- predict(object=cox.pbc4_17, newdata=pbc, type="risk") # risk score
+pbc$risk4_17 <- risk.pbc4_17
+ROC.risk.marginal4_17 <- timeROC(T=pbc$time,
+                         delta=pbc$status,marker=pbc$risk4_17,
+                         cause=1,weighting="marginal",
+                         times=pbc$time)
+```
+
+#### Make AUC data
+
+```{r}
+data4_1 <- data.frame(time=ROC.risk.marginal4[["times"]],
+                    cox.pbc4=ROC.risk.marginal4[["AUC"]],
+                    cox.pbc4_11=ROC.risk.marginal4_11[["AUC"]],
+                    cox.pbc4_12=ROC.risk.marginal4_12[["AUC"]],
+                    cox.pbc4_13=ROC.risk.marginal4_13[["AUC"]],
+                    cox.pbc4_14=ROC.risk.marginal4_14[["AUC"]],
+                    cox.pbc4_15=ROC.risk.marginal4_15[["AUC"]],
+                    cox.pbc4_16=ROC.risk.marginal4_16[["AUC"]],
+                    cox.pbc4_17=ROC.risk.marginal4_17[["AUC"]])
+data4_1.melt <- melt(data = data4_1, 
+                   id.vars = "time", 
+                   measure.vars = c("cox.pbc4","cox.pbc4_11","cox.pbc4_12",
+                                    "cox.pbc4_13","cox.pbc4_14","cox.pbc4_15",
+                                    "cox.pbc4_16","cox.pbc4_17"))
+data4_1.melt <- rename(data4_1.melt,
+                     replace=c("variable"="model",
+                               "value"="AUC"))
+
+time.density <- density(ROC.risk.marginal[["times"]])
+data1 <- data.frame(time=time.density[["x"]], density=time.density[["y"]])
+data1$density.normal1 <- (time.density[["y"]]-min(time.density[["y"]]))/(max(time.density[["y"]])-min(time.density[["y"]]))
+data1$density.normal2 <- (max(na.omit(ROC.risk.marginal4_17[["AUC"]]))-min(na.omit(ROC.risk.marginal4_17[["AUC"]])))*(time.density[["y"]]-min(time.density[["y"]]))/(max(time.density[["y"]])-min(time.density[["y"]]))+min(na.omit(ROC.risk.marginal4_17[["AUC"]]))
+
+pbc$status.color <- ifelse(pbc$status==1,"seagreen","darkred")
+pbc$status1 <- ifelse(pbc$status==1,1,0.3)
+```
+
+#### Plot of Time dependent AUC with Adjusted Density of time and Status of censoring (cox.pbc4~4_17)
+
+```{r}
+par(mar=c(4,4,3,1))
+plot(x=ROC.risk.marginal4[["times"]],y=ROC.risk.marginal4[["AUC"]],
+     type="l",xlab="times",ylab="AUC",lwd=3,lty=1,col="black",ylim=c(0.3,1),
+     main="Time dependent AUC with risk score (pbc data)")
+lines(x=ROC.risk.marginal4_11[["times"]],y=ROC.risk.marginal4_11[["AUC"]],
+     type="l",lwd=1,lty=1,col="red") #Except bili
+lines(x=ROC.risk.marginal4_12[["times"]],y=ROC.risk.marginal4_12[["AUC"]],
+     type="l",lwd=1,lty=1,col="blue") #Except bili, ast
+lines(x=ROC.risk.marginal4_13[["times"]],y=ROC.risk.marginal4_13[["AUC"]],
+     type="l",lwd=1,lty=1,col="green") #Except bili, ast, copper
+lines(x=ROC.risk.marginal4_14[["times"]],y=ROC.risk.marginal4_14[["AUC"]],
+     type="l",lwd=1,lty=1,col="yellow") #Except bili, ast, copper, edema
+lines(x=ROC.risk.marginal4_15[["times"]],y=ROC.risk.marginal4_15[["AUC"]],
+     type="l",lwd=1,lty=1,col="brown") #Except bili, ast, copper, edema, protime  
+lines(x=ROC.risk.marginal4_16[["times"]],y=ROC.risk.marginal4_16[["AUC"]],
+     type="l",lwd=1,lty=1,col="purple") #Except bili, ast, copper, edema, protime, albumin
+lines(x=ROC.risk.marginal4_17[["times"]],y=ROC.risk.marginal4_17[["AUC"]],
+     type="l",lwd=1,lty=1,col="navy") #Except bili, ast, copper, edema, protime, albumin, stage
+lines(x=data1$time,y=data1$density.normal2,col="steelblue",type="l",lwd=2)
+points(x=pbc$time,y=pbc$status1,col=pbc$status.color,pch=20)
+abline(v=seq(0,5000,500),col="lightgray",lty=1)
+rug(jitter(ROC.risk.marginal[["times"]]))
+legend("topright",c("AUC(cox.pbc4)","AUC(cox.pbc4_11)","AUC(cox.pbc4_12)","AUC(cox.pbc4_13)","AUC(cox.pbc4_14)","AUC(cox.pbc4_15)","AUC(cox.pbc4_16)","AUC(cox.pbc4_17)","Density of time(adjusted)","censored(status=0)"),col=c("black","red","blue","green","yellow","brown","purple","navy","steelblue","darkred"),lwd=c(1,1,1,1,1,1,1,1,1,1),lty=c(1,1,1,1,1,1,1,1,1,2))
+```
+
+#### Plot without legend
+
+```{r}
+par(mar=c(4,4,3,1))
+plot(x=ROC.risk.marginal4[["times"]],y=ROC.risk.marginal4[["AUC"]],
+     type="l",xlab="times",ylab="AUC",lwd=3,lty=1,col="black",ylim=c(0.3,1),
+     main="Time dependent AUC with risk score (pbc data)")
+lines(x=ROC.risk.marginal4_11[["times"]],y=ROC.risk.marginal4_11[["AUC"]],
+     type="l",lwd=1,lty=1,col="red") #Except bili
+lines(x=ROC.risk.marginal4_12[["times"]],y=ROC.risk.marginal4_12[["AUC"]],
+     type="l",lwd=1,lty=1,col="blue") #Except bili, ast
+lines(x=ROC.risk.marginal4_13[["times"]],y=ROC.risk.marginal4_13[["AUC"]],
+     type="l",lwd=1,lty=1,col="green") #Except bili, ast, copper
+lines(x=ROC.risk.marginal4_14[["times"]],y=ROC.risk.marginal4_14[["AUC"]],
+     type="l",lwd=1,lty=1,col="yellow") #Except bili, ast, copper, edema
+lines(x=ROC.risk.marginal4_15[["times"]],y=ROC.risk.marginal4_15[["AUC"]],
+     type="l",lwd=1,lty=1,col="brown") #Except bili, ast, copper, edema, protime  
+lines(x=ROC.risk.marginal4_16[["times"]],y=ROC.risk.marginal4_16[["AUC"]],
+     type="l",lwd=1,lty=1,col="purple") #Except bili, ast, copper, edema, protime, albumin
+lines(x=ROC.risk.marginal4_17[["times"]],y=ROC.risk.marginal4_17[["AUC"]],
+     type="l",lwd=1,lty=1,col="navy") #Except bili, ast, copper, edema, protime, albumin, stage
+lines(x=data1$time,y=data1$density.normal2,col="steelblue",type="l",lwd=2)
+points(x=pbc$time,y=pbc$status1,col=pbc$status.color,pch=20)
+abline(v=seq(0,5000,500),col="lightgray",lty=1)
+rug(jitter(ROC.risk.marginal[["times"]]))
+```
+
+#### Using ggplot2 (cox.pbc4~4_17)
+
+```{r}
+pbc$status1 <- ifelse(pbc$status==1,1,0.3)
+ggplot() +
+  geom_line(data=data4_1.melt, aes(x=time, y=AUC,
+                            group=model, color=model)) +
+  geom_point(data=pbc, aes(x=time, y=status1, color=as.factor(status))) +
+  geom_line(data=data1, aes(x=time, y=density.normal2), size=1, colour='black') +
+  scale_x_continuous(limits = c(0, max(pbc$time))) +
+  labs(title="Time dependent AUC with risk score (cox.pbc4~4_17)",
+       xlab="time", ylab="AUC") +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+#### Mean value of Time dependent AUC (cox.pbc4~4_17)
+
+```{r}
+mean(ROC.risk.marginal4[["AUC"]],na.rm=TRUE) 
+mean(ROC.risk.marginal4_11[["AUC"]],na.rm=TRUE) #Except bili
+mean(ROC.risk.marginal4_12[["AUC"]],na.rm=TRUE) #Except bili, ast
+mean(ROC.risk.marginal4_13[["AUC"]],na.rm=TRUE) #Except bili, ast, copper
+mean(ROC.risk.marginal4_14[["AUC"]],na.rm=TRUE) #Except bili, ast, copper, edema 
+mean(ROC.risk.marginal4_15[["AUC"]],na.rm=TRUE) #Except bili, ast, copper, edema, protime 
+mean(ROC.risk.marginal4_16[["AUC"]],na.rm=TRUE) #Except bili, ast, copper, edema, protime, albumin 
+mean(ROC.risk.marginal4_17[["AUC"]],na.rm=TRUE) #Except bili, ast, copper, edema, protime, albumin, stage 
+```
+
+
+
+
+
+## Train vs Test
+
+```{r}
+data(pbc)
+pbc<-pbc[,-1] # delete ID
+pbc$status<-as.numeric(pbc$status==2) # create event indicator: 1 for death, 0 for censored
+pbc <- na.omit(pbc)
+```
+
+### train:test = 7:3
+
+### 임의로 pbc data를 훈련자료와 검증자료로 나누어서 분석
+
+```{r}
+set.seed(55364)
+idx_train <- sample(1:nrow(pbc), round(0.7*nrow(pbc)))
+pbc.train <- pbc[idx_train,]
+pbc.test <- pbc[setdiff(x = 1:nrow(pbc), y = idx_train), ]
+```
+
+### Cox PH model with train data
+
+#### 유의확률을 기준으로 유의하지 않은 변수들을 순차적으로 제거
+
+#### Null model
+
+```{r}
+cox.train0 <- coxph(Surv(time,status) ~ trt+age+sex+ascites+hepato+spiders+edema
+                 +bili+chol+albumin+copper+alk.phos+ast+trig
+                 +platelet+protime+stage, data=pbc.train)
+summary(cox.train0)
+risk.train0 <- predict(object=cox.train0, newdata=pbc.test, type="risk") # risk score
+pbc.test$risk0 <- risk.train0
+ROC.risk.train0 <- timeROC(T=pbc.test$time,
+                         delta=pbc.test$status,marker=pbc.test$risk0,
+                         cause=1,weighting="marginal",
+                         times=pbc.test$time)
+ROC.risk.train0
+```
+
+#### Except explanatory variables with p-value > 0.5
+
+```{r}
+cox.train1 <- coxph(Surv(time,status) ~ age+sex+edema
+                 +bili+chol+albumin+copper+ast
+                 +protime+stage, data=pbc.train)
+summary(cox.train1)
+risk.train1 <- predict(object=cox.train1, newdata=pbc.test, type="risk") # risk score
+pbc.test$risk1 <- risk.train1
+ROC.risk.train1 <- timeROC(T=pbc.test$time,
+                         delta=pbc.test$status,marker=pbc.test$risk1,
+                         cause=1,weighting="marginal",
+                         times=pbc.test$time)
+ROC.risk.train1
+```
+
+#### Except explanatory variables with p-value > 0.2
+
+```{r}
+cox.train2 <- coxph(Surv(time,status) ~ age+bili+albumin+copper
+                 +protime+stage, data=pbc.train)
+summary(cox.train2)
+risk.train2 <- predict(object=cox.train2, newdata=pbc.test, type="risk") # risk score
+pbc.test$risk2 <- risk.train2
+ROC.risk.train2 <- timeROC(T=pbc.test$time,
+                         delta=pbc.test$status,marker=pbc.test$risk2,
+                         cause=1,weighting="marginal",
+                         times=pbc.test$time)
+ROC.risk.train2
+```
+
+#### Except explanatory variables with p-value > 0.2
+
+```{r}
+cox.train3 <- coxph(Surv(time,status) ~ bili+albumin+copper
+                 +protime+stage, data=pbc.train)
+summary(cox.train3)
+risk.train3 <- predict(object=cox.train3, newdata=pbc.test, type="risk") # risk score
+pbc.test$risk3 <- risk.train3
+ROC.risk.train3 <- timeROC(T=pbc.test$time,
+                         delta=pbc.test$status,marker=pbc.test$risk3,
+                         cause=1,weighting="marginal",
+                         times=pbc.test$time)
+ROC.risk.train3
+```
+
+#### Make AUC data
+
+```{r}
+time.density <- density(ROC.risk.train0[["times"]])
+data1 <- data.frame(time=time.density[["x"]], density=time.density[["y"]])
+data1$density.adjusted <- (max(na.omit(ROC.risk.train0[["AUC"]]))-min(na.omit(ROC.risk.train0[["AUC"]])))*(time.density[["y"]]-min(time.density[["y"]]))/(max(time.density[["y"]])-min(time.density[["y"]]))+min(na.omit(ROC.risk.train0[["AUC"]]))
+dt1 <- data.frame(time=ROC.risk.train0[["times"]],
+                    cox.train0=ROC.risk.train0[["AUC"]],
+                    cox.train1=ROC.risk.train1[["AUC"]],
+                    cox.train2=ROC.risk.train2[["AUC"]],
+                    cox.train3=ROC.risk.train3[["AUC"]])
+dt1.melt <- melt(data = dt1, 
+                   id.vars = "time", 
+                   measure.vars = c("cox.train0","cox.train1","cox.train2",
+                                    "cox.train3"))
+dt1.melt <- rename(dt1.melt,
+                     replace=c("variable"="model",
+                               "value"="AUC"))
+```
+
+#### Time dependent AUC plot with ggplot2 (cox.train0~3)
+
+```{r}
+pbc.test$status1 <- ifelse(pbc.test$status==1,1,min(na.omit(ROC.risk.train0[["AUC"]])))
+ggplot() +
+  geom_line(data=dt1.melt, aes(x=time, y=AUC,
+                            group=model, color=model)) +
+  geom_point(data=pbc.test, aes(x=time, y=status1, color=as.factor(status))) +
+  geom_line(data=data1, aes(x=time, y=density.adjusted), size=1, colour='black') +
+  scale_x_continuous(limits = c(0, max(pbc.test$time))) +
+  labs(title="Time dependent AUC with risk score (cox.train0~3)",
+       xlab="time", ylab="AUC") +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+#### Mean value of Time dependent AUC (cox.train0~3)
+
+```{r}
+mean(ROC.risk.train0[["AUC"]],na.rm=TRUE) 
+mean(ROC.risk.train1[["AUC"]],na.rm=TRUE) 
+mean(ROC.risk.train2[["AUC"]],na.rm=TRUE) 
+mean(ROC.risk.train3[["AUC"]],na.rm=TRUE) 
+```
+
+#### Counting censored data
+
+```{r}
+pbc.test.censor <- pbc.test[pbc.test$status==0,]
+pbc.test.censor <- pbc.test.censor %>%
+  mutate(n.cen=cut(pbc.test.censor$time, 
+                   breaks=seq(from=0,to=5000,by=500)))
+table(pbc.test.censor$n.cen)
+```
+
+#### 유의한 설명변수들만 포함한 모형 cox.train3에서 각 변수를 하나씩 제거
+
+#### Except each explanatory variables in model cox.train3
+
+```{r}
+# Except bili
+cox.train3_1 <- coxph(Surv(time,status) ~ albumin+copper
+                 +protime+stage, data=pbc.train)
+summary(cox.train3_1)
+risk.train3_1 <- predict(object=cox.train3_1, newdata=pbc.test, type="risk") # risk score
+pbc.test$risk3_1 <- risk.train3_1
+ROC.risk.train3_1 <- timeROC(T=pbc.test$time,
+                         delta=pbc.test$status,marker=pbc.test$risk3_1,
+                         cause=1,weighting="marginal",
+                         times=pbc.test$time)
+ROC.risk.train3_1
+
+# Except albumin
+cox.train3_2 <- coxph(Surv(time,status) ~ bili+copper
+                 +protime+stage, data=pbc.train)
+summary(cox.train3_2)
+risk.train3_2 <- predict(object=cox.train3_2, newdata=pbc.test, type="risk") # risk score
+pbc.test$risk3_2 <- risk.train3_2
+ROC.risk.train3_2 <- timeROC(T=pbc.test$time,
+                         delta=pbc.test$status,marker=pbc.test$risk3_2,
+                         cause=1,weighting="marginal",
+                         times=pbc.test$time)
+ROC.risk.train3_2
+
+# Except copper
+cox.train3_3 <- coxph(Surv(time,status) ~ bili+albumin
+                 +protime+stage, data=pbc.train)
+summary(cox.train3_3)
+risk.train3_3 <- predict(object=cox.train3_3, newdata=pbc.test, type="risk") # risk score
+pbc.test$risk3_3 <- risk.train3_3
+ROC.risk.train3_3 <- timeROC(T=pbc.test$time,
+                         delta=pbc.test$status,marker=pbc.test$risk3_3,
+                         cause=1,weighting="marginal",
+                         times=pbc.test$time)
+ROC.risk.train3_3
+
+# Except protime
+cox.train3_4 <- coxph(Surv(time,status) ~ bili+albumin+copper
+                 +stage, data=pbc.train)
+summary(cox.train3_4)
+risk.train3_4 <- predict(object=cox.train3_4, newdata=pbc.test, type="risk") # risk score
+pbc.test$risk3_4 <- risk.train3_4
+ROC.risk.train3_4 <- timeROC(T=pbc.test$time,
+                         delta=pbc.test$status,marker=pbc.test$risk3_4,
+                         cause=1,weighting="marginal",
+                         times=pbc.test$time)
+ROC.risk.train3_4
+
+# Except stage
+cox.train3_5 <- coxph(Surv(time,status) ~ bili+albumin+copper
+                 +protime, data=pbc.train)
+summary(cox.train3_5)
+risk.train3_5 <- predict(object=cox.train3_5, newdata=pbc.test, type="risk") # risk score
+pbc.test$risk3_5 <- risk.train3_5
+ROC.risk.train3_5 <- timeROC(T=pbc.test$time,
+                         delta=pbc.test$status,marker=pbc.test$risk3_5,
+                         cause=1,weighting="marginal",
+                         times=pbc.test$time)
+ROC.risk.train3_5
+```
+
+#### Make AUC data
+
+```{r}
+time.density <- density(ROC.risk.train3[["times"]])
+data1 <- data.frame(time=time.density[["x"]], density=time.density[["y"]])
+data1$density.adjusted <- (max(na.omit(ROC.risk.train3[["AUC"]]))-min(na.omit(ROC.risk.train3[["AUC"]])))*(time.density[["y"]]-min(time.density[["y"]]))/(max(time.density[["y"]])-min(time.density[["y"]]))+min(na.omit(ROC.risk.train3[["AUC"]]))
+dt2 <- data.frame(time=ROC.risk.train3[["times"]],
+                    cox.train3=ROC.risk.train3[["AUC"]],
+                    cox.train3_1=ROC.risk.train3_1[["AUC"]],
+                    cox.train3_2=ROC.risk.train3_2[["AUC"]],
+                    cox.train3_3=ROC.risk.train3_3[["AUC"]],
+                    cox.train3_4=ROC.risk.train3_4[["AUC"]],
+                    cox.train3_5=ROC.risk.train3_5[["AUC"]])
+dt2.melt <- melt(data = dt2, 
+                   id.vars = "time", 
+                   measure.vars = c("cox.train3","cox.train3_1","cox.train3_2",
+                                    "cox.train3_3","cox.train3_4","cox.train3_5"))
+dt2.melt <- rename(dt2.melt,
+                     replace=c("variable"="model",
+                               "value"="AUC"))
+```
+
+#### Time dependent AUC plot with ggplot2 (cox.train3~3_5)
+
+```{r}
+pbc.test$status1 <- ifelse(pbc.test$status==1,1,min(na.omit(ROC.risk.train3[["AUC"]])))
+ggplot() +
+  geom_line(data=dt2.melt, aes(x=time, y=AUC,
+                            group=model, color=model)) +
+  geom_point(data=pbc.test, aes(x=time, y=status1, color=as.factor(status))) +
+  geom_line(data=data1, aes(x=time, y=density.adjusted), size=1, colour='black') +
+  scale_x_continuous(limits = c(0, max(pbc.test$time))) +
+  labs(title="Time dependent AUC with risk score (cox.train3~3_5)",
+       xlab="time", ylab="AUC") +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+#### Mean value of Time dependent AUC (cox.train3~3_5)
+
+```{r}
+mean(ROC.risk.train3[["AUC"]],na.rm=TRUE) 
+mean(ROC.risk.train3_1[["AUC"]],na.rm=TRUE) # Except bili
+mean(ROC.risk.train3_2[["AUC"]],na.rm=TRUE) # Except albumin
+mean(ROC.risk.train3_3[["AUC"]],na.rm=TRUE) # Except copper
+mean(ROC.risk.train3_4[["AUC"]],na.rm=TRUE) # Except protime 
+mean(ROC.risk.train3_5[["AUC"]],na.rm=TRUE) # Except stage 
+```
+
+### Backward Elimination ver2
+
+#### 유의한 설명변수들만 포함한 모형 cox.train3에서 유의확률을 기준으로 가장 유의한 변수를 순차적으로 하나씩 제거
+
+#### All significant explanatory variables 
+
+```{r}
+cox.train3 <- coxph(Surv(time,status) ~ bili+albumin+copper+protime+stage, data=pbc.train)
+summary(cox.train3)
+risk.train3 <- predict(object=cox.train3, newdata=pbc.test, type="risk") # risk score
+pbc.test$risk3 <- risk.train3
+ROC.risk.train3 <- timeROC(T=pbc.test$time,
+                         delta=pbc.test$status,marker=pbc.test$risk3,
+                         cause=1,weighting="marginal",
+                         times=pbc.test$time)
+```
+
+#### Except bili
+
+```{r}
+cox.train3_11 <- coxph(Surv(time,status) ~ albumin+copper+protime+stage, data=pbc.train)
+summary(cox.train3_11)
+risk.train3_11 <- predict(object=cox.train3_11, newdata=pbc.test, type="risk") # risk score
+pbc.test$risk3_11 <- risk.train3_11
+ROC.risk.train3_11 <- timeROC(T=pbc.test$time,
+                         delta=pbc.test$status,marker=pbc.test$risk3_11,
+                         cause=1,weighting="marginal",
+                         times=pbc.test$time)
+```
+
+#### Except bili, copper
+
+```{r}
+cox.train3_12 <- coxph(Surv(time,status) ~ albumin+protime+stage, data=pbc.train)
+summary(cox.train3_12)
+risk.train3_12 <- predict(object=cox.train3_12, newdata=pbc.test, type="risk") # risk score
+pbc.test$risk3_12 <- risk.train3_12
+ROC.risk.train3_12 <- timeROC(T=pbc.test$time,
+                         delta=pbc.test$status,marker=pbc.test$risk3_12,
+                         cause=1,weighting="marginal",
+                         times=pbc.test$time)
+```
+
+#### Except bili, copper, albumin
+
+```{r}
+cox.train3_13 <- coxph(Surv(time,status) ~ protime+stage, data=pbc.train)
+summary(cox.train3_13)
+risk.train3_13 <- predict(object=cox.train3_13, newdata=pbc.test, type="risk") # risk score
+pbc.test$risk3_13 <- risk.train3_13
+ROC.risk.train3_13 <- timeROC(T=pbc.test$time,
+                         delta=pbc.test$status,marker=pbc.test$risk3_13,
+                         cause=1,weighting="marginal",
+                         times=pbc.test$time)
+```
+
+#### Except bili, copper, albumin, stage
+
+```{r}
+cox.train3_14 <- coxph(Surv(time,status) ~ protime, data=pbc.train)
+summary(cox.train3_14)
+risk.train3_14 <- predict(object=cox.train3_14, newdata=pbc.test, type="risk") # risk score
+pbc.test$risk3_14 <- risk.train3_14
+ROC.risk.train3_14 <- timeROC(T=pbc.test$time,
+                         delta=pbc.test$status,marker=pbc.test$risk3_14,
+                         cause=1,weighting="marginal",
+                         times=pbc.test$time)
+```
+
+#### Make AUC data
+
+```{r}
+dt2_1 <- data.frame(time=ROC.risk.train3[["times"]],
+                    cox.train3=ROC.risk.train3[["AUC"]],
+                    cox.train3_11=ROC.risk.train3_11[["AUC"]],
+                    cox.train3_12=ROC.risk.train3_12[["AUC"]],
+                    cox.train3_13=ROC.risk.train3_13[["AUC"]],
+                    cox.train3_14=ROC.risk.train3_14[["AUC"]])
+dt2_1.melt <- melt(data = dt2_1, 
+                   id.vars = "time", 
+                   measure.vars = c("cox.train3","cox.train3_11","cox.train3_12",
+                                    "cox.train3_13","cox.train3_14"))
+dt2_1.melt <- rename(dt2_1.melt,
+                     replace=c("variable"="model",
+                               "value"="AUC"))
+
+time.density <- density(ROC.risk.train3[["times"]])
+data1 <- data.frame(time=time.density[["x"]], density=time.density[["y"]])
+data1$density.adjusted <- (max(na.omit(ROC.risk.train3_13[["AUC"]]))-min(na.omit(ROC.risk.train3_13[["AUC"]])))*(time.density[["y"]]-min(time.density[["y"]]))/(max(time.density[["y"]])-min(time.density[["y"]]))+min(na.omit(ROC.risk.train3_13[["AUC"]]))
+```
+
+#### Plot of Time dependent AUC with Adjusted Density of time and Status of censoring (Using ggplot2) (cox.train3~3_14)
+
+```{r}
+pbc$status1 <- ifelse(pbc$status==1,1,0.25)
+ggplot() +
+  geom_line(data=dt2_1.melt, aes(x=time, y=AUC,
+                            group=model, color=model)) +
+  geom_point(data=pbc, aes(x=time, y=status1, color=as.factor(status))) +
+  geom_line(data=data1, aes(x=time, y=density.adjusted), size=1, colour='black') +
+  scale_x_continuous(limits = c(0, max(pbc$time))) +
+  labs(title="Time dependent AUC with risk score (cox.train3~3_14)",
+       xlab="time", ylab="AUC") +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+#### Mean value of Time dependent AUC (cox.train3~3_14)
+
+```{r}
+mean(ROC.risk.train3[["AUC"]],na.rm=TRUE) 
+mean(ROC.risk.train3_11[["AUC"]],na.rm=TRUE) #Except bili
+mean(ROC.risk.train3_12[["AUC"]],na.rm=TRUE) #Except bili, copper
+mean(ROC.risk.train3_13[["AUC"]],na.rm=TRUE) #Except bili, copper, albumin
+mean(ROC.risk.train3_14[["AUC"]],na.rm=TRUE) #Except bili, copper, albumin, stage
+```
+
+
+
