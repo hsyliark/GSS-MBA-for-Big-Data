@@ -1,7 +1,7 @@
 ---
 title: "Time dependent ROC curve (Train vc Test)"
 author: "Hwang Seong-Yun"
-date: '2022 4 1 '
+date: '2022 4 11 '
 output: html_document
 ---
 
@@ -132,12 +132,12 @@ ggplot() +
   geom_line(data=data2, aes(x=time, y=density.adjusted), 
             size=1, colour='orange') +
   scale_x_continuous(limits = c(0, max(pbc.test$time))) +
-  ggtitle("Time dependent AUC with risk score (cox.train0~1)") +
+  ggtitle("Time dependent AUC with risk score (cox.train0~2)") +
   xlab("time") + ylab("AUC") +
   theme(plot.title = element_text(hjust = 0.5))
 ```
 
-#### Mean value of Time dependent AUC (cox.train0~1)
+#### Mean value of Time dependent AUC (cox.train0~2)
 
 ```{r}
 mean(ROC.risk.train0[["AUC"]],na.rm=TRUE) 
