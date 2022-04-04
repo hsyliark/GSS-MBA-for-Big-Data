@@ -1,0 +1,222 @@
+---
+title: "Time dependent ROC curve (simulation)"
+author: "Hwang Seong-Yun"
+date: '2022 4 4 '
+output: html_document
+---
+
+## Loading packages
+
+```{r}
+library(survival)
+library(timeROC)
+library(timereg)
+library(ggplot2)
+library(reshape)
+library(plyr)
+library(tidyverse)
+library(coxed)
+```
+
+## Simulation
+
+### Generating survival data from Cox proportional hazard model
+
+#### function sim.survdata()
+
+``` r
+sim.survdata(N = 1000, T = 100, type = "none", hazard.fun = NULL,
+  num.data.frames = 1, fixed.hazard = FALSE, knots = 8,
+  spline = TRUE, X = NULL, beta = NULL, xvars = 3, mu = 0,
+  sd = 0.5, covariate = 1, low = 0, high = 1, compare = median,
+  censor = 0.1, censor.cond = FALSE)
+```  
+
+- `N`	: Number of observations in each generated data frame. Ignored if X is not NULL
+
+- `T`	: The latest time point during which an observation may fail. Failures can occur as early as 1 and as late as T
+
+- `type` : If "none" (the default) data are generated with no time-varying covariates or coefficients. If "tvc", data are generated with time-varying covariates, and if "tvbeta" data are generated with time-varying coefficients (see details)
+
+- `hazard.fun` : A user-specified R function with one argument, representing time, that outputs the baseline hazard function. If NULL, a baseline hazard function is generated using the flexible-hazard method as described in Harden and Kropko (2018) (see details)
+
+- `num.data.frames`	: The number of data frames to be generated
+
+- `fixed.hazard` : If TRUE, the same hazard function is used to generate each data frame. If FALSE (the default), different drawn hazard functions are used to generate each data frame. Ignored if hazard.fun is not NULL or if num.data.frames is 1
+
+- `knots`	: The number of points to draw while using the flexible-hazard method to generate hazard functions (default is 8). Ignored if hazard.fun is not NULL
+
+- `spline` : If TRUE (the default), a spline is employed to smooth the generated cumulative baseline hazard, and if FALSE the cumulative baseline hazard is specified as a step function with steps at the knots. Ignored if hazard.fun is not NULL
+
+- `X` : A user-specified data frame containing the covariates that condition duration. If NULL, covariates are generated from normal distributions with means given by the mu argument and standard deviations given by the sd argument
+
+- `beta` : Either a user-specified vector containing the coefficients that for the linear part of the duration model, or a user specified matrix with rows equal to T for pre-specified time-varying coefficients. If NULL, coefficients are generated from normal distributions with means of 0 and standard deviations of 0.1
+
+- `xvars`	: The number of covariates to generate. Ignored if X is not NULL
+
+- `mu` : If scalar, all covariates are generated to have means equal to this scalar. If a vector, it specifies the mean of each covariate separately, and it must be equal in length to xvars. Ignored if X is not NULL
+
+- `sd` : If scalar, all covariates are generated to have standard deviations equal to this scalar. If a vector, it specifies the standard deviation of each covariate separately, and it must be equal in length to xvars. Ignored if X is not NULL
+
+- `covariate` : Specification of the column number of the covariate in the X matrix for which to generate a simulated marginal effect (default is 1). The marginal effect is the difference in expected duration when the covariate is fixed at a high value and the expected duration when the covariate is fixed at a low value
+
+- `low`	: The low value of the covariate for which to calculate a marginal effect
+
+- `high` : The high value of the covariate for which to calculate a marginal effect
+
+- `compare`	: The statistic to employ when examining the two new vectors of expected durations (see details). The default is median
+
+- `censor` : The proportion of observations to designate as being right-censored
+
+- `censor.cond` : Whether to make right-censoring conditional on the covariates (default is FALSE, but see details) 
+
+```{r}
+simdata <- sim.survdata(N=1000, T=5000, type="none", xvars=1, censor=0.2, 
+                    hazard.fun=NULL, num.data.frames=1)
+dt1 <- simdata[["data"]]
+dt1$X2 <- (dt1$X)^2 ; dt1$t <- dt1$y
+dt1$censor <- as.numeric(dt1$failed)
+head(dt1,10)
+```
+
+### Time dependent AUC
+
+### Assuming linear
+
+- $h(t|x)=h _{0} (t)exp[f(x)]$
+- $f(x)=\beta_{0}+\beta_{1}x$
+
+```{r}
+cox.lin.dt1 <- coxph(Surv(t,censor) ~ X, data=dt1)
+summary(cox.lin.dt1)
+risk.lin.dt1 <- predict(object=cox.lin.dt1, newdata=dt1, type="risk") # risk score
+dt1$risk.lin.dt1 <- risk.lin.dt1
+ROC.risk.lin.dt1 <- timeROC(T=dt1$t,
+                         delta=dt1$censor,marker=dt1$risk.lin.dt1,
+                         cause=1,weighting="marginal",
+                         times=dt1$t)
+ROC.risk.lin.dt1
+```
+
+### Assuming quadratic
+
+- $h(t|x)=h _{0} (t)exp[f(x)]$
+- $f(x)=\beta_{0}+\beta_{1}x+\beta_{2}x^2$
+
+```{r}
+cox.quad.dt1 <- coxph(Surv(t,censor) ~ X+X2, data=dt1)
+summary(cox.quad.dt1)
+risk.quad.dt1 <- predict(object=cox.quad.dt1, newdata=dt1, type="risk") # risk score
+dt1$risk.quad.dt1 <- risk.quad.dt1
+ROC.risk.quad.dt1 <- timeROC(T=dt1$t,
+                         delta=dt1$censor,marker=dt1$risk.quad.dt1,
+                         cause=1,weighting="marginal",
+                         times=dt1$t)
+ROC.risk.quad.dt1
+```
+
+
+## Train vs Test
+
+### train:test = 7:3
+
+```{r}
+idx_train <- sample(1:nrow(dt1), round(0.7*nrow(dt1)))
+dt1.train <- dt1[idx_train,]
+dt1.test <- dt1[-idx_train,]
+# dt1.test <- dt1[setdiff(x = 1:nrow(dt1), y = idx_train), ]
+```
+
+### Assuming linear
+
+- $h(t|x)=h _{0} (t)exp[f(x)]$
+- $f(x)=\beta_{0}+\beta_{1}x$
+
+```{r}
+cox.lin <- coxph(Surv(t,censor) ~ X, data=dt1.train)
+summary(cox.lin)
+risk.lin <- predict(object=cox.lin, newdata=dt1.test, type="risk") # risk score
+dt1.test$risk.lin <- risk.lin
+ROC.risk.lin <- timeROC(T=dt1.test$t,
+                         delta=dt1.test$censor,marker=dt1.test$risk.lin,
+                         cause=1,weighting="marginal",
+                         times=dt1.test$t)
+ROC.risk.lin
+```
+
+### Assuming quadratic
+
+- $h(t|x)=h _{0} (t)exp[f(x)]$
+- $f(x)=\beta_{0}+\beta_{1}x+\beta_{2}x^2$
+
+```{r}
+cox.quad <- coxph(Surv(t,censor) ~ X+X2, data=dt1.train)
+summary(cox.quad)
+risk.quad <- predict(object=cox.quad, newdata=dt1.test, type="risk") # risk score
+dt1.test$risk.quad <- risk.quad
+ROC.risk.quad <- timeROC(T=dt1.test$t,
+                         delta=dt1.test$censor,marker=dt1.test$risk.quad,
+                         cause=1,weighting="marginal",
+                         times=dt1.test$t)
+ROC.risk.quad
+```
+
+#### Make AUC data
+
+```{r}
+# uncensored
+uncensored.density <- density(dt1.test$t[dt1.test$censor==1])
+data1 <- data.frame(time=uncensored.density[["x"]], 
+                    density=uncensored.density[["y"]])
+data1$density.adjusted <- (max(na.omit(ROC.risk.lin[["AUC"]]))-min(na.omit(ROC.risk.lin[["AUC"]])))*(uncensored.density[["y"]]-min(uncensored.density[["y"]]))/(max(uncensored.density[["y"]])-min(uncensored.density[["y"]]))+min(na.omit(ROC.risk.lin[["AUC"]]))
+
+# censored
+censored.density <- density(dt1.test$t[dt1.test$censor==0])
+data2 <- data.frame(time=censored.density[["x"]], 
+                    density=censored.density[["y"]])
+data2$density.adjusted <- (max(na.omit(ROC.risk.lin[["AUC"]]))-min(na.omit(ROC.risk.lin[["AUC"]])))*(censored.density[["y"]]-min(censored.density[["y"]]))/(max(censored.density[["y"]])-min(censored.density[["y"]]))+min(na.omit(ROC.risk.lin[["AUC"]]))
+
+res <- data.frame(time=ROC.risk.lin[["times"]],
+                    cox.lin=ROC.risk.lin[["AUC"]],
+                    cox.quad=ROC.risk.quad[["AUC"]])
+res <- melt(data = res, 
+                   id.vars = "time", 
+                   measure.vars = c("cox.lin","cox.quad"))
+```
+
+#### Time dependent AUC plot with ggplot2 (cox.lin, cox.quad)
+
+```{r}
+dt1.test$censor1 <- ifelse(dt1.test$censor==1,
+                    max(na.omit(ROC.risk.lin[["AUC"]])),
+                    min(na.omit(ROC.risk.lin[["AUC"]])))
+ggplot() +
+  geom_line(data=res, aes(x=time, y=value,
+                            group=variable, color=variable)) +
+  geom_point(data=dt1.test, aes(x=t, y=censor1, color=as.factor(censor))) +
+  geom_line(data=data1, aes(x=time, y=density.adjusted), 
+            size=1, colour='black') +
+  geom_line(data=data2, aes(x=time, y=density.adjusted), 
+            size=1, colour='orange') +
+  scale_x_continuous(limits = c(0, max(dt1.test$t))) +
+  ggtitle("Time dependent AUC with risk score (cox.lin, cox.quad)") +
+  xlab("time") + ylab("AUC") +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+#### Mean value of Time dependent AUC (cox.lin, cox.quad)
+
+```{r}
+mean(ROC.risk.lin[["AUC"]],na.rm=TRUE) 
+mean(ROC.risk.quad[["AUC"]],na.rm=TRUE) 
+```
+
+#### Counting censored data
+
+```{r}
+dt1.test.censor <- dt1.test[dt1.test$censor==0,]
+dt1.test.censor <- dt1.test.censor %>%
+  mutate(n.cen=cut(dt1.test.censor$t, 
+                   breaks=seq(from=0,to=5000,by=500)))
+table(dt1.test.censor$n.cen)
+```
