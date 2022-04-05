@@ -16,13 +16,14 @@ library(reshape)
 library(plyr)
 library(tidyverse)
 library(coxed)
+library(gridExtra)
 ```
 
 ## Simulation
 
-### Generating survival data from Cox proportional hazard model
+### Simulating duration data for the Cox proportional hazards model
 
-#### function sim.survdata()
+#### function sim.survdata() in package `coxed`
 
 ``` r
 sim.survdata(N = 1000, T = 100, type = "none", hazard.fun = NULL,
@@ -71,12 +72,15 @@ sim.survdata(N = 1000, T = 100, type = "none", hazard.fun = NULL,
 - `censor.cond` : Whether to make right-censoring conditional on the covariates (default is FALSE, but see details) 
 
 ```{r}
-simdata <- sim.survdata(N=1000, T=5000, type="none", xvars=1, censor=0.2, 
+# Assume linearity
+set.seed(12345678)
+simdata <- sim.survdata(N=1000, T=5000, type="none", xvars=1, censor=0.3, 
                     hazard.fun=NULL, num.data.frames=1)
 dt1 <- simdata[["data"]]
-dt1$X2 <- (dt1$X)^2 ; dt1$t <- dt1$y
+dt1$X2 <- (dt1$X)^2 ; dt1$time <- dt1$y
 dt1$censor <- as.numeric(dt1$failed)
 head(dt1,10)
+simdata$betas ## "true" coefficients 
 ```
 
 ### Time dependent AUC
@@ -84,43 +88,122 @@ head(dt1,10)
 ### Assuming linear
 
 - $h(t|x)=h _{0} (t)exp[f(x)]$
-- $f(x)=\beta_{0}+\beta_{1}x$
+- $f(x)=\beta_{1}x$
 
 ```{r}
-cox.lin.dt1 <- coxph(Surv(t,censor) ~ X, data=dt1)
+cox.lin.dt1 <- coxph(Surv(time,censor) ~ X, data=dt1)
 summary(cox.lin.dt1)
+cox.lin.dt1$coefficients ## model-estimated coefficients
+simdata$betas ## "true" coefficients
 risk.lin.dt1 <- predict(object=cox.lin.dt1, newdata=dt1, type="risk") # risk score
 dt1$risk.lin.dt1 <- risk.lin.dt1
-ROC.risk.lin.dt1 <- timeROC(T=dt1$t,
+ROC.risk.lin.dt1 <- timeROC(T=dt1$time,
                          delta=dt1$censor,marker=dt1$risk.lin.dt1,
                          cause=1,weighting="marginal",
-                         times=dt1$t)
+                         times=dt1$time)
 ROC.risk.lin.dt1
 ```
 
 ### Assuming quadratic
 
 - $h(t|x)=h _{0} (t)exp[f(x)]$
-- $f(x)=\beta_{0}+\beta_{1}x+\beta_{2}x^2$
+- $f(x)=\beta_{1}x+\beta_{2}x^2$
 
 ```{r}
-cox.quad.dt1 <- coxph(Surv(t,censor) ~ X+X2, data=dt1)
+cox.quad.dt1 <- coxph(Surv(time,censor) ~ X+X2, data=dt1)
 summary(cox.quad.dt1)
 risk.quad.dt1 <- predict(object=cox.quad.dt1, newdata=dt1, type="risk") # risk score
 dt1$risk.quad.dt1 <- risk.quad.dt1
-ROC.risk.quad.dt1 <- timeROC(T=dt1$t,
+ROC.risk.quad.dt1 <- timeROC(T=dt1$time,
                          delta=dt1$censor,marker=dt1$risk.quad.dt1,
                          cause=1,weighting="marginal",
-                         times=dt1$t)
+                         times=dt1$time)
 ROC.risk.quad.dt1
 ```
+
+#### Make AUC data
+
+```{r}
+# uncensored
+uncensored.density1 <- density(dt1$time[dt1$censor==1])
+data1_1 <- data.frame(time=uncensored.density1[["x"]], 
+                    density=uncensored.density1[["y"]])
+data1_1$density.adjusted <- (max(na.omit(ROC.risk.lin.dt1[["AUC"]]))-min(na.omit(ROC.risk.lin.dt1[["AUC"]])))*(uncensored.density1[["y"]]-min(uncensored.density1[["y"]]))/(max(uncensored.density1[["y"]])-min(uncensored.density1[["y"]]))+min(na.omit(ROC.risk.lin.dt1[["AUC"]]))
+
+# censored
+censored.density1 <- density(dt1$time[dt1$censor==0])
+data1_2 <- data.frame(time=censored.density1[["x"]], 
+                    density=censored.density1[["y"]])
+data1_2$density.adjusted <- (max(na.omit(ROC.risk.lin.dt1[["AUC"]]))-min(na.omit(ROC.risk.lin.dt1[["AUC"]])))*(censored.density1[["y"]]-min(censored.density1[["y"]]))/(max(censored.density1[["y"]])-min(censored.density1[["y"]]))+min(na.omit(ROC.risk.lin.dt1[["AUC"]]))
+
+res1 <- data.frame(time=ROC.risk.lin.dt1[["times"]],
+                    cox.lin.dt1=ROC.risk.lin.dt1[["AUC"]],
+                    cox.quad.dt1=ROC.risk.quad.dt1[["AUC"]])
+res1 <- melt(data = res1, 
+                   id.vars = "time", 
+                   measure.vars = c("cox.lin.dt1","cox.quad.dt1"))
+```
+
+#### Time dependent AUC plot with ggplot2 (cox.lin.dt1, cox.quad.dt1)
+
+```{r}
+dt1$censor1 <- ifelse(dt1$censor==1,
+                    max(na.omit(ROC.risk.lin.dt1[["AUC"]])),
+                    min(na.omit(ROC.risk.lin.dt1[["AUC"]])))
+ggplot() +
+  geom_line(data=res1, aes(x=time, y=value,
+                            group=variable, color=variable)) +
+  geom_point(data=dt1, aes(x=time, y=censor1, color=as.factor(censor))) +
+  geom_line(data=data1_1, aes(x=time, y=density.adjusted), 
+            size=1, colour='black') +
+  geom_line(data=data1_2, aes(x=time, y=density.adjusted), 
+            size=1, colour='orange') +
+  scale_x_continuous(limits = c(0, max(dt1$time))) +
+  ggtitle("Time dependent AUC with risk score (cox.lin.dt1, cox.quad.dt1)") +
+  xlab("time") + ylab("AUC") +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+#### Mean value of Time dependent AUC (cox.lin.dt1, cox.quad.dt1)
+
+```{r}
+mean(ROC.risk.lin.dt1[["AUC"]],na.rm=TRUE) 
+mean(ROC.risk.quad.dt1[["AUC"]],na.rm=TRUE) 
+```
+
+#### Counting censored data
+
+```{r}
+dt1.censor <- dt1[dt1$censor==0,]
+dt1.censor <- dt1.censor %>%
+  mutate(n.cen=cut(dt1.censor$time, 
+                   breaks=seq(from=0,to=5000,by=500)))
+table(dt1.censor$n.cen)
+```
+
+
+
+
+
+
 
 
 ## Train vs Test
 
+```{r}
+# Assume linearity
+set.seed(12345678)
+simdata <- sim.survdata(N=1000, T=5000, type="none", xvars=1, censor=0.3, 
+                    hazard.fun=NULL, num.data.frames=1)
+dt1 <- simdata[["data"]]
+dt1$X2 <- (dt1$X)^2 ; dt1$time <- dt1$y
+dt1$censor <- as.numeric(dt1$failed)
+```
+
 ### train:test = 7:3
 
 ```{r}
+# set.seed(54321)
 idx_train <- sample(1:nrow(dt1), round(0.7*nrow(dt1)))
 dt1.train <- dt1[idx_train,]
 dt1.test <- dt1[-idx_train,]
@@ -130,34 +213,34 @@ dt1.test <- dt1[-idx_train,]
 ### Assuming linear
 
 - $h(t|x)=h _{0} (t)exp[f(x)]$
-- $f(x)=\beta_{0}+\beta_{1}x$
+- $f(x)=\beta_{1}x$
 
 ```{r}
-cox.lin <- coxph(Surv(t,censor) ~ X, data=dt1.train)
+cox.lin <- coxph(Surv(time,censor) ~ X, data=dt1.train)
 summary(cox.lin)
 risk.lin <- predict(object=cox.lin, newdata=dt1.test, type="risk") # risk score
 dt1.test$risk.lin <- risk.lin
-ROC.risk.lin <- timeROC(T=dt1.test$t,
+ROC.risk.lin <- timeROC(T=dt1.test$time,
                          delta=dt1.test$censor,marker=dt1.test$risk.lin,
                          cause=1,weighting="marginal",
-                         times=dt1.test$t)
+                         times=dt1.test$time)
 ROC.risk.lin
 ```
 
 ### Assuming quadratic
 
 - $h(t|x)=h _{0} (t)exp[f(x)]$
-- $f(x)=\beta_{0}+\beta_{1}x+\beta_{2}x^2$
+- $f(x)=\beta_{1}x+\beta_{2}x^2$
 
 ```{r}
-cox.quad <- coxph(Surv(t,censor) ~ X+X2, data=dt1.train)
+cox.quad <- coxph(Surv(time,censor) ~ X+X2, data=dt1.train)
 summary(cox.quad)
 risk.quad <- predict(object=cox.quad, newdata=dt1.test, type="risk") # risk score
 dt1.test$risk.quad <- risk.quad
-ROC.risk.quad <- timeROC(T=dt1.test$t,
+ROC.risk.quad <- timeROC(T=dt1.test$time,
                          delta=dt1.test$censor,marker=dt1.test$risk.quad,
                          cause=1,weighting="marginal",
-                         times=dt1.test$t)
+                         times=dt1.test$time)
 ROC.risk.quad
 ```
 
@@ -165,21 +248,21 @@ ROC.risk.quad
 
 ```{r}
 # uncensored
-uncensored.density <- density(dt1.test$t[dt1.test$censor==1])
-data1 <- data.frame(time=uncensored.density[["x"]], 
-                    density=uncensored.density[["y"]])
-data1$density.adjusted <- (max(na.omit(ROC.risk.lin[["AUC"]]))-min(na.omit(ROC.risk.lin[["AUC"]])))*(uncensored.density[["y"]]-min(uncensored.density[["y"]]))/(max(uncensored.density[["y"]])-min(uncensored.density[["y"]]))+min(na.omit(ROC.risk.lin[["AUC"]]))
+uncensored.density2 <- density(dt1.test$time[dt1.test$censor==1])
+data2_1 <- data.frame(time=uncensored.density2[["x"]], 
+                    density=uncensored.density2[["y"]])
+data2_1$density.adjusted <- (max(na.omit(ROC.risk.lin[["AUC"]]))-min(na.omit(ROC.risk.lin[["AUC"]])))*(uncensored.density2[["y"]]-min(uncensored.density2[["y"]]))/(max(uncensored.density2[["y"]])-min(uncensored.density2[["y"]]))+min(na.omit(ROC.risk.lin[["AUC"]]))
 
 # censored
-censored.density <- density(dt1.test$t[dt1.test$censor==0])
-data2 <- data.frame(time=censored.density[["x"]], 
-                    density=censored.density[["y"]])
-data2$density.adjusted <- (max(na.omit(ROC.risk.lin[["AUC"]]))-min(na.omit(ROC.risk.lin[["AUC"]])))*(censored.density[["y"]]-min(censored.density[["y"]]))/(max(censored.density[["y"]])-min(censored.density[["y"]]))+min(na.omit(ROC.risk.lin[["AUC"]]))
+censored.density2 <- density(dt1.test$time[dt1.test$censor==0])
+data2_2 <- data.frame(time=censored.density2[["x"]], 
+                    density=censored.density2[["y"]])
+data2_2$density.adjusted <- (max(na.omit(ROC.risk.lin[["AUC"]]))-min(na.omit(ROC.risk.lin[["AUC"]])))*(censored.density2[["y"]]-min(censored.density2[["y"]]))/(max(censored.density2[["y"]])-min(censored.density2[["y"]]))+min(na.omit(ROC.risk.lin[["AUC"]]))
 
-res <- data.frame(time=ROC.risk.lin[["times"]],
+res2 <- data.frame(time=ROC.risk.lin[["times"]],
                     cox.lin=ROC.risk.lin[["AUC"]],
                     cox.quad=ROC.risk.quad[["AUC"]])
-res <- melt(data = res, 
+res2 <- melt(data = res2, 
                    id.vars = "time", 
                    measure.vars = c("cox.lin","cox.quad"))
 ```
@@ -191,14 +274,14 @@ dt1.test$censor1 <- ifelse(dt1.test$censor==1,
                     max(na.omit(ROC.risk.lin[["AUC"]])),
                     min(na.omit(ROC.risk.lin[["AUC"]])))
 ggplot() +
-  geom_line(data=res, aes(x=time, y=value,
+  geom_line(data=res2, aes(x=time, y=value,
                             group=variable, color=variable)) +
-  geom_point(data=dt1.test, aes(x=t, y=censor1, color=as.factor(censor))) +
-  geom_line(data=data1, aes(x=time, y=density.adjusted), 
+  geom_point(data=dt1.test, aes(x=time, y=censor1, color=as.factor(censor))) +
+  geom_line(data=data2_1, aes(x=time, y=density.adjusted), 
             size=1, colour='black') +
-  geom_line(data=data2, aes(x=time, y=density.adjusted), 
+  geom_line(data=data2_2, aes(x=time, y=density.adjusted), 
             size=1, colour='orange') +
-  scale_x_continuous(limits = c(0, max(dt1.test$t))) +
+  scale_x_continuous(limits = c(0, max(dt1.test$time))) +
   ggtitle("Time dependent AUC with risk score (cox.lin, cox.quad)") +
   xlab("time") + ylab("AUC") +
   theme(plot.title = element_text(hjust = 0.5))
@@ -216,7 +299,51 @@ mean(ROC.risk.quad[["AUC"]],na.rm=TRUE)
 ```{r}
 dt1.test.censor <- dt1.test[dt1.test$censor==0,]
 dt1.test.censor <- dt1.test.censor %>%
-  mutate(n.cen=cut(dt1.test.censor$t, 
+  mutate(n.cen=cut(dt1.test.censor$time, 
                    breaks=seq(from=0,to=5000,by=500)))
 table(dt1.test.censor$n.cen)
 ```
+
+
+
+
+## Compare two results
+
+```{r}
+dt1$censor1 <- ifelse(dt1$censor==1,
+                      max(na.omit(ROC.risk.lin.dt1[["AUC"]])),
+                      min(na.omit(ROC.risk.lin.dt1[["AUC"]])))
+
+dt1.test$censor1 <- ifelse(dt1.test$censor==1,
+                           max(na.omit(ROC.risk.lin[["AUC"]])),
+                           min(na.omit(ROC.risk.lin[["AUC"]])))
+
+a <- ggplot()
+fig1 <- a +
+  geom_line(data=res1, aes(x=time, y=value,
+                           group=variable, color=variable)) +
+  geom_point(data=dt1, aes(x=time, y=censor1, color=as.factor(censor))) +
+  geom_line(data=data1_1, aes(x=time, y=density.adjusted), 
+            size=1, colour='black') +
+  geom_line(data=data1_2, aes(x=time, y=density.adjusted), 
+            size=1, colour='orange') +
+  scale_x_continuous(limits = c(0, max(dt1$time))) +
+  ggtitle("Only dt1") +
+  xlab("time") + ylab("AUC") +
+  theme(plot.title = element_text(hjust = 0.5))
+fig2 <- a +
+  geom_line(data=res2, aes(x=time, y=value,
+                           group=variable, color=variable)) +
+  geom_point(data=dt1.test, aes(x=time, y=censor1, color=as.factor(censor))) +
+  geom_line(data=data2_1, aes(x=time, y=density.adjusted), 
+            size=1, colour='black') +
+  geom_line(data=data2_2, aes(x=time, y=density.adjusted), 
+            size=1, colour='orange') +
+  scale_x_continuous(limits = c(0, max(dt1.test$time))) +
+  ggtitle("Train:Test = 7:3") +
+  xlab("time") + ylab("AUC") +
+  theme(plot.title = element_text(hjust = 0.5))
+
+grid.arrange(fig1, fig2, nrow=2, ncol=1)
+```
+
