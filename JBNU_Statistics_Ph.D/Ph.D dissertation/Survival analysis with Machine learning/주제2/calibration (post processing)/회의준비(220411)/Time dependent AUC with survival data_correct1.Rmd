@@ -1,7 +1,7 @@
 ---
-title: "Time dependent AUC with survival data"
+title: "Time dependent AUC with survival data _ correct1"
 author: "Hwang Seong-Yun"
-date: '2022 4 7 '
+date: '2022 4 11 '
 output: html_document
 ---
 
@@ -19,53 +19,49 @@ library(coxed)
 library(gridExtra)
 ```
 
-# Generating simulation data from Cox Proportional Hazard Model
+# Generating simulation data from Cox regression 
 
-## Assume linear relationship
+## Background
 
-- reference : http://koreascience.or.kr/article/JAKO201810866005356.page
+- reference 1 : https://doi.org/10.5351/KJAS.2018.31.6.761
+- reference 2 : https://doi.org/10.1017/psrm.2018.19
 
-- $h(t|x)=h_{0}(t)exp(\beta x)$
-- $H(t|x)=\int_{0}^{t} h(s|x)ds= \int_{0}^{t} h_{0}(s)exp(\beta x)ds=H_{0}(t)exp( \beta x)$
+- $h(t|x)=h_{0}(t)exp(f(x))$
+- $H(t|x)=\int_{0}^{t} h(s|x)ds= \int_{0}^{t} h_{0}(s)exp(f(x))ds=H_{0}(t)exp(f(x))$
 - $h(t|x)=\frac {f(t|x)}{S(t|x)}= -\frac {d}{dt} log[S(t|x)]$
-- $log[S(t|x)]= -\int_{0}^{t} h(s|x)ds= -H(t|x)= -H_{0}(t)exp(\beta x)$
-- $S(t|x)=exp[-H_{0}(t)exp(\beta x)]$
+- $log[S(t|x)]= -\int_{0}^{t} h(s|x)ds= -H(t|x)= -H_{0}(t)exp(f(x))$
+- $S(t|x)=exp[-H_{0}(t)exp(f(x))]$
 
 - In general,...
-- $F(t|x)=1-exp[-H_{0}(t) exp(\beta x)]$
-- -> $F^{-1}(t|x)=H_{0}^{-1}[-log(1-t) exp(-\beta x)]$
+- $F(t|x)=1-exp[-H_{0}(t) exp(f(x))]$
+- -> $F^{-1}(t|x)=H_{0}^{-1}[-log(1-t) exp(-f(x))]$
 - By Inverse Transform Sampling, suppose that $U_{1}, U_{2} \overset{i.i.d}{\sim}\ U(0,1)$, then we can generate real survival time $Y$ from Cox Proportional Hazard Model using this equation.
-- $Y=H_{0}^{-1}[-log(U_{1})exp(-\beta x)]$
+- $Y=H_{Y0}^{-1}[-log(U_{1})exp(-f(x))]$
 - And by assuming non-informative censoring, we can generate censoring time $C$ like this equation. (Set $Y$ and $C$ are independent each other.)
-- $C=H_{0}^{-1}[-log(U_{2})]$
+- $C=H_{C0}^{-1}[-log(U_{2})]$
 - And set censoring indicator $\delta=I(Y \leq C)$ and observed survival time $T=min(Y,C)$
+- $H_{Y0}(t|x)$ : Basis cumulative hazard function of real survival time $Y$
+- $H_{C0}(t)$ : Basis cumulative hazard function of censoring time $C$
 
-- When parametric basis distribution of observed survival time $T$ is Exponential distribution($Exp(\lambda)$), then ~
+- When parametric basis distribution of real survival time $Y$ and censoring time $C$ are Exponential distribution and independent each other, then ~
 - $f_{0}(t)=\lambda e^{-\lambda t}, t>0$ -> $S_{0}(t)=e^{-\lambda t}$ -> $h_{0}(t)=\lambda$
-- $\therefore Y=-\frac{1}{\lambda} log(U_{1}) exp(\beta x)$, $C=-\frac{1}{\lambda} log(U_{2})$
-
-- Suppose that parametric basis distribution is Exponential distribution($Exp(\lambda)$), then ~
-- $f_{0}(t)=\lambda e^{-\lambda t}, t>0$ -> $S_{0}(t)=e^{-\lambda t}$ -> $h_{0}(t)=\lambda$
-- $\therefore S(t|x)=exp[-(\lambda t)exp(\beta x)]=exp(-C_{x}t)$
-- (Put $\lambda exp(\beta x)=C_{x}$ and fixed $\lambda=\lambda_{0}$, $\beta=\beta_{0}$)
-- $\therefore F(t|x)=1-S(t|x)=1-exp(-C_{x}t)$ -> $Exp(C_{x})$
+- $\therefore Y=-\frac{1}{\lambda} log(U_{1}) exp(-f(x))$, $C=-\frac{1}{\lambda} log(U_{2})$
 
 
 
 
 
 
+# Generating simulation data
 
 
-## Generating simulation data
-
-### version 1
+## Assume linear relationship
 
 ```{r}
 # Assume parametric basis distribution is Exponential distribution... 
 lambda1 <- 0.1 # parameter for generate Y  
-lambda2 <- 0.03 # parameter for generate C 
-beta <- 1.5 # true coefficients
+lambda2 <- 0.05 # parameter for generate C 
+beta1 <- 3 # true coefficients
 Y <- c() # real survival time
 C <- c() # censoring time
 t <- c() # observed survival time
@@ -75,13 +71,13 @@ U1 <- c() # random variable from U(0,1) for generate Y
 U2 <- c() # random variable from U(0,1) for generate C 
 X2 <- c() # X^2
 
-for (i in 1:1000) {
+for (i in 1:10000) {
   U1[i] <- runif(1)
   U2[i] <- runif(1)
   # X[i] <- runif(1,min=0,max=10)
   X[i] <- rnorm(1,mean=0,sd=1)
   X2[i] <- X[i]^2
-  Y[i] <- -(1/lambda1)*log(U1[i])*exp(-beta*X[i])
+  Y[i] <- -(1/lambda1)*log(U1[i])*exp(-beta1*X[i])
   C[i] <- -(1/lambda2)*log(U2[i])
   t[i] <- min(Y[i],C[i])
   censor[i] <- ifelse(Y[i]<=C[i],1,0)
@@ -90,44 +86,19 @@ for (i in 1:1000) {
 mean(1-censor) # censoring rate
 dt1 <- data.frame(X=X, X2=X2, Y=Y, C=C, time=t, censor=censor)
 head(dt1,20)
-```
-
-### version2
-
-```{r}
-# Assume parametric basis distribution is Exponential distribution... 
-lambda0 <- 0.01
-beta0 <- 1.5
-t <- c() # observed survival time
-censor <- c() # censoring indicator
-X <- c() # explanatory variable
-X2 <- c() # X^2
-Cx <- c() # parameter for generate t
-
-for (i in 1:1000) {
-  # X[i] <- runif(1,min=0,max=10)
-  X[i] <- rnorm(1,mean=0,sd=1)
-  X2[i] <- X[i]^2
-  Cx[i] <- lambda0*exp(beta0*X[i])
-  t[i] <- rexp(1,rate=Cx[i])
-  censor[i] <- rbinom(1,size=1,prob=0.7) # censoring rate : 0.3
-}
-
-mean(1-censor) # censoring rate
-dt2 <- data.frame(X=X, X2=X2, time=t, censor=censor)
-head(dt2,20)
+# dt1[c(order(dt1$time)),]$censor
 ```
 
 
+### Time dependent AUC
 
+### True model
 
+- $h(t|x)=h _{0} (t)exp[f(x)]$
+- $f(x)=\beta_{1} x$
+- True coefficients : $\beta_{1}=3$ 
 
-## Time dependent AUC
-
-
-### version 1
-
-### Assuming linear
+### Set linear model
 
 - $h(t|x)=h _{0} (t)exp[f(x)]$
 - $f(x)=\beta_{1}x$
@@ -144,7 +115,7 @@ ROC.risk.lin.dt1 <- timeROC(T=dt1$time,
 ROC.risk.lin.dt1
 ```
 
-### Assuming quadratic
+### Set quadratic model
 
 - $h(t|x)=h _{0} (t)exp[f(x)]$
 - $f(x)=\beta_{1}x+\beta_{2}x^2$
@@ -188,8 +159,7 @@ res1 <- melt(data = res1,
 
 ```{r}
 dt1$censor1 <- ifelse(dt1$censor==1,
-                    max(na.omit(ROC.risk.lin.dt1[["AUC"]])),
-                    min(na.omit(ROC.risk.lin.dt1[["AUC"]])))
+                    1,min(na.omit(ROC.risk.lin.dt1[["AUC"]])))
 ggplot() +
   geom_line(data=res1, aes(x=time, y=value,
                             group=variable, color=variable)) +
@@ -198,7 +168,7 @@ ggplot() +
             size=1, colour='black') +
   geom_line(data=data1_2, aes(x=time, y=density.adjusted), 
             size=1, colour='orange') +
-  scale_x_continuous(limits = c(0, max(dt1$time))) +
+  scale_x_continuous(limits = c(min(dt1$time), max(dt1$time))) +
   ggtitle("Time dependent AUC with risk score (cox.lin.dt1, cox.quad.dt1)") +
   xlab("time") + ylab("AUC") +
   theme(plot.title = element_text(hjust = 0.5))
@@ -217,14 +187,56 @@ mean(ROC.risk.quad.dt1[["AUC"]],na.rm=TRUE)
 dt1.censor <- dt1[dt1$censor==0,]
 dt1.censor <- dt1.censor %>%
   mutate(n.cen=cut(dt1.censor$time, 
-                   breaks=seq(from=0,to=5000,by=500)))
+                   breaks=seq(from=0,to=200,by=5)))
 table(dt1.censor$n.cen)
 ```
 
 
-### version 2
 
-### Assuming linear
+## Assume quadratic relationship
+
+```{r}
+# Assume parametric basis distribution is Exponential distribution... 
+lambda1 <- 0.1 # parameter for generate Y  
+lambda2 <- 0.05 # parameter for generate C 
+beta1 <- 3 ; beta2 <- 2 # true coefficients
+Y <- c() # real survival time
+C <- c() # censoring time
+t <- c() # observed survival time
+censor <- c() # censoring indicator
+X <- c() # explanatory variable
+U1 <- c() # random variable from U(0,1) for generate Y
+U2 <- c() # random variable from U(0,1) for generate C 
+X2 <- c() # X^2
+
+for (i in 1:10000) {
+  U1[i] <- runif(1)
+  U2[i] <- runif(1)
+  # X[i] <- runif(1,min=0,max=10)
+  X[i] <- rnorm(1,mean=0,sd=1)
+  X2[i] <- X[i]^2
+  Y[i] <- -(1/lambda1)*log(U1[i])*exp(-beta1*X[i]-beta2*X2[i])
+  C[i] <- -(1/lambda2)*log(U2[i])
+  t[i] <- min(Y[i],C[i])
+  censor[i] <- ifelse(Y[i]<=C[i],1,0)
+}
+
+mean(1-censor) # censoring rate
+dt2 <- data.frame(X=X, X2=X2, Y=Y, C=C, time=t, censor=censor)
+head(dt2,20)
+# dt2[c(order(dt2$time)),]$censor
+```
+
+
+### Time dependent AUC
+
+### True model
+
+- $h(t|x)=h _{0} (t)exp[f(x)]$
+- $f(x)=\beta_{1} x + \beta_{2} x^2$
+- True coefficients : $\beta_{1}=3, \beta_{2}=2$ 
+
+### Set linear model
 
 - $h(t|x)=h _{0} (t)exp[f(x)]$
 - $f(x)=\beta_{1}x$
@@ -241,7 +253,7 @@ ROC.risk.lin.dt2 <- timeROC(T=dt2$time,
 ROC.risk.lin.dt2
 ```
 
-### Assuming quadratic
+### Set quadratic model
 
 - $h(t|x)=h _{0} (t)exp[f(x)]$
 - $f(x)=\beta_{1}x+\beta_{2}x^2$
@@ -265,13 +277,13 @@ ROC.risk.quad.dt2
 uncensored.density2 <- density(dt2$time[dt2$censor==1])
 data2_1 <- data.frame(time=uncensored.density2[["x"]], 
                     density=uncensored.density2[["y"]])
-data2_1$density.adjusted <- (max(na.omit(ROC.risk.quad.dt2[["AUC"]]))-min(na.omit(ROC.risk.quad.dt2[["AUC"]])))*(uncensored.density2[["y"]]-min(uncensored.density2[["y"]]))/(max(uncensored.density2[["y"]])-min(uncensored.density2[["y"]]))+min(na.omit(ROC.risk.quad.dt2[["AUC"]]))
+data2_1$density.adjusted <- (max(na.omit(ROC.risk.lin.dt2[["AUC"]]))-min(na.omit(ROC.risk.lin.dt2[["AUC"]])))*(uncensored.density2[["y"]]-min(uncensored.density2[["y"]]))/(max(uncensored.density2[["y"]])-min(uncensored.density2[["y"]]))+min(na.omit(ROC.risk.lin.dt2[["AUC"]]))
 
 # censored
 censored.density2 <- density(dt2$time[dt2$censor==0])
 data2_2 <- data.frame(time=censored.density2[["x"]], 
                     density=censored.density2[["y"]])
-data2_2$density.adjusted <- (max(na.omit(ROC.risk.quad.dt2[["AUC"]]))-min(na.omit(ROC.risk.quad.dt2[["AUC"]])))*(censored.density2[["y"]]-min(censored.density2[["y"]]))/(max(censored.density2[["y"]])-min(censored.density2[["y"]]))+min(na.omit(ROC.risk.quad.dt2[["AUC"]]))
+data2_2$density.adjusted <- (max(na.omit(ROC.risk.lin.dt2[["AUC"]]))-min(na.omit(ROC.risk.lin.dt2[["AUC"]])))*(censored.density2[["y"]]-min(censored.density2[["y"]]))/(max(censored.density2[["y"]])-min(censored.density2[["y"]]))+min(na.omit(ROC.risk.lin.dt2[["AUC"]]))
 
 res2 <- data.frame(time=ROC.risk.lin.dt2[["times"]],
                     cox.lin.dt2=ROC.risk.lin.dt2[["AUC"]],
@@ -285,8 +297,7 @@ res2 <- melt(data = res2,
 
 ```{r}
 dt2$censor1 <- ifelse(dt2$censor==1,
-                    max(na.omit(ROC.risk.quad.dt2[["AUC"]])),
-                    min(na.omit(ROC.risk.quad.dt2[["AUC"]])))
+                    1,min(na.omit(ROC.risk.lin.dt2[["AUC"]])))
 ggplot() +
   geom_line(data=res2, aes(x=time, y=value,
                             group=variable, color=variable)) +
@@ -295,7 +306,7 @@ ggplot() +
             size=1, colour='black') +
   geom_line(data=data2_2, aes(x=time, y=density.adjusted), 
             size=1, colour='orange') +
-  scale_x_continuous(limits = c(0, max(dt2$time))) +
+  scale_x_continuous(limits = c(min(dt2$time), max(dt2$time))) +
   ggtitle("Time dependent AUC with risk score (cox.lin.dt2, cox.quad.dt2)") +
   xlab("time") + ylab("AUC") +
   theme(plot.title = element_text(hjust = 0.5))
@@ -314,7 +325,44 @@ mean(ROC.risk.quad.dt2[["AUC"]],na.rm=TRUE)
 dt2.censor <- dt2[dt2$censor==0,]
 dt2.censor <- dt2.censor %>%
   mutate(n.cen=cut(dt2.censor$time, 
-                   breaks=seq(from=0,to=5000,by=500)))
+                   breaks=seq(from=0,to=200,by=5)))
 table(dt2.censor$n.cen)
 ```
+
+
+
+## Compare two results
+
+```{r}
+a <- ggplot()
+
+fig1 <- a +
+  geom_line(data=res1, aes(x=time, y=value,
+                            group=variable, color=variable)) +
+  geom_point(data=dt1, aes(x=time, y=censor1, color=as.factor(censor))) +
+  geom_line(data=data1_1, aes(x=time, y=density.adjusted), 
+            size=1, colour='black') +
+  geom_line(data=data1_2, aes(x=time, y=density.adjusted), 
+            size=1, colour='orange') +
+  scale_x_continuous(limits = c(min(dt1$time), max(dt1$time))) +
+  ggtitle("Assume linear relationship") +
+  xlab("time") + ylab("AUC") +
+  theme(plot.title = element_text(hjust = 0.5))
+
+fig2 <- a +
+  geom_line(data=res2, aes(x=time, y=value,
+                            group=variable, color=variable)) +
+  geom_point(data=dt2, aes(x=time, y=censor1, color=as.factor(censor))) +
+  geom_line(data=data2_1, aes(x=time, y=density.adjusted), 
+            size=1, colour='black') +
+  geom_line(data=data2_2, aes(x=time, y=density.adjusted), 
+            size=1, colour='orange') +
+  scale_x_continuous(limits = c(min(dt2$time), max(dt2$time))) +
+  ggtitle("Assume quadratic relationship") +
+  xlab("time") + ylab("AUC") +
+  theme(plot.title = element_text(hjust = 0.5))
+
+grid.arrange(fig1, fig2, nrow=2, ncol=1)
+```
+
 
