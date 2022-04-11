@@ -535,7 +535,7 @@ legend("bottomleft",c("lin.AUC","quad.AUC"),col=c("red","blue"),lty=c(1,1))
 - $H_{Y0}(t|x)$ : Basis cumulative hazard function of real survival time $Y$
 - $H_{C0}(t)$ : Basis cumulative hazard function of censoring time $C$
 
-- When parametric basis distribution of real survival time $Y$ is Exponential distribution and censoring time $C$ is Uniform distribution ($Y$ and $C$ are independent each other), then ~
+- When parametric basis distribution of real survival time $Y$ is Exponential distribution and parametric basis distribution of censoring time $C$ is Uniform distribution ($Y$ and $C$ are independent each other), then ~
 - $Y$ : $f_{Y0}(t)=\lambda e^{-\lambda t}, t>0$ -> $S_{Y0}(t)=e^{-\lambda t}$ -> $h_{Y0}(t)=\lambda$
 - $C$ : $f_{C0}(t)=\frac {1}{\lambda}, 0<t<\lambda$ -> $S_{C0}(t)=1-\frac {t}{\lambda}$ -> $h_{C0}(t)=\frac {1}{\lambda -t}$
 - $\therefore Y=-\frac{1}{\lambda_{1}} log(U_{1}) exp(-f(x))$, $C=\lambda_{2}(1-U_{2})$
