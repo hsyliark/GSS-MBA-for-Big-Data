@@ -1,0 +1,236 @@
+---
+title: "Midterm"
+author: "Hwang Seong-Yun"
+date: '2022 4 28 '
+output: html_document
+---
+
+# Beijing PM2.5 Data Data Set
+
+- 본 데이터는 2010년 1월 1일부터 2014년 12월 31일까지 중국의 수도 베이징에서 측정한 대기관련 자료이며, 목적은 초미세먼지 농도를 측정하는 지표인 PM2.5에 어떠한 요인이 영향을 미치는지를 알아보는 데 있다.
+
+## Description of variables
+
+- No: row number
+
+- year: year of data in this row
+
+- month: month of data in this row
+
+- day: day of data in this row
+
+- hour: hour of data in this row
+
+- pm2.5: PM2.5 concentration (ug/m^3)
+
+- DEWP: Dew Point (â„ƒ)
+
+- TEMP: Temperature (â„ƒ)
+
+- PRES: Pressure (hPa)
+
+- cbwd: Combined wind direction
+
+- Iws: Cumulated wind speed (m/s)
+
+- Is: Cumulated hours of snow
+
+- Ir: Cumulated hours of rain
+
+`-` 우선 분석의 목적과 관련이 없다고 여겨지는 변수인 No, year, month, day, hour, cbwd는 제거할 필요가 있다고 보여지며, 결측치(NA)가 포함된 관측치도 모두 제거한 뒤에 분석을 진행하고자 한다.
+
+## Data loading
+
+```{r}
+PRSA <- read.csv("C:/Users/stat/Desktop/응용통계학/중간평가/PRSA.csv",sep=",",header=T)
+PRSA <- na.omit(PRSA)[,-c(1,2,3,4,5,10)]
+summary(PRSA)
+```
+
+### Multiple linear regression analysis
+
+`1` 본 데이터에서 반응변수는 pm2.5($y$) 이고 이를 예측하기 위해 사용하는 설명변수는 DEWP($x_{1}$), TEMP($x_{2}$), PRES($x_{3}$), Iws($x_{4}$), Is($x_{5}$), Ir($x_{6}$) 이렇게 6가지이다. 
+
+`2` 다중회귀모형식은 다음과 같다.
+
+- $y_{i}=\beta_{0}+\beta_{1}x_{1i}+\beta_{2}x_{2i}+\beta_{3}x_{3i}+\beta_{4}x_{4i}+\beta_{5}x_{5i}+\beta_{6}x_{6i}+\epsilon_{i}$
+
+- 여기에 보통 $\epsilon_{i} \overset{i.i.d}{\sim} N(0,\sigma^{2})$ 이라는 가정을 하게 된다.
+
+- 모형적합은 다음과 같이 할 수 있다.
+
+```{r}
+reg1 <- lm(pm2.5 ~ ., data=PRSA)
+summary(reg1)
+```
+
+- 위의 결과를 통해 다음과 같은 회귀모형식을 적을 수 있다.
+
+- $\hat{y_{i}}=1728+4.282x_{1i}-6.068x_{2i}-1.529x_{3i}-0.262x_{4i}-2.267x_{5i}-7.206x_{6i}$
+
+- 그리고 모든 설명변수에 대한 유의확률의 값이 유의수준 $\alpha=0.05$보다 작게 산출되는 것으로 보아서 본 모형에 적용한 모든 설명변수가 pm2.5의 변동을 설명하는 데 있어 유의한 영향력을 미치는 것으로 보여진다. 하지만, ${R_{adj}}^2=0.236$이므로 데이터의 변동에 대한 본 모형의 설명력이 그다지 크지는 않기 때문에 해석하는 데 있어 어느정도 주의가 필요할 것으로 보인다.
+
+- 추정된 회귀모형식에 따르면 이슬점(DEWP)의 값이 증가할수록 pm2.5의 농도도 증가하게 된다. 하지만 온도(TEMP), 압력(PRES), 누적바람속도(Iws), 누적적설시간(Is), 누적강우시간(Ir)의 경우는 값이 감소할수록 pm2.5의 농도가 증가하는 것으로 보여진다.
+
+`3` `2`를 통해 추정된 회귀모형이 잔차에 대한 가정(정규성, 등분산성, 독립성, 선형성)을 적절하게 만족하고 있는지 확인하기 위해 다음과 같이 할 수 있다.
+
+```{r}
+par(mfrow=c(2,2))
+plot(reg1)
+par(mfrow=c(1,1))
+```
+
+- 추가적으로 잔차의 등분산성에 대한 검정결과는 다음과 같다. (Score Test for Non-Constant Error Variance)
+
+```{r}
+library(car)
+ncvTest(reg1)
+```
+
+- 검정결과 유의확률의 값이 굉장히 작게 나오므로 잔차가 등분산성을 만족한다고 할 수는 없다.
+
+- 그리고 잔차의 정규성에 대한 검정결과는 다음과 같다. (Anderson-Darling test for normality)
+
+```{r}
+library(nortest)
+ad.test(residuals(reg1))
+```
+
+- 검정결과 등분산성 검정과 마찬가지로 유의확률의 값이 굉장히 작게 나오므로 잔차가 정규성을 만족한다고 할 수는 없다.
+
+- 또한 잔차의 독립성에 대한 검정결과는 다음과 같다. (Durbin-Watson Test)
+
+```{r}
+require(lmtest)
+dwtest(pm2.5 ~ ., data=PRSA)
+```
+
+- 검정결과 이전의 검정과 마찬가지로 유의확률의 값이 굉장히 작게 나오므로 잔차가 독립성을 만족한다고 할 수는 없다.
+
+- 위에 있는 잔차에 대한 4가지 plot을 살펴본 결과 본 회귀모형이 잔차에 대한 정규성, 등분산성, 독립성을 적절하게 만족하고 있지 않다고 보여지며, 이상점과 영향점도 존재하는 것으로 판단된다. 그러므로 다음과 같은 방법을 추가적으로 고려해보는 것이 좋을 것 같다.
+
+- 1) 이상점의 특성을 살펴보고 데이터의 특성을 적절히 반영하지 않는다고 생각되면 이를 제거한다. 그렇지 않고 자연스러운 데이터의 생성과정에서 발생한 것이라면 robust method 등을 적용해본다.
+
+- 2) 이분산성과 비선형 추세가 보임에 따라 반응변수와 설명변수에 대해 적절한 변환을 실시해본다.
+
+- 3) Q-Q plot을 보면 극단적인 지점에서 Heavy-tail의 형태가 보이므로 bootstrap이나 permutation test와 같은 방법을 적용해본다.
+
+`4` 추정된 회귀모형에서 다중공선성(multicollinearity), 즉 설명변수들 사이에 연관성이 존재하는지 확인해보기 위해 다음과 같이 VIF(Variance Inflation Factor)를 계산해볼 수 있다.
+
+```{r}
+library(car)
+vif(reg1)
+```
+
+- 분석결과 VIF의 값이 10을 초과하는 경우가 없으므로 다중공선성의 문제는 없다고 할 수 있겠다.
+
+`5` 본 모형에 대하여 각 회귀계수에 대한 이론적인 95% 신뢰구간은 다음과 같이 계산된다.
+
+```{r}
+confint(reg1, level=0.95)
+```
+
+- 사실 위의 결과는 잔차에 대한 가정이 만족되지 않는 모형에 대하여 계산된 결과이기 때문에 신뢰하기는 어렵다고 여겨진다. 이러한 점을 고려하여 bootstrap 방법을 기반으로 하여 회귀계수의 95% 신뢰구간을 계산하는 방법을 생각해보도록 한다.
+
+```{r}
+X <- cbind(as.matrix(rep(1,nrow(PRSA))),as.matrix(PRSA[,-1]))
+y <- as.matrix(PRSA[,1])
+hat_beta <- solve(t(X)%*%X)%*%t(X)%*%y
+```
+
+```{r}
+B=2000 ; M=1000
+n <- nrow(PRSA)
+beta_boots <- matrix(NA,nrow=7,ncol=B)
+set.seed(1)
+
+for (i in 1:B) {
+  id_boot <- sample(1:n, replace=T)
+  X_boot <- X[id_boot,]
+  y_boot <- y[id_boot]
+  beta_boot <- solve(t(X_boot)%*%X_boot)%*%t(X_boot)%*%y_boot
+  beta_boots[,i] <- beta_boot
+}
+
+rownames(beta_boots) <- c('Intercept','DEWP','TEMP','PRES','Iws','Is','Ir')
+```
+
+`-` 변수 DEWP
+
+```{r}
+# Theoretical C.I.
+confint(reg1, 'DEWP', level=0.95)
+# Bootstrap C.I. (normal interval)
+c(hat_beta[2]-qnorm(0.975)*sd(beta_boots[2,]),hat_beta[2]+qnorm(0.975)*sd(beta_boots[2,]))
+# Bootstrap C.I. (Pivotal interval)
+c(2*hat_beta[2]-quantile(beta_boots[2,],probs=0.975),2*hat_beta[2]-quantile(beta_boots[2,],probs=0.025))
+# Bootstrap C.I. (Percentile interval)
+c(quantile(beta_boots[2,],probs=0.025),quantile(beta_boots[2,],probs=0.975))
+```
+
+`-` 변수 TEMP
+
+```{r}
+# Theoretical C.I.
+confint(reg1, 'TEMP', level=0.95)
+# Bootstrap C.I. (normal interval)
+c(hat_beta[3]-qnorm(0.975)*sd(beta_boots[3,]),hat_beta[3]+qnorm(0.975)*sd(beta_boots[3,]))
+# Bootstrap C.I. (Pivotal interval)
+c(2*hat_beta[3]-quantile(beta_boots[3,],probs=0.975),2*hat_beta[3]-quantile(beta_boots[3,],probs=0.025))
+# Bootstrap C.I. (Percentile interval)
+c(quantile(beta_boots[3,],probs=0.025),quantile(beta_boots[3,],probs=0.975))
+```
+
+`-` 변수 PRES
+
+```{r}
+# Theoretical C.I.
+confint(reg1, 'PRES', level=0.95)
+# Bootstrap C.I. (normal interval)
+c(hat_beta[4]-qnorm(0.975)*sd(beta_boots[4,]),hat_beta[4]+qnorm(0.975)*sd(beta_boots[4,]))
+# Bootstrap C.I. (Pivotal interval)
+c(2*hat_beta[4]-quantile(beta_boots[4,],probs=0.975),2*hat_beta[4]-quantile(beta_boots[4,],probs=0.025))
+# Bootstrap C.I. (Percentile interval)
+c(quantile(beta_boots[4,],probs=0.025),quantile(beta_boots[4,],probs=0.975))
+```
+
+`-` 변수 Iws
+
+```{r}
+# Theoretical C.I.
+confint(reg1, 'Iws', level=0.95)
+# Bootstrap C.I. (normal interval)
+c(hat_beta[5]-qnorm(0.975)*sd(beta_boots[5,]),hat_beta[5]+qnorm(0.975)*sd(beta_boots[5,]))
+# Bootstrap C.I. (Pivotal interval)
+c(2*hat_beta[5]-quantile(beta_boots[5,],probs=0.975),2*hat_beta[5]-quantile(beta_boots[5,],probs=0.025))
+# Bootstrap C.I. (Percentile interval)
+c(quantile(beta_boots[5,],probs=0.025),quantile(beta_boots[5,],probs=0.975))
+```
+
+`-` 변수 Is
+
+```{r}
+# Theoretical C.I.
+confint(reg1, 'Is', level=0.95)
+# Bootstrap C.I. (normal interval)
+c(hat_beta[6]-qnorm(0.975)*sd(beta_boots[6,]),hat_beta[6]+qnorm(0.975)*sd(beta_boots[6,]))
+# Bootstrap C.I. (Pivotal interval)
+c(2*hat_beta[6]-quantile(beta_boots[6,],probs=0.975),2*hat_beta[6]-quantile(beta_boots[6,],probs=0.025))
+# Bootstrap C.I. (Percentile interval)
+c(quantile(beta_boots[6,],probs=0.025),quantile(beta_boots[6,],probs=0.975))
+```
+
+`-` 변수 Ir
+
+```{r}
+# Theoretical C.I.
+confint(reg1, 'Ir', level=0.95)
+# Bootstrap C.I. (normal interval)
+c(hat_beta[7]-qnorm(0.975)*sd(beta_boots[7,]),hat_beta[7]+qnorm(0.975)*sd(beta_boots[7,]))
+# Bootstrap C.I. (Pivotal interval)
+c(2*hat_beta[7]-quantile(beta_boots[7,],probs=0.975),2*hat_beta[7]-quantile(beta_boots[7,],probs=0.025))
+# Bootstrap C.I. (Percentile interval)
+c(quantile(beta_boots[7,],probs=0.025),quantile(beta_boots[7,],probs=0.975))
+```
+
+- 결과를 보면 이론적인 결과와 bootstrap에 의한 결과가 비슷하게 나오는 변수도 있지만 Is, Ir처럼 차이가 나는 변수도 있다. 추정한 회귀모형이 잔차에 대한 가정을 만족하지 못하고 있는 것이 주된 이유로 보인다.
