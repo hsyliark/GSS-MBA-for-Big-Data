@@ -1,7 +1,7 @@
 ---
-title: "Time dependent AUC with survival data _ correct4"
+title: "Time dependent AUC with survival data _ correct5"
 author: "Hwang Seong-Yun"
-date: '2022 4 22 '
+date: '2022 4 29 '
 output: html_document
 ---
 
@@ -76,7 +76,7 @@ X2 <- c() # X^2
 for (i in 1:200) {
   U1[i] <- runif(1)
   U2[i] <- runif(1)
-  X[i] <- rnorm(1,mean=0,sd=1)
+  X[i] <- runif(1,min=0,max=1)
   X2[i] <- X[i]^2
   Y[i] <- -(1/lambda1)*log(U1[i])*exp(-beta1*X[i])
   C[i] <- (lambda2)*(1-U2[i])
@@ -186,7 +186,7 @@ ggplot() +
             size=1, colour='black') +
   geom_line(data=data3_2, aes(x=time, y=density.adjusted), 
             size=1, colour='orange') +
-  scale_x_continuous(limits = c(0, min(dt3$time[dt3$censor==1]+3))) +
+  scale_x_continuous(limits = c(0, min(dt3$time[dt3$censor==1]+50))) +
   scale_y_continuous(limits = c(min(na.omit(ROC.risk.lin.dt3[["AUC"]])), 1)) +
   geom_vline(xintercept = min(dt3$time[dt3$censor==1]),
              linetype="dotted", color = "blue", size=1) +
@@ -221,7 +221,7 @@ table(dt3.censor$n.cen)
 # Assume parametric basis distribution is Exponential distribution... 
 lambda1 <- 0.001 # parameter for generate Y  
 lambda2 <- 1.5/lambda1 # parameter for generate C 
-beta1 <- 3 ; beta2 <- 2 # true coefficients
+beta1 <- 3 ; beta2 <- -2 # true coefficients
 Y <- c() # real survival time
 C <- c() # censoring time
 t <- c() # observed survival time
@@ -255,7 +255,7 @@ min(dt4$time[dt4$censor==1])
 
 - $h(t|x)=h _{0} (t)exp[f(x)]$
 - $f(x)=\beta_{1} x$
-- True coefficients : $\beta_{1}=3, \beta_{2}=2$ 
+- True coefficients : $\beta_{1}=3, \beta_{2}=-2$ 
 
 ### Set linear model
 
@@ -344,7 +344,7 @@ ggplot() +
             size=1, colour='black') +
   geom_line(data=data4_2, aes(x=time, y=density.adjusted), 
             size=1, colour='orange') +
-  scale_x_continuous(limits = c(0, min(dt4$time[dt4$censor==1])+3)) +
+  scale_x_continuous(limits = c(0, min(dt4$time[dt4$censor==1])+50)) +
   scale_y_continuous(limits = c(min(na.omit(ROC.risk.lin.dt4[["AUC"]])), 1)) +
   geom_vline(xintercept = min(dt4$time[dt4$censor==1]),
              linetype="dotted", color = "blue", size=1) +
@@ -440,7 +440,7 @@ for (i in 1:100) {
   for (j in 1:200) {
     U1[j] <- runif(1)
     U2[j] <- runif(1)
-    X[j] <- rnorm(1,mean=0,sd=1)
+    X[j] <- runif(1,min=0,max=1)
     X2[j] <- X[j]^2
     Y[j] <- -(1/lambda1)*log(U1[j])*exp(-beta1*X[j])
     C[j] <- (lambda2)*(1-U2[j])
@@ -477,7 +477,7 @@ for (i in 1:100) {
 dat3 <- data.frame(time=seq(0,1500,0.2), lin.AUC=rowMeans(lin.AUC, na.rm=TRUE),
                    quad.AUC=rowMeans(quad.AUC, na.rm=TRUE))
 plot(x=dat3$time, y=dat3$lin.AUC, xlab="time", ylab="mean of AUC",
-     main="Assume linear relationship \n (Y : Exponential, C : Uniform)", type="l", col="red", ylim=c(0.9,1))
+     main="Assume linear relationship \n (Y : Exponential, C : Uniform)", type="l", col="red", ylim=c(0.5,1))
 lines(x=dat3$time, y=dat3$quad.AUC, type="l", col="blue")
 legend("bottomleft",c("lin.AUC","quad.AUC"),col=c("red","blue"),lty=c(1,1))
 ```
@@ -493,7 +493,7 @@ for (i in 1:100) {
   # Assume parametric basis distribution is Exponential distribution... 
   lambda1 <- 0.001 # parameter for generate Y  
   lambda2 <- 1.5/lambda1 # parameter for generate C 
-  beta1 <- 3 ; beta2 <- 2 # true coefficients
+  beta1 <- 3 ; beta2 <- -2 # true coefficients
   Y <- c() # real survival time
   C <- c() # censoring time
   t <- c() # observed survival time
@@ -545,7 +545,84 @@ for (i in 1:100) {
 dat4 <- data.frame(time=seq(0,1500,0.2), lin.AUC=rowMeans(lin.AUC, na.rm=TRUE),
                    quad.AUC=rowMeans(quad.AUC, na.rm=TRUE))
 plot(x=dat4$time, y=dat4$lin.AUC, xlab="time", ylab="mean of AUC",
-     main="Assume quadratic relationship \n (Y : Exponential, C : Uniform)", type="l", col="red", ylim=c(0.7,1))
+     main="Assume quadratic relationship \n (Y : Exponential, C : Uniform)", type="l", col="red", ylim=c(0.5,1))
 lines(x=dat4$time, y=dat4$quad.AUC, type="l", col="blue")
 legend("bottomleft",c("lin.AUC","quad.AUC"),col=c("red","blue"),lty=c(1,1))
 ```
+
+
+
+
+# Generate survival data with time dependent covariates
+
+## Background
+
+- reference  : https://dx.doi.org/10.21037/atm.2018.02.12
+
+
+`-` real survival time $Y$ : Exponential distribution
+
+`-` censoring time $C$ : Uniform distribution
+
+- $h(t|x)=h_{0}(t)exp[f(x(t))]$
+- $H(t|x)=\int_{0}^{t} h(s|x)ds= \int_{0}^{t} h_{0}(s)exp[f(x(t))]ds=H_{0}(t)exp[f(x(t))]$
+- $h(t|x)=\frac {f(t|x)}{S(t|x)}= -\frac {d}{dt} log[S(t|x)]$
+- $log[S(t|x)]= -\int_{0}^{t} h(s|x)ds= -H(t|x)= -H_{0}(t)exp[f(x(t))]$
+- $S(t|x)=exp[-H_{0}(t)exp[f(x(t))]]$
+
+- In general,...
+- $F(t|x)=1-exp[-H_{0}(t) exp[f(x(t))]]$
+- -> $F^{-1}(t|x)=H_{0}^{-1}[-log(1-t) exp[-f(x(t))]]$
+- By Inverse Transform Sampling, suppose that $U_{1}, U_{2} \overset{i.i.d}{\sim}\ U(0,1)$, then we can generate real survival time $Y$ from Cox Regression Model using this equation.
+- $Y=H_{Y0}^{-1}[-log(U_{1})exp[-f(x(t))]]$
+- And by assuming non-informative censoring, we can generate censoring time $C$ like this equation. (Set $Y$ and $C$ are independent each other.)
+- $C=H_{C0}^{-1}[-log(U_{2})]$
+- And set censoring indicator $\delta=I(Y \leq C)$ and observed survival time $T=min(Y,C)$
+- $H_{Y0}(t)$ : Basis cumulative hazard function of real survival time $Y$
+- $H_{C0}(t)$ : Basis cumulative hazard function of censoring time $C$
+
+- When parametric basis distribution of real survival time $Y$ is Exponential distribution and parametric basis distribution of censoring time $C$ is Uniform distribution ($Y$ and $C$ are independent each other), then ~
+- $Y$ : $f_{Y0}(t)=\lambda e^{-\lambda t}, t>0$ -> $S_{Y0}(t)=e^{-\lambda t}$ -> $h_{Y0}(t)=\lambda$
+- $C$ : $f_{C0}(t)=\frac {1}{\lambda}, 0<t<\lambda$ -> $S_{C0}(t)=1-\frac {t}{\lambda}$ -> $h_{C0}(t)=\frac {1}{\lambda -t}$
+- $\therefore Y=-\frac{1}{\lambda_{1}} log(U_{1}) exp[-f(x(t))]$, $C=\lambda_{2}(1-U_{2})$
+
+- In this simulation, I take this Cox regression model with time dependent covariates.
+- $h(t|x)=h_{0}(t)exp[\beta_{1}x+\beta_{2}g(x,t)]$
+- $g(x,t)=\alpha_{0}+\alpha_{1}x+\alpha_{2}xt$
+
+
+## Generating simulation data
+
+```{r}
+# Assume parametric basis distribution is Exponential distribution... 
+lambda1 <- 0.001 # parameter for generate Y  
+lambda2 <- 1.5/lambda1 # parameter for generate C 
+beta1 <- 3 ; beta2 <- -2 # true coefficients 1
+alpha0 <- 1 ; alpha1 <- 1 ; alpha2 <- -3 # true coefficients 2
+Y <- c() # real survival time
+C <- c() # censoring time
+t <- c() # observed survival time
+censor <- c() # censoring indicator
+X <- c() # explanatory variable
+U1 <- c() # random variable from U(0,1) for generate Y
+U2 <- c() # random variable from U(0,1) for generate C 
+X2 <- c() # X^2
+
+for (i in 1:200) {
+  U1[i] <- runif(1)
+  U2[i] <- runif(1)
+  X[i] <- rnorm(1,mean=0,sd=1)
+  X2[i] <- X[i]^2
+  Y[i] <- -(1/lambda1)*log(U1[i])*exp(-beta1*X[i])
+  C[i] <- (lambda2)*(1-U2[i])
+  t[i] <- min(Y[i],C[i])
+  censor[i] <- ifelse(Y[i]<=C[i],1,0)
+}
+
+mean(1-censor) # censoring rate
+dt3 <- data.frame(X=X, X2=X2, Y=Y, C=C, time=t, censor=censor)
+head(dt3,10)
+min(dt3$time[dt3$censor==1])
+```
+
+
