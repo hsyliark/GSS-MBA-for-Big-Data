@@ -1,0 +1,276 @@
+---
+title: "Time dependent AUC with survival data _ correct5-3"
+author: "Hwang Seong-Yun"
+date: '2022 4 29 '
+output: html_document
+---
+
+# Loading packages
+
+```{r warning = FALSE, message = FALSE}
+library(survival)
+library(timeROC)
+library(timereg)
+library(ggplot2)
+library(reshape)
+library(plyr)
+library(tidyverse)
+library(coxed)
+library(gridExtra)
+library(survsim)
+```
+
+# Generating simulation data from Cox Regression Model with time dependent covariates 
+
+## Background
+
+- reference : https://dx.doi.org/10.21037/atm.2018.02.12
+
+`--` Function `simple.surv.sim()` in package `survsim`
+```r
+simple.surv.sim(n, foltime, dist.ev, anc.ev, beta0.ev, dist.cens="weibull", 
+anc.cens, beta0.cens, z=NULL, beta=NA, x=NA)
+```
+
+`-` Arguments
+
+- n	: integer value indicating the desired size of the cohort to be simulated.
+
+- foltime	: real number that indicates the maximum time of follow-up of the simulated cohort.
+
+- dist.ev	: time to event distributions, with possible values weibull for the Weibull distribution, lnorm for the log-normal distribution and llogistic for the log-logistic distribution.
+
+- anc.ev : ancillary parameter for the time to event distribution.
+
+- beta0.ev : β_0 parameter for the time to event distribution.
+
+- dist.cens	 : string indicating the time to censoring distributions, with possible values weibull for the Weibull distribution, lnorm for the log-normal distribution, llogistic for the log-logistic distribution and unif for the uniform distribution. If no distribution is introduced, the time to censoring is assumed to follow a Weibull distribution.
+
+- anc.cens : real number containing the ancillary parameter for the time to censoring distribution or the maximum in case of uniform distributed time to censoring.
+
+- beta0.cens : real number containing the β_0 parameter for the time to censoring distribution or the minimum in case of uniform distributed time to censoring.
+
+- z : vector with three elements that contains information relative to a random effect used in order to introduce individual heterogeneity. The first element indicates the distribution: "unif" states for a uniform distribution, "gamma" states for a gamma distribution, "exp" states for an exponential distribution, "weibull" states for a Weibull distribution and "invgauss" states for an inverse gaussian distribution. The second and third elements indicates the minimum and maximum in the case of a uniform distribution (both must be positive) and the parameters in the case of the rest of distributions. Notice that that just one parameter is needed in the case of exponential distribution. Its default value is NULL, indicating that no individual heterogeneity is introduced.
+
+- beta : list of elements indicating the effect of the corresponding covariate. The number of vectors in beta must match the number of covariates. Its default value is NA, indicating that no covariates are included.
+
+- x : list of vectors indicating the distribution and parameters of any covariate that the user needs to introduce in the simulated cohort. The possible distributions are "normal" for normal distribution, "unif" for uniform distribution and "bern" for Bernoulli distribution. Its default value is NA, indicating that no covariates are included. The number of vectors in x must match the number of vectors in beta. Each vector in x must contain the name of the distribution and the parameter(s), which are: the probability of success in the case of a Bernoulli distribution; the mean and the variance in the case of a normal distribution; and the minimum and maximum in the case of a uniform distribution.
+
+`-` Value
+
+- nid : an integer number that identifies the subject.
+
+- status : logical value indicating if the corresponding event has been suffered or not.
+
+- start : time at which the follow-up time begins for each event.
+
+- stop : time at which the follow-up time ends for each event.
+
+- z	: Individual heterogeneity generated according to the specified distribution.
+
+- x : value of each covariate randomly generated for each subject in the cohort.
+
+
+## Generating simulation data
+
+### Generates a data frame containing two time-fixed variables named “grp” (abbreviated from group) and “age” 
+
+```{r}
+N <- 100 #number of patients
+set.seed(123)
+df.tf <- simple.surv.sim(#baseline time fixed
+   n=N, foltime=500,
+   dist.ev=c('llogistic'),
+   anc.ev=c(0.68), beta0.ev=c(5.8),
+   anc.cens=1.2,
+   beta0.cens=7.4,
+   z=list(c("unif", 0.8, 1.2)),
+   beta=list(c(-0.4),c(0)),
+   x=list(c("bern", 0.5),
+   c("normal", 70, 13)))
+names(df.tf)[c(1,6,7)] <- c("id","grp","age")
+head(df.tf,20)
+```
+
+### Generates a timevarying covariate named crp (C-reactive protein) which is assumed to have a normal distribution with a mean of 100 and a standard deviation of 40 and skewed 
+
+```{r}
+set.seed(123)
+nft <- sample(1:10,N,replace=T)#number of follow up time points
+crp <- round(abs(rnorm(sum(nft)+N,mean=100,sd=40)),1)
+time <- NA
+id <- NA
+i <- 0
+for (n in nft) {
+    i <- i+1
+    time.n <- sample(1:500,n)
+    time.n <- c(0,sort(time.n))
+    time <- c(time,time.n)
+    id.n <- rep(i,n+1)
+    id <- c(id,id.n)
+}
+df.td <- cbind(data.frame(id,time)[-1,],crp)
+head(df.td,20)
+```
+
+### Merging data frames with tmerge() function
+
+`--` Function `tmerge()` in package 'survival'
+```r
+tmerge(data1, data2,  id,..., tstart, tstop, options)
+```
+
+`-` Arguments
+
+- data1 : the primary data set, to which new variables and/or observation will be added
+
+- data2 : second data set in which all the other arguments will be found
+
+- id : subject identifier
+
+- ... : operations that add new variables or intervals, see below
+
+- tstart : optional variable to define the valid time range for each subject, only used on an initial call
+
+- tstop : optional variable to define the valid time range for each subject, only used on an initial call
+
+- options : a list of options. Valid ones are idname, tstartname, tstopname, delay, na.rm, and tdcstart. See the explanation below.
+
+```{r}
+df <- tmerge(df.tf,df.tf,id=id,endpt=event(stop,status))
+head(df,20)
+```
+
+```{r}
+df <- tmerge(df,df.td,id=id,crp=tdc(time,crp))
+head(df,20)
+```
+
+
+
+
+
+
+
+### Time dependent AUC
+
+### All covariates
+
+```{r}
+fit.tdc1 <- coxph(Surv(tstart,tstop,endpt)~grp+age+crp+cluster(id),data=df)
+summary(fit.tdc1)
+risk.tdc1 <- predict(object=fit.tdc1, newdata=df, type="risk") # risk score
+df$risk.tdc1 <- risk.tdc1
+ROC.risk.tdc1 <- timeROC(T=df$tstop,
+                         delta=df$endpt,marker=df$risk.tdc1,
+                         cause=1,weighting="marginal",
+                         times=df$tstop)
+ROC.risk.tdc1
+```
+
+### Except time-dependent covariates
+
+```{r}
+fit.tdc2 <- coxph(Surv(tstart,tstop,endpt)~grp+age+cluster(id),data=df)
+summary(fit.tdc2)
+risk.tdc2 <- predict(object=fit.tdc2, newdata=df, type="risk") # risk score
+df$risk.tdc2 <- risk.tdc2
+ROC.risk.tdc2 <- timeROC(T=df$tstop,
+                         delta=df$endpt,marker=df$risk.tdc2,
+                         cause=1,weighting="marginal",
+                         times=df$tstop)
+ROC.risk.tdc2
+```
+
+### Except time-fixed covariates
+
+```{r}
+fit.tdc3 <- coxph(Surv(tstart,tstop,endpt)~crp+cluster(id),data=df)
+summary(fit.tdc3)
+risk.tdc3 <- predict(object=fit.tdc3, newdata=df, type="risk") # risk score
+df$risk.tdc3 <- risk.tdc3
+ROC.risk.tdc3 <- timeROC(T=df$tstop,
+                         delta=df$endpt,marker=df$risk.tdc3,
+                         cause=1,weighting="marginal",
+                         times=df$tstop)
+ROC.risk.tdc3
+```
+
+
+
+#### Make AUC data
+
+```{r}
+# uncensored
+uncensored.density1 <- density(df$tstop[df$endpt==1])
+data1_1 <- data.frame(time=uncensored.density1[["x"]], 
+                    density=uncensored.density1[["y"]])
+data1_1$density.adjusted <- (max(na.omit(ROC.risk.tdc3[["AUC"]]))-min(na.omit(ROC.risk.tdc3[["AUC"]])))*(uncensored.density1[["y"]]-min(uncensored.density1[["y"]]))/(max(uncensored.density1[["y"]])-min(uncensored.density1[["y"]]))+min(na.omit(ROC.risk.tdc3[["AUC"]]))
+
+# censored
+censored.density1 <- density(df$tstop[df$endpt==0])
+data1_2 <- data.frame(time=censored.density1[["x"]], 
+                    density=censored.density1[["y"]])
+data1_2$density.adjusted <- (max(na.omit(ROC.risk.tdc3[["AUC"]]))-min(na.omit(ROC.risk.tdc3[["AUC"]])))*(censored.density1[["y"]]-min(censored.density1[["y"]]))/(max(censored.density1[["y"]])-min(censored.density1[["y"]]))+min(na.omit(ROC.risk.tdc3[["AUC"]]))
+
+res1 <- data.frame(time=ROC.risk.tdc3[["times"]],
+                    fit.tdc1=ROC.risk.tdc1[["AUC"]],
+                    fit.tdc2=ROC.risk.tdc2[["AUC"]],
+                    fit.tdc3=ROC.risk.tdc3[["AUC"]])
+res1 <- melt(data = res1, 
+                   id.vars = "time", 
+                   measure.vars = c("fit.tdc1","fit.tdc2","fit.tdc3"))
+```
+
+#### Time dependent AUC plot with ggplot2 (fit.tdc1,fit.tdc2,fit.tdc3)
+
+```{r}
+df$censor1 <- ifelse(df$endpt==1,
+                    1,min(na.omit(ROC.risk.tdc3[["AUC"]])))
+ggplot() +
+  geom_line(data=res1, aes(x=time, y=value,
+                            group=variable, color=variable)) +
+  geom_point(data=df, aes(x=tstop, y=censor1, color=as.factor(censor1))) +
+  geom_line(data=data1_1, aes(x=time, y=density.adjusted), 
+            size=1, colour='black') +
+  geom_line(data=data1_2, aes(x=time, y=density.adjusted), 
+            size=1, colour='orange') +
+  scale_x_continuous(limits = c(0, max(df$tstop))) +
+  geom_vline(xintercept = min(df$tstop[df$endpt==1]),
+             linetype="dotted", color = "blue", size=1) +
+  ggtitle("Time dependent AUC with risk score (fit.tdc1,fit.tdc2,fit.tdc3)") +
+  xlab("time") + ylab("AUC") +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+```{r}
+ggplot() +
+  geom_line(data=res1, aes(x=time, y=value,
+                            group=variable, color=variable)) +
+  geom_point(data=df, aes(x=time, y=censor1, color=as.factor(censor1))) +
+  geom_line(data=data1_1, aes(x=time, y=density.adjusted), 
+            size=1, colour='black') +
+  geom_line(data=data1_2, aes(x=time, y=density.adjusted), 
+            size=1, colour='orange') +
+  scale_x_continuous(limits = c(0, min(df$tstop[df$endpt==1]+50))) +
+  scale_y_continuous(limits = c(min(na.omit(ROC.risk.tdc3[["AUC"]])), 1)) +
+  geom_vline(xintercept = min(df$tstop[df$endpt==1]),
+             linetype="dotted", color = "blue", size=1) +
+  ggtitle("Time dependent AUC with risk score (fit.tdc1,fit.tdc2,fit.tdc3) \n (with minimum no censoring time point)") +
+  xlab("time") + ylab("AUC") +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+
+#### Mean value of Time dependent AUC ("fit.tdc1","fit.tdc2","fit.tdc3")
+
+```{r}
+mean(ROC.risk.tdc1[["AUC"]],na.rm=TRUE) 
+mean(ROC.risk.tdc2[["AUC"]],na.rm=TRUE) 
+mean(ROC.risk.tdc3[["AUC"]],na.rm=TRUE)
+```
+
+
+
+
+
