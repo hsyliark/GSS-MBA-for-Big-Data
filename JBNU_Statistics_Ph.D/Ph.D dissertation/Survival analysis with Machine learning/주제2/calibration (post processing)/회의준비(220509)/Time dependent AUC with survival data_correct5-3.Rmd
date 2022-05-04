@@ -24,7 +24,7 @@ library(survsim)
 
 ## Background
 
-- reference : https://dx.doi.org/10.21037/atm.2018.02.12
+- reference : https://dx.doi.org/10.21037/atm.2018.02.12 (Title : Time-varying covariates and coefficients in Cox regression models)
 
 `--` Function `simple.surv.sim()` in package `survsim`
 ```r
@@ -76,9 +76,9 @@ anc.cens, beta0.cens, z=NULL, beta=NA, x=NA)
 ### Generates a data frame containing two time-fixed variables named “grp” (abbreviated from group) and “age” 
 
 ```{r}
-N <- 100 #number of patients
+N <- 100 # number of patients
 set.seed(123)
-df.tf <- simple.surv.sim(#baseline time fixed
+df.tf <- simple.surv.sim(# baseline time fixed
    n=N, foltime=500,
    dist.ev=c('llogistic'),
    anc.ev=c(0.68), beta0.ev=c(5.8),
@@ -92,11 +92,11 @@ names(df.tf)[c(1,6,7)] <- c("id","grp","age")
 head(df.tf,20)
 ```
 
-### Generates a timevarying covariate named crp (C-reactive protein) which is assumed to have a normal distribution with a mean of 100 and a standard deviation of 40 and skewed 
+### Generates a time varying covariate named crp (C-reactive protein) which is assumed to have a normal distribution with a mean of 100 and a standard deviation of 40 and skewed 
 
 ```{r}
 set.seed(123)
-nft <- sample(1:10,N,replace=T)#number of follow up time points
+nft <- sample(1:10,N,replace=T) # number of follow up time points
 crp <- round(abs(rnorm(sum(nft)+N,mean=100,sd=40)),1)
 time <- NA
 id <- NA
@@ -243,23 +243,6 @@ ggplot() +
   theme(plot.title = element_text(hjust = 0.5))
 ```
 
-```{r}
-ggplot() +
-  geom_line(data=res1, aes(x=time, y=value,
-                            group=variable, color=variable)) +
-  geom_point(data=df, aes(x=time, y=censor1, color=as.factor(censor1))) +
-  geom_line(data=data1_1, aes(x=time, y=density.adjusted), 
-            size=1, colour='black') +
-  geom_line(data=data1_2, aes(x=time, y=density.adjusted), 
-            size=1, colour='orange') +
-  scale_x_continuous(limits = c(0, min(df$tstop[df$endpt==1]+50))) +
-  scale_y_continuous(limits = c(min(na.omit(ROC.risk.tdc3[["AUC"]])), 1)) +
-  geom_vline(xintercept = min(df$tstop[df$endpt==1]),
-             linetype="dotted", color = "blue", size=1) +
-  ggtitle("Time dependent AUC with risk score (fit.tdc1,fit.tdc2,fit.tdc3) \n (with minimum no censoring time point)") +
-  xlab("time") + ylab("AUC") +
-  theme(plot.title = element_text(hjust = 0.5))
-```
 
 
 #### Mean value of Time dependent AUC ("fit.tdc1","fit.tdc2","fit.tdc3")
