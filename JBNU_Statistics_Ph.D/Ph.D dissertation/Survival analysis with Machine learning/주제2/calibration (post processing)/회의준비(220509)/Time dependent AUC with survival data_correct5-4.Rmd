@@ -713,7 +713,7 @@ ggplot() +
 ```
 
 
-#### Mean value of Time dependent AUC (cox.lin.dt3, cox.quad.dt3)
+#### Mean value of Time dependent AUC (cox.indep.dt5, cox.dep.dt5)
 
 ```{r}
 mean(ROC.risk.indep.dt5[["AUC"]],na.rm=TRUE) 
