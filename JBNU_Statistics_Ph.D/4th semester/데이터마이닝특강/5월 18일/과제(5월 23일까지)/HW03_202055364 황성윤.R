@@ -5,7 +5,7 @@ library(rpart.plot)
 library(tree)
 
 # (a)
-carseats <- read.csv("C:/Users/HSY/Desktop/Carseats.csv",sep=",",header=T)
+carseats <- read.csv("C:/Users/stat/Desktop/Carseats.csv",sep=",",header=T)
 set.seed(55364)
 train_id <- sample(1:nrow(carseats), nrow(carseats)*0.6)
 train_dt <- carseats[train_id,]
@@ -113,7 +113,7 @@ ggplot(melt.tmp, aes(num_tree, value, col=variable)) +
 ## Problem 4
 
 # (a)
-oj <- read.csv("C:/Users/HSY/Desktop/OJ.csv",sep=",",header=T)
+oj <- read.csv("C:/Users/stat/Desktop/OJ.csv",sep=",",header=T)
 set.seed(55364)
 train_id <- sample(1:nrow(oj), 800)
 train_dt <- oj[train_id,]
@@ -134,7 +134,6 @@ mean(yhat!=train_dt$Purchase)
 # (c)
 rpart.plot(tree_oj, 
            main = "Classification using CART")
-par(mar = c(5.1, 6.0, 4.1, 2.1))
 plot(tree_oj)
 text(tree_oj, all=T)
 
@@ -151,12 +150,13 @@ printcp(tree_oj)
 plotcp(tree_oj)
 
 prune_tree_oj <- rpart(Purchase ~ ., data=train_dt,
-                       control = rpart.control(cp = 0.02))
+                       control = rpart.control(cp = 0.017))
 
 prune_tree_oj
 
 summary(prune_tree_oj)
 
+rpart.plot(prune_tree_oj)
 plot(prune_tree_oj)
 text(prune_tree_oj, all=T)
 
