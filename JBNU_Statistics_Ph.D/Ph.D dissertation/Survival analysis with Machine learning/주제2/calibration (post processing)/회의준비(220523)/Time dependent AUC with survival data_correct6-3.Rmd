@@ -1,0 +1,619 @@
+---
+title: "Time dependent AUC with survival data _ correct6-3"
+author: "Hwang Seong-Yun"
+date: '2022 5 23 '
+output: html_document
+---
+
+# Loading packages
+
+```{r warning = FALSE, message = FALSE}
+library(survival) 
+library(timeROC)
+library(timereg)
+library(ggplot2)
+library(reshape)
+library(plyr)
+library(tidyverse)
+library(coxed)
+library(gridExtra)
+```
+
+# Generating simulation data from Cox Regression Model 
+
+## Background
+
+- reference 1 : https://doi.org/10.5351/KJAS.2018.31.6.761
+
+- reference 2 : https://doi.org/10.1017/psrm.2018.19
+
+`-` Parametric basis distribution
+
+- real survival time $Y$ : Exponential distribution
+
+- censoring time $C$ : Uniform distribution
+
+- $h(t|x)=h_{0}(t)exp(f(x))$
+- $H(t|x)=\int_{0}^{t} h(s|x)ds= \int_{0}^{t} h_{0}(s)exp(f(x))ds=H_{0}(t)exp(f(x))$
+- $h(t|x)=\frac {f(t|x)}{S(t|x)}= -\frac {d}{dt} log[S(t|x)]$
+- $log[S(t|x)]= -\int_{0}^{t} h(s|x)ds= -H(t|x)= -H_{0}(t)exp(f(x))$
+- $S(t|x)=exp[-H_{0}(t)exp(f(x))]$
+
+- In general,...
+- $F(t|x)=1-exp[-H_{0}(t) exp(f(x))]$
+- -> $F^{-1}(t|x)=H_{0}^{-1}[-log(1-t) exp(-f(x))]$
+- By Inverse Transform Sampling, suppose that $U_{1}, U_{2} \overset{i.i.d}{\sim}\ U(0,1)$, then we can generate real survival time $Y$ from Cox Regression Model using this equation.
+- $Y=H_{Y0}^{-1}[-log(U_{1})exp(-f(x))]$
+- And by assuming non-informative censoring, we can generate censoring time $C$ like this equation. (Set $Y$ and $C$ are independent each other.)
+- $C=H_{C0}^{-1}[-log(U_{2})]$
+- And set censoring indicator $\delta=I(Y \leq C)$ and observed survival time $T=min(Y,C)$
+- $H_{Y0}(t)$ : Basis cumulative hazard function of real survival time $Y$
+- $H_{C0}(t)$ : Basis cumulative hazard function of censoring time $C$
+
+- When parametric basis distribution of real survival time $Y$ is Exponential distribution and parametric basis distribution of censoring time $C$ is Uniform distribution ($Y$ and $C$ are independent each other), then ~
+- $Y$ : $f_{Y0}(t)=\lambda e^{-\lambda t}, t>0$ -> $S_{Y0}(t)=e^{-\lambda t}$ -> $h_{Y0}(t)=\lambda$
+- $C$ : $f_{C0}(t)=\frac {1}{\lambda}, 0<t<\lambda$ -> $S_{C0}(t)=1-\frac {t}{\lambda}$ -> $h_{C0}(t)=\frac {1}{\lambda -t}$
+- $\therefore Y=-\frac{1}{\lambda_{1}} log(U_{1}) exp(-f(x))$, $C=\lambda_{2}(1-U_{2})$
+
+
+
+# Generate survival data with time dependent covariates
+
+
+## Background
+
+- reference 1 : https://doi.org/10.1002/sim.5452
+
+- reference 2 : https://dx.doi.org/10.21037/atm.2018.02.12
+
+
+## Case 1) Continuous time-varying covariate: exponential distribution of event times
+
+- $Y$ : real survival time
+
+- $C$ : censoring time  
+
+- model : $h(t,x,z(t))=h_{0}(t)exp(\beta x + \gamma z(t))$
+- $Y$ : Assume $z(t)=\alpha t$, $\alpha > 0$
+- $h_{0}(t)=\lambda$
+- $h(t,x,z(t))=\lambda exp(\beta x + \gamma \alpha t)=-\frac{d}{dt} log[S(t,x,z(t))]$
+- $log[S(t,x,z(t))]=-\int_{0}^{t}\lambda exp(\beta x + \gamma \alpha s)ds=-\frac{\lambda exp(\beta x)}{\gamma \alpha} [exp(\gamma \alpha t)-1]$
+- $S(t,x,z(t))=exp[-\frac{\lambda exp(\beta x)}{\gamma \alpha} [exp(\gamma \alpha t)-1]]$ 
+- $F(t,x,z(t))=1-exp[-\frac{\lambda exp(\beta x)}{\gamma \alpha} [exp(\gamma \alpha t)-1]]$
+- $F^{-1}(t,x,z(t))=\frac {1}{\gamma \alpha} log[1-\frac {\gamma \alpha}{\lambda exp(\beta x)} log(1-t)]$
+- $C$ : $f_{C0}(t)=\frac {1}{\lambda}, 0<t<\lambda$ -> $S_{C0}(t)=1-\frac {t}{\lambda}$ -> $h_{C0}(t)=\frac {1}{\lambda -t}$
+- By Inverse Transform Sampling and non-informative censoring, suppose that $U_{1}, U_{2} \overset{i.i.d}{\sim}\ U(0,1)$, then we can generate real survival time $Y$ and censoring time $C$ like this.
+- $\therefore Y=\frac {1}{\gamma \alpha} log[1-\frac {\gamma \alpha}{\lambda_{1} exp(\beta x)} log(U_{1})]$
+- $\therefore C=\lambda_{2}(1-U_{2})$ 
+
+## Generating simulation data
+
+```{r}
+lambda1 <- 0.003 # parameter for generate Y  
+lambda2 <- 0.2/lambda1 # parameter for generate C 
+beta0 <- -3 ; gamma0 <- 2 ; alpha0 <- 4 # true coefficients
+Y <- c() # real survival time
+C <- c() # censoring time
+t <- c() # observed survival time
+censor <- c() # censoring indicator
+X <- c() # time invariant covariate
+U1 <- c() # random variable from U(0,1) for generate Y
+U2 <- c() # random variable from U(0,1) for generate C 
+
+for (i in 1:1000) {
+  U1[i] <- runif(1)
+  U2[i] <- runif(1)
+  X[i] <- rnorm(1,mean=0,sd=1)
+  Y[i] <- (1/gamma0*alpha0)*log(1-(gamma0*alpha0/lambda1/exp(beta0*X[i]))*log(U1[i]))
+  C[i] <- (lambda2)*(1-U2[i])
+  t[i] <- min(Y[i],C[i])
+  censor[i] <- ifelse(Y[i]<=C[i],1,0)
+}
+
+mean(1-censor) # censoring rate
+dt5 <- data.frame(X=X, Y=Y, C=C, time=t, censor=censor)
+head(dt5,10)
+min(dt5$time[dt5$censor==1])
+```
+
+### Time dependent AUC
+
+### True model
+
+- model : $h(t,x,z(t))=h_{0}(t)exp[\beta x + \gamma z(t)]$
+- $z(t)=\alpha t$
+- $h_{0}(t)=\lambda$
+- True coefficients : $\beta=-3$, $\gamma=2$, $\alpha=4$
+
+### Set Cox regression model
+
+```{r}
+cox.dep.dt5 <- coxph(Surv(time,censor) ~ X, data=dt5)
+summary(cox.dep.dt5)
+risk.dep.dt5 <- predict(object=cox.dep.dt5, newdata=dt5, type="risk") # risk score
+dt5$risk.dep.dt5 <- risk.dep.dt5
+ROC.risk.dep.dt5 <- timeROC(T=dt5$time,
+                         delta=dt5$censor,marker=dt5$risk.dep.dt5,
+                         cause=1,weighting="marginal",
+                         times=dt5$time)
+ROC.risk.dep.dt5
+```
+
+
+
+#### Make AUC data
+
+```{r}
+# uncensored
+uncensored.density5 <- density(dt5$time[dt5$censor==1])
+data5_1 <- data.frame(time=uncensored.density5[["x"]], 
+                    density=uncensored.density5[["y"]])
+data5_1$density.adjusted <- (max(na.omit(ROC.risk.dep.dt5[["AUC"]]))-min(na.omit(ROC.risk.dep.dt5[["AUC"]])))*(uncensored.density5[["y"]]-min(uncensored.density5[["y"]]))/(max(uncensored.density5[["y"]])-min(uncensored.density5[["y"]]))+min(na.omit(ROC.risk.dep.dt5[["AUC"]]))
+
+# censored
+censored.density5 <- density(dt5$time[dt5$censor==0])
+data5_2 <- data.frame(time=censored.density5[["x"]], 
+                    density=censored.density5[["y"]])
+data5_2$density.adjusted <- (max(na.omit(ROC.risk.dep.dt5[["AUC"]]))-min(na.omit(ROC.risk.dep.dt5[["AUC"]])))*(censored.density5[["y"]]-min(censored.density5[["y"]]))/(max(censored.density5[["y"]])-min(censored.density5[["y"]]))+min(na.omit(ROC.risk.dep.dt5[["AUC"]]))
+
+res5 <- data.frame(time=ROC.risk.dep.dt5[["times"]],
+                    cox.dep.dt5=ROC.risk.dep.dt5[["AUC"]])
+res5 <- melt(data = res5, 
+                   id.vars = "time", 
+                   measure.vars = c("cox.dep.dt5"))
+```
+
+#### Time dependent AUC plot with ggplot2 (cox.dep.dt5)
+
+```{r}
+dt5$censor1 <- ifelse(dt5$censor==1,
+                    1,min(na.omit(ROC.risk.dep.dt5[["AUC"]])))
+ggplot() +
+  geom_line(data=res5, aes(x=time, y=value,
+                            group=variable, color=variable)) +
+  geom_point(data=dt5, aes(x=time, y=censor1, color=as.factor(censor))) +
+  geom_line(data=data5_1, aes(x=time, y=density.adjusted), 
+            size=1, colour='black') +
+  geom_line(data=data5_2, aes(x=time, y=density.adjusted), 
+            size=1, colour='orange') +
+  scale_x_continuous(limits = c(0, max(dt5$time))) +
+  geom_vline(xintercept = min(dt5$time[dt5$censor==1]),
+             linetype="dotted", color = "blue", size=1) +
+  ggtitle("Time dependent AUC with risk score (cox.dep.dt5)") +
+  xlab("time") + ylab("AUC") +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+
+
+#### Mean value of Time dependent AUC (cox.dep.dt5)
+
+```{r}
+mean(ROC.risk.dep.dt5[["AUC"]],na.rm=TRUE) 
+```
+
+
+#### simulation (repeat 100 times / time VS mean of AUC)
+
+```{r}
+con.AUC <- matrix(nrow=length(seq(0,50,0.01)),ncol=100)
+
+for (i in 1:100) {
+  
+  lambda1 <- 0.003 # parameter for generate Y  
+  lambda2 <- 0.2/lambda1 # parameter for generate C 
+  beta0 <- -3 ; gamma0 <- 2 ; alpha0 <- 4 # true coefficients
+  Y <- c() # real survival time
+  C <- c() # censoring time
+  t <- c() # observed survival time
+  censor <- c() # censoring indicator
+  X <- c() # time invariant covariate
+  U1 <- c() # random variable from U(0,1) for generate Y
+  U2 <- c() # random variable from U(0,1) for generate C
+
+  # Generate simulation data 
+  set.seed(i)
+  for (j in 1:200) {
+    U1[j] <- runif(1)
+    U2[j] <- runif(1)
+    X[j] <- rnorm(1,mean=0,sd=1)
+    Y[j] <- (1/gamma0*alpha0)*log(1-(gamma0*alpha0/lambda1/exp(beta0*X[j]))*log(U1[j]))
+    C[j] <- (lambda2)*(1-U2[j])
+    t[j] <- min(Y[j],C[j])
+    censor[j] <- ifelse(Y[j]<=C[j],1,0)
+  }
+  dt5 <- data.frame(X=X, Y=Y, C=C, time=t, censor=censor)
+  
+  # Set Cox regression model
+  cox.dep.dt5 <- coxph(Surv(time,censor) ~ X, data=dt5)
+  summary(cox.dep.dt5)
+  risk.dep.dt5 <- predict(object=cox.dep.dt5, newdata=dt5, type="risk") # risk score
+  dt5$risk.dep.dt5 <- risk.dep.dt5
+  ROC.risk.dep.dt5 <- timeROC(T=dt5$time,
+                           delta=dt5$censor,marker=dt5$risk.dep.dt5,
+                           cause=1,weighting="marginal",
+                           times=seq(0,50,0.01))
+  
+  con.AUC[,i] <- ROC.risk.dep.dt5[["AUC"]]
+  
+  # print(i)
+  
+}
+
+dat5 <- data.frame(time=seq(0,50,0.01), con.AUC=rowMeans(con.AUC, na.rm=TRUE))
+plot(x=dat5$time, y=dat5$con.AUC, xlab="time", ylab="mean of AUC",
+     main="Continuous time-varying covariate \n (Exponential distribution of event times)", type="l", col="red", ylim=c(0.94,1))
+```
+
+
+
+
+## Case 2) Dichotomous time-varying covariate: exponential distribution of event times
+
+- $Y$ : real survival time
+
+- $C$ : censoring time
+
+- model : $h(t,x,z(t))=h_{0}(t)exp(\beta x + \gamma z(t))$
+- $Y$ : Assume $z(t)=\begin{cases} 0, & \mbox{if } t<t_{0} \\ 1, & \mbox{if } t \geq t_{0} \end{cases}$
+- $h_{0}(t)=\lambda$
+- If $t<t_{0}$, then $H(t,x,z(t))=\int_{0}^{t}h_{0}(s)exp(\gamma z(s) + \beta x)ds=\int_{0}^{t}\lambda exp(\beta x)ds=\lambda exp(\beta x)t$
+- If $t \geq t_{0}$, then $H(t,x,z(t))=\int_{0}^{t}h_{0}(s)exp(\gamma z(s) + \beta x)ds=\int_{0}^{t} \lambda exp(\gamma z(s) + \beta x)ds=\lambda exp(\beta x) \int_{0}^{t}exp(\gamma z(s))ds=\lambda exp(\beta x) [ \int_{0}^{t_{0}}ds+\int_{t_{0}}^{t}exp(\gamma)ds ]=\lambda exp(\beta x)[t_{0}+exp(\gamma)t - exp(\gamma) t_{0}]$
+- Hence, $H^{-1}(t,x,z(t))=\begin{cases} \frac {t}{\lambda exp(\beta x)}, & \mbox{if } t < \lambda exp(\beta x)t_{0} \\ \frac {t - \lambda exp(\beta x)t_{0} + \lambda exp(\beta x + \gamma)t_{0}}{\lambda exp(\beta x + \gamma)}, & \mbox{if } t \geq \lambda exp(\beta x)t_{0} \end{cases}$ 
+- Therefore, $T=\begin{cases} \frac {-log(U)}{\lambda exp(\beta x)}, & \mbox{if } -log(U) < \lambda exp(\beta x)t_{0} \\ \frac {-log(U) - \lambda exp(\beta x)t_{0} + \lambda exp(\beta x + \gamma)t_{0}}{\lambda exp(\beta x + \gamma)}, & \mbox{if } -log(U) \geq \lambda exp(\beta x)t_{0} \end{cases}$ when $U \sim U(0,1)$ 
+- $C$ : $f_{C0}(t)=\frac {1}{\lambda}, 0<t<\lambda$ -> $S_{C0}(t)=1-\frac {t}{\lambda}$ -> $h_{C0}(t)=\frac {1}{\lambda -t}$
+- By Inverse Transform Sampling and non-informative censoring, suppose that $U_{1}, U_{2} \overset{i.i.d}{\sim}\ U(0,1)$, then we can generate real survival time $Y$ and censoring time $C$ like this.
+- $\therefore Y=\begin{cases} \frac {-log(U_{1})}{\lambda exp(\beta x)}, & \mbox{if } -log(U_{1}) < \lambda exp(\beta x)t_{0} \\ \frac {-log(U_{1}) - \lambda exp(\beta x)t_{0} + \lambda exp(\beta x + \gamma)t_{0}}{\lambda exp(\beta x + \gamma)}, & \mbox{if } -log(U_{1}) \geq \lambda exp(\beta x)t_{0} \end{cases}$
+- $\therefore C=\lambda_{2}(1-U_{2})$ 
+
+## Generating simulation data
+
+```{r}
+lambda1 <- 0.003 # parameter for generate Y  
+lambda2 <- 0.2/lambda1 # parameter for generate C 
+beta0 <- -3 ; gamma0 <- 2 # true coefficients
+t0 <- 30 # denote the time at which the time-varying covariate changes from unexposed (Z(t) = 0) to exposed (Z(t) = 1)
+Y <- c() # real survival time
+C <- c() # censoring time
+t <- c() # observed survival time
+censor <- c() # censoring indicator
+X <- c() # time invariant covariate
+U1 <- c() # random variable from U(0,1) for generate Y
+U2 <- c() # random variable from U(0,1) for generate C 
+
+for (i in 1:1000) {
+  U1[i] <- runif(1)
+  U2[i] <- runif(1)
+  X[i] <- rnorm(1,mean=0,sd=1)
+  Y[i] <- ifelse(-log(U1[i])<lambda1*exp(beta0*X[i])*t0, -log(U1[i])/lambda1/exp(beta0*X[i]), (-log(U1[i])-lambda1*exp(beta0*X[i])*t0+lambda1*exp(beta0*X[i]+gamma0)*t0)/lambda1/exp(beta0*X[i]+gamma0))
+  C[i] <- (lambda2)*(1-U2[i])
+  t[i] <- min(Y[i],C[i])
+  censor[i] <- ifelse(Y[i]<=C[i],1,0)
+}
+
+mean(1-censor) # censoring rate
+dt6 <- data.frame(X=X, Y=Y, C=C, time=t, censor=censor)
+head(dt6,10)
+min(dt6$time[dt6$censor==1])
+```
+
+### Time dependent AUC
+
+### True model
+
+- model : $h(t,x,z(t))=h_{0}(t)exp[\beta x + \gamma z(t)]$
+- $z(t)=\begin{cases} 0, & \mbox{if } t<t_{0} \\ 1, & \mbox{if } t \geq t_{0} \end{cases}$
+- $h_{0}(t)=\lambda$
+- True coefficients : $\beta=-3$, $\gamma=2$
+
+### Set Cox regression model
+
+```{r}
+cox.dep.dt6 <- coxph(Surv(time,censor) ~ X, data=dt6)
+summary(cox.dep.dt6)
+risk.dep.dt6 <- predict(object=cox.dep.dt6, newdata=dt6, type="risk") # risk score
+dt6$risk.dep.dt6 <- risk.dep.dt6
+ROC.risk.dep.dt6 <- timeROC(T=dt6$time,
+                         delta=dt6$censor,marker=dt6$risk.dep.dt6,
+                         cause=1,weighting="marginal",
+                         times=dt6$time)
+ROC.risk.dep.dt6
+```
+
+
+
+#### Make AUC data
+
+```{r}
+# uncensored
+uncensored.density6 <- density(dt6$time[dt6$censor==1])
+data6_1 <- data.frame(time=uncensored.density6[["x"]], 
+                    density=uncensored.density6[["y"]])
+data6_1$density.adjusted <- (max(na.omit(ROC.risk.dep.dt6[["AUC"]]))-min(na.omit(ROC.risk.dep.dt6[["AUC"]])))*(uncensored.density6[["y"]]-min(uncensored.density6[["y"]]))/(max(uncensored.density6[["y"]])-min(uncensored.density6[["y"]]))+min(na.omit(ROC.risk.dep.dt6[["AUC"]]))
+
+# censored
+censored.density6 <- density(dt6$time[dt6$censor==0])
+data6_2 <- data.frame(time=censored.density6[["x"]], 
+                    density=censored.density6[["y"]])
+data6_2$density.adjusted <- (max(na.omit(ROC.risk.dep.dt6[["AUC"]]))-min(na.omit(ROC.risk.dep.dt6[["AUC"]])))*(censored.density6[["y"]]-min(censored.density6[["y"]]))/(max(censored.density6[["y"]])-min(censored.density6[["y"]]))+min(na.omit(ROC.risk.dep.dt6[["AUC"]]))
+
+res6 <- data.frame(time=ROC.risk.dep.dt6[["times"]],
+                    cox.dep.dt6=ROC.risk.dep.dt6[["AUC"]])
+res6 <- melt(data = res6, 
+                   id.vars = "time", 
+                   measure.vars = c("cox.dep.dt6"))
+```
+
+#### Time dependent AUC plot with ggplot2 (cox.dep.dt6)
+
+```{r}
+dt6$censor1 <- ifelse(dt6$censor==1,
+                    1,min(na.omit(ROC.risk.dep.dt6[["AUC"]])))
+ggplot() +
+  geom_line(data=res6, aes(x=time, y=value,
+                            group=variable, color=variable)) +
+  geom_point(data=dt6, aes(x=time, y=censor1, color=as.factor(censor))) +
+  geom_line(data=data6_1, aes(x=time, y=density.adjusted), 
+            size=1, colour='black') +
+  geom_line(data=data6_2, aes(x=time, y=density.adjusted), 
+            size=1, colour='orange') +
+  scale_x_continuous(limits = c(0, max(dt6$time))) +
+  geom_vline(xintercept = min(dt6$time[dt6$censor==1]),
+             linetype="dotted", color = "blue", size=1) +
+  ggtitle("Time dependent AUC with risk score (cox.dep.dt6)") +
+  xlab("time") + ylab("AUC") +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+
+
+#### Mean value of Time dependent AUC (cox.dep.dt6)
+
+```{r}
+mean(ROC.risk.dep.dt6[["AUC"]],na.rm=TRUE) 
+```
+
+
+#### simulation (repeat 100 times / time VS mean of AUC)
+
+```{r}
+din.AUC <- matrix(nrow=length(seq(0,70,0.01)),ncol=100)
+
+for (i in 1:100) {
+  
+  lambda1 <- 0.003 # parameter for generate Y  
+  lambda2 <- 0.2/lambda1 # parameter for generate C 
+  beta0 <- -3 ; gamma0 <- 2 # true coefficients
+  t0 <- 30 # denote the time at which the time-varying covariate changes from unexposed (Z(t) = 0) to exposed (Z(t) = 1)
+  Y <- c() # real survival time
+  C <- c() # censoring time
+  t <- c() # observed survival time
+  censor <- c() # censoring indicator
+  X <- c() # time invariant covariate
+  U1 <- c() # random variable from U(0,1) for generate Y
+  U2 <- c() # random variable from U(0,1) for generate C
+
+  # Generate simulation data 
+  set.seed(i)
+  for (j in 1:200) {
+    U1[j] <- runif(1)
+    U2[j] <- runif(1)
+    X[j] <- rnorm(1,mean=0,sd=1)
+    Y[j] <- ifelse(-log(U1[j])<lambda1*exp(beta0*X[j])*t0, -log(U1[j])/lambda1/exp(beta0*X[j]), (-log(U1[j])-lambda1*exp(beta0*X[j])*t0+lambda1*exp(beta0*X[j]+gamma0)*t0)/lambda1/exp(beta0*X[j]+gamma0))
+    C[j] <- (lambda2)*(1-U2[j])
+    t[j] <- min(Y[j],C[j])
+    censor[j] <- ifelse(Y[j]<=C[j],1,0)
+  } 
+  dt6 <- data.frame(X=X, Y=Y, C=C, time=t, censor=censor)
+  
+  # Set Cox regression model
+  cox.dep.dt6 <- coxph(Surv(time,censor) ~ X, data=dt6)
+  summary(cox.dep.dt6)
+  risk.dep.dt6 <- predict(object=cox.dep.dt6, newdata=dt6, type="risk") # risk score
+  dt6$risk.dep.dt6 <- risk.dep.dt6
+  ROC.risk.dep.dt6 <- timeROC(T=dt6$time,
+                           delta=dt6$censor,marker=dt6$risk.dep.dt6,
+                           cause=1,weighting="marginal",
+                           times=seq(0,70,0.01))
+  
+  din.AUC[,i] <- ROC.risk.dep.dt6[["AUC"]]
+  
+  # print(i)
+  
+}
+
+dat6 <- data.frame(time=seq(0,70,0.01), din.AUC=rowMeans(din.AUC, na.rm=TRUE))
+plot(x=dat6$time, y=dat6$din.AUC, xlab="time", ylab="mean of AUC",
+     main="Dichotomous time-varying covariate \n (Exponential distribution of event times)", type="l", col="blue", ylim=c(0.92,1))
+```
+
+
+
+
+## Case 3) Continuous time-varying covariate: exponential distribution of event times
+
+- $Y$ : real survival time
+
+- $C$ : censoring time  
+
+- model : $h(t,x,m,z(t))=h_{0}(t)exp(\beta x + \gamma mz(t))$
+- $x$ : independent variable, $m$ : interaction with time dependent term 
+- $Y$ : Assume $z(t)=\alpha t$, $\alpha > 0$
+- $h_{0}(t)=\lambda$
+- $h(t,x,m,z(t))=\lambda exp(\beta x + \gamma m \alpha t)=-\frac{d}{dt} log[S(t,x,m,z(t))]$
+- $log[S(t,x,m,z(t))]=-\int_{0}^{t}\lambda exp(\beta x + \gamma m \alpha s)ds=-\frac{\lambda exp(\beta x)}{\gamma m \alpha} [exp(\gamma m \alpha t)-1]$
+- $S(t,x,m,z(t))=exp[-\frac{\lambda exp(\beta x)}{\gamma m \alpha} [exp(\gamma m \alpha t)-1]]$ 
+- $F(t,x,m,z(t))=1-exp[-\frac{\lambda exp(\beta x)}{\gamma m \alpha} [exp(\gamma m \alpha t)-1]]$
+- $F^{-1}(t,x,m,z(t))=\frac {1}{\gamma m \alpha} log[1-\frac {\gamma m \alpha}{\lambda exp(\beta x)} log(1-t)]$
+- $C$ : $f_{C0}(t)=\frac {1}{\lambda}, 0<t<\lambda$ -> $S_{C0}(t)=1-\frac {t}{\lambda}$ -> $h_{C0}(t)=\frac {1}{\lambda -t}$
+- By Inverse Transform Sampling and non-informative censoring, suppose that $U_{1}, U_{2} \overset{i.i.d}{\sim}\ U(0,1)$, then we can generate real survival time $Y$ and censoring time $C$ like this.
+- $\therefore Y=\frac {1}{\gamma m \alpha} log[1-\frac {\gamma m \alpha}{\lambda_{1} exp(\beta x)} log(U_{1})]$
+- $\therefore C=\lambda_{2}(1-U_{2})$ 
+
+## Generating simulation data
+
+```{r}
+lambda1 <- 0.01 # parameter for generate Y  
+lambda2 <- 0.2/lambda1 # parameter for generate C 
+beta0 <- -3 ; gamma0 <- 1 ; alpha0 <- 2 # true coefficients
+Y <- c() # real survival time
+C <- c() # censoring time
+t <- c() # observed survival time
+censor <- c() # censoring indicator
+X <- c() # time invariant covariate : N(0,1^2)
+M <- c() # interaction with time dependent term : U(0,1)
+U1 <- c() # random variable from U(0,1) for generate Y
+U2 <- c() # random variable from U(0,1) for generate C 
+
+for (i in 1:1000) {
+  U1[i] <- runif(1)
+  U2[i] <- runif(1)
+  X[i] <- rnorm(1,mean=0,sd=1)
+  M[i] <- runif(1,min=0,max=1)
+  Y[i] <- (1/gamma0*M[i]*alpha0)*log(1-(gamma0*M[i]*alpha0/lambda1/exp(beta0*X[i]))*log(U1[i]))
+  C[i] <- (lambda2)*(1-U2[i])
+  t[i] <- min(Y[i],C[i])
+  censor[i] <- ifelse(Y[i]<=C[i],1,0)
+}
+
+mean(1-censor) # censoring rate
+dt7 <- data.frame(X=X, Y=Y, C=C, M=M, time=t, censor=censor)
+head(dt7,10)
+min(dt7$time[dt7$censor==1])
+```
+
+
+### Time dependent AUC
+
+### True model
+
+- model : $h(t,x,m,z(t))=h_{0}(t)exp[\beta x + \gamma m z(t)]$
+- $z(t)=\alpha t$
+- $h_{0}(t)=\lambda$
+- True coefficients : $\beta=-3$, $\gamma=1$, $\alpha=2$
+
+
+### Set Cox regression model
+
+```{r}
+cox.dep.dt7 <- coxph(Surv(time,censor) ~ X, data=dt7)
+summary(cox.dep.dt7)
+risk.dep.dt7 <- predict(object=cox.dep.dt7, newdata=dt7, type="risk") # risk score
+dt7$risk.dep.dt7 <- risk.dep.dt7
+ROC.risk.dep.dt7 <- timeROC(T=dt7$time,
+                         delta=dt7$censor,marker=dt7$risk.dep.dt7,
+                         cause=1,weighting="marginal",
+                         times=dt7$time)
+ROC.risk.dep.dt7
+```
+
+
+
+#### Make AUC data
+
+```{r}
+# uncensored
+uncensored.density7 <- density(dt7$time[dt7$censor==1])
+data7_1 <- data.frame(time=uncensored.density7[["x"]], 
+                    density=uncensored.density7[["y"]])
+data7_1$density.adjusted <- (max(na.omit(ROC.risk.dep.dt7[["AUC"]]))-min(na.omit(ROC.risk.dep.dt7[["AUC"]])))*(uncensored.density7[["y"]]-min(uncensored.density7[["y"]]))/(max(uncensored.density7[["y"]])-min(uncensored.density7[["y"]]))+min(na.omit(ROC.risk.dep.dt7[["AUC"]]))
+
+# censored
+censored.density7 <- density(dt7$time[dt7$censor==0])
+data7_2 <- data.frame(time=censored.density7[["x"]], 
+                    density=censored.density7[["y"]])
+data7_2$density.adjusted <- (max(na.omit(ROC.risk.dep.dt7[["AUC"]]))-min(na.omit(ROC.risk.dep.dt7[["AUC"]])))*(censored.density7[["y"]]-min(censored.density7[["y"]]))/(max(censored.density7[["y"]])-min(censored.density7[["y"]]))+min(na.omit(ROC.risk.dep.dt7[["AUC"]]))
+
+res7 <- data.frame(time=ROC.risk.dep.dt7[["times"]],
+                    cox.dep.dt7=ROC.risk.dep.dt7[["AUC"]])
+res7 <- melt(data = res7, 
+                   id.vars = "time", 
+                   measure.vars = c("cox.dep.dt7"))
+```
+
+#### Time dependent AUC plot with ggplot2 (cox.dep.dt7)
+
+```{r}
+dt7$censor1 <- ifelse(dt7$censor==1,
+                    1,min(na.omit(ROC.risk.dep.dt7[["AUC"]])))
+ggplot() +
+  geom_line(data=res7, aes(x=time, y=value,
+                            group=variable, color=variable)) +
+  geom_point(data=dt7, aes(x=time, y=censor1, color=as.factor(censor))) +
+  geom_line(data=data7_1, aes(x=time, y=density.adjusted), 
+            size=1, colour='black') +
+  geom_line(data=data7_2, aes(x=time, y=density.adjusted), 
+            size=1, colour='orange') +
+  scale_x_continuous(limits = c(0, max(dt7$time))) +
+  geom_vline(xintercept = min(dt7$time[dt7$censor==1]),
+             linetype="dotted", color = "blue", size=1) +
+  ggtitle("Time dependent AUC with risk score (cox.dep.dt7)") +
+  xlab("time") + ylab("AUC") +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+
+
+#### Mean value of Time dependent AUC (cox.dep.dt5)
+
+```{r}
+mean(ROC.risk.dep.dt7[["AUC"]],na.rm=TRUE) 
+```
+
+
+#### simulation (repeat 100 times / time VS mean of AUC)
+
+```{r}
+con.AUC <- matrix(nrow=length(seq(0,50,0.01)),ncol=100)
+
+for (i in 1:100) {
+  
+  lambda1 <- 0.01 # parameter for generate Y  
+  lambda2 <- 0.2/lambda1 # parameter for generate C 
+  beta0 <- -3 ; gamma0 <- 1 ; alpha0 <- 2 # true coefficients
+  Y <- c() # real survival time
+  C <- c() # censoring time
+  t <- c() # observed survival time
+  censor <- c() # censoring indicator
+  X <- c() # time invariant covariate : N(0,1^2)
+  M <- c() # interaction with time dependent term : U(0,1)
+  U1 <- c() # random variable from U(0,1) for generate Y
+  U2 <- c() # random variable from U(0,1) for generate C
+
+  # Generate simulation data 
+  set.seed(i)
+  for (j in 1:200) {
+    U1[j] <- runif(1)
+    U2[j] <- runif(1)
+    X[j] <- rnorm(1,mean=0,sd=1)
+    M[j] <- runif(1,min=0,max=1)
+    Y[j] <- (1/gamma0*M[j]*alpha0)*log(1-(gamma0*M[j]*alpha0/lambda1/exp(beta0*X[j]))*log(U1[j]))
+    C[j] <- (lambda2)*(1-U2[j])
+    t[j] <- min(Y[j],C[j])
+    censor[j] <- ifelse(Y[j]<=C[j],1,0)
+  }
+  dt7 <- data.frame(X=X, Y=Y, C=C, M=M, time=t, censor=censor)
+  
+  # Set Cox regression model
+  cox.dep.dt7 <- coxph(Surv(time,censor) ~ X, data=dt7)
+  summary(cox.dep.dt7)
+  risk.dep.dt7 <- predict(object=cox.dep.dt7, newdata=dt7, type="risk") # risk score
+  dt7$risk.dep.dt7 <- risk.dep.dt7
+  ROC.risk.dep.dt7 <- timeROC(T=dt7$time,
+                           delta=dt7$censor,marker=dt7$risk.dep.dt7,
+                           cause=1,weighting="marginal",
+                           times=seq(0,50,0.01))
+  
+  con.AUC[,i] <- ROC.risk.dep.dt7[["AUC"]]
+  
+  # print(i)
+  
+}
+
+dat7 <- data.frame(time=seq(0,50,0.01), con.AUC=rowMeans(con.AUC, na.rm=TRUE))
+plot(x=dat7$time, y=dat7$con.AUC, xlab="time", ylab="mean of AUC",
+     main="Continuous time-varying covariate \n (Exponential distribution of event times)", type="l", col="red", ylim=c(0.94,1))
+```
+
+
+
