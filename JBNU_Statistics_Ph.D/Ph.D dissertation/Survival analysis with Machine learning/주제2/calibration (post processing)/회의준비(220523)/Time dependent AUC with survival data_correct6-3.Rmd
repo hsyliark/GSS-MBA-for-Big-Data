@@ -558,7 +558,7 @@ ggplot() +
 
 
 
-#### Mean value of Time dependent AUC (cox.dep.dt5)
+#### Mean value of Time dependent AUC (cox.dep.dt7)
 
 ```{r}
 mean(ROC.risk.dep.dt7[["AUC"]],na.rm=TRUE) 
@@ -567,59 +567,10 @@ mean(ROC.risk.dep.dt7[["AUC"]],na.rm=TRUE)
 
 #### simulation (repeat 100 times / time VS mean of AUC)
 
-```{r}
-con.AUC <- matrix(nrow=length(seq(0,25,0.01)),ncol=100)
+- simulation(repeat 100 times)은 다음과 같은 오류가 일어나는 관계로 아직 실시하지 않았습니다.
 
-for (i in 1:100) {
-  
-  lambda1 <- 0.01 # parameter for generate Y  
-  lambda2 <- 0.2/lambda1 # parameter for generate C 
-  beta0 <- -3 ; gamma0 <- 1 ; alpha0 <- 2 # true coefficients
-  Y <- c() # real survival time
-  C <- c() # censoring time
-  t <- c() # observed survival time
-  censor <- c() # censoring indicator
-  X <- c() # time invariant covariate : N(0,1^2)
-  M <- c() # interaction with time dependent term : U(0,1)
-  MZ <- c() # time-varyinh covariate
-  U1 <- c() # random variable from U(0,1) for generate Y
-  U2 <- c() # random variable from U(0,1) for generate C
-
-  # Generate simulation data 
-  set.seed(i)
-  for (j in 1:200) {
-    U1[j] <- runif(1)
-    U2[j] <- runif(1)
-    X[j] <- rnorm(1,mean=0,sd=1)
-    M[j] <- runif(1,min=0,max=1)
-    Y[j] <- (1/gamma0*M[j]*alpha0)*log(1-(gamma0*M[j]*alpha0/lambda1/exp(beta0*X[j]))*log(U1[j]))
-    MZ[j] <- M[j]*Y[j]
-    C[j] <- (lambda2)*(1-U2[j])
-    t[j] <- min(Y[j],C[j])
-    censor[j] <- ifelse(Y[j]<=C[j],1,0)
-  }
-  dt7 <- data.frame(X=X, Y=Y, C=C, M=M, MZ=MZ, time=t, censor=censor)
-  
-  # Set Cox regression model
-  cox.dep.dt7 <- gam(time ~ X + s(time,by=M), weights=censor, data=dt7, family=cox.ph) 
-  summary(cox.dep.dt7)
-  risk.dep.dt7 <- predict(object=cox.dep.dt7, newdata=dt7, type="link") # linear predictor (risk score)
-  dt7$risk.dep.dt7 <- risk.dep.dt7
-  ROC.risk.dep.dt7 <- timeROC(T=dt7$time,
-                           delta=dt7$censor,marker=dt7$risk.dep.dt7,
-                           cause=1,weighting="marginal",
-                           times=seq(0,25,0.01))
-  
-  con.AUC[,i] <- ROC.risk.dep.dt7[["AUC"]]
-  
-  # print(i)
-  
-}
-
-dat7 <- data.frame(time=seq(0,25,0.01), con.AUC=rowMeans(con.AUC, na.rm=TRUE))
-plot(x=dat7$time, y=dat7$con.AUC, xlab="time", ylab="mean of AUC",
-     main="Continuous time-varying covariate \n (Exponential distribution of event times)", type="l", col="red", ylim=c(0.9,1))
 ```
-
-
+Error in eigen(hess1, symmetric = TRUE) : 
+'x'에 무한(infinite) 또는 결측(missing)값이 존재합니다.
+```
 
