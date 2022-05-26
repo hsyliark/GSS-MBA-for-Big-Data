@@ -30,6 +30,8 @@ eta <- predict(coxph(So ~ X))
 Som <- as.matrix(So)
 Som[,1] <- Som[,1] + (1-Som[,2])*min(Som[,1])/2
 survConcordance.fit(So, eta)[1:2]
+cindex(Som, eta)
+concordance(coxph(So ~ X))
 
 
 ## Equation (2)
