@@ -80,7 +80,7 @@ p2 <- ggplot(dt, aes(x,y, col=as.factor(res2$cluster)))+
   theme_bw()
 
 m <- 10
-res3 <- dbscan(dt, eps = 0.4 , minPts = m)
+res3 <- dbscan(dt, eps = 0.3 , minPts = m)
 p3 <- ggplot(dt, aes(x,y, col=as.factor(res3$cluster)))+
   geom_point()+
   xlab("")+ylab("")+ggtitle(paste0('BDscan : minPts = ', m))+

@@ -159,9 +159,38 @@ ggplot(melt.tmp, aes(num_tree, value, col=variable)) + geom_line(lwd=1) +
 wcd <- read.csv("C:/Users/HSY/Desktop/Wholesale_customers_data.csv",
                 sep=",",header=T)
 wcd <- wcd[,-(1:2)]
+wcd_scale <- scale(wcd)
 
 ### k-means
-data_k <- kmeans(wcd ,centers=3, nstart=5) 
+tot_withinss <- c()
+for (i in 1:20) {
+  set.seed(5790) # for reproducibility 
+  kmeans_cluster <- kmeans(wcd_scale, centers = i, iter.max = 1000)
+  tot_withinss[i] <- kmeans_cluster$tot.withinss
+}
+
+library(factoextra)
+library(cluster)
+avg_silhouette <- c(0)
+for (i in 2:20) {
+  set.seed(5790) # for reproducibility 
+  km.res <- kmeans(wcd_scale, centers = i, iter.max = 1000)
+  sil <- silhouette(km.res$cluster, dist(wcd_scale))[,3] 
+  avg_silhouette[i] <- mean(sil)
+}
+
+par(mfrow=c(1,2))
+plot(c(1:20), tot_withinss, type="b", 
+     main="Optimal number of clusters", 
+     xlab="Number of clusters", 
+     ylab="Total within-cluster sum of squares")
+plot(c(1:20), avg_silhouette, type="b", 
+     main="Optimal number of clusters", 
+     xlab="Number of clusters", 
+     ylab="Average Silhouette width")
+par(mfrow=c(1,1))
+ 
+data_k <- kmeans(wcd_scale ,centers=5, nstart=5) 
 attributes(data_k)
 
 data_k$cluster
@@ -171,22 +200,20 @@ data_k$tot.withinss
 data_k$size
 data_k$iter
 
-par(mfrow=c(2,3))
-data_k <- kmeans(wcd ,centers=3, nstart=5) 
-plot(wcd[,c(1,2)], pch = 16, col =  data_k$cluster, 
-     main = round(data_k$tot.withinss,2),
-     xaxt='n', yaxt='n',
-     xlab='Fresh', ylab='Milk')
-par(mfrow=c(1,1))
-
 plot(wcd$Fresh,wcd$Milk)
 wcd_c <- wcd[(wcd$Fresh<=60000)&(wcd$Milk<=30000),]
 plot(wcd_c$Fresh,wcd_c$Milk)
+wcd_c_scale <- scale(wcd_c)
 
-par(mfrow=c(2,3))
-data_k <- kmeans(wcd_c ,centers=3, nstart=5) 
-plot(wcd_c[,c(1,2)], pch = 16, col =  data_k$cluster, 
-     main = round(data_k$tot.withinss,2),
+par(mfrow=c(1,2))
+data_k1 <- kmeans(wcd_scale ,centers=5, nstart=5) 
+plot(wcd[,c(1,2)], pch = 16, col =  data_k1$cluster, 
+     main = paste0("k-means with influential point, \n tot.withinss=",round(data_k1$tot.withinss,2)),
+     xaxt='n', yaxt='n',
+     xlab='Fresh', ylab='Milk')
+data_k2 <- kmeans(wcd_c_scale ,centers=5, nstart=5) 
+plot(wcd_c[,c(1,2)], pch = 16, col =  data_k2$cluster, 
+     main = paste0("k-means without influential point, \n tot.withinss=",round(data_k2$tot.withinss,2)),
      xaxt='n', yaxt='n',
      xlab='Fresh', ylab='Milk')
 par(mfrow=c(1,1))
@@ -198,18 +225,154 @@ library(MASS)
 library(cowplot)
 library(gridExtra)
 
-fit <- pam(wcd,k=3)
+wss <- fviz_nbclust(wcd_scale, pam, method = "wss")
+p1 <- wss+theme(axis.text = element_text(size = 8, color = "red"), 
+                title = element_text(size = 8, color = "blue"))
+wss$data
+
+sil <- fviz_nbclust(wcd_scale, pam, method = "silhouette")
+p2 <- sil+theme(axis.text = element_text(size = 8, color = "red"), 
+                title = element_text(size = 8, color = "blue"))
+sil$data
+
+grid.arrange(p1, p2, nrow = 1)
+
+fit <- pam(wcd_scale,k=5)
 summary(fit)
 
 par(mfrow=c(1,2))
-fit1 <- pam(wcd,k=3)
-fit2 <- pam(wcd,k=3)
+fit1 <- pam(wcd_scale,k=2)
+fit2 <- pam(wcd_c_scale,k=2)
 plot(wcd[,c(1,2)], pch = 16, col =  fit1$clustering, 
      xaxt='n', yaxt='n',
      xlab='Fresh', ylab='Milk',
-     main="With influential point")
+     main="PAM with influential point")
 plot(wcd_c[,c(1,2)], pch = 16, col =  fit2$clustering, 
      xaxt='n', yaxt='n',
      xlab='Fresh', ylab='Milk',
-     main="Without influential point")
+     main="PAM without influential point")
 par(mfrow=c(1,1))
+
+### SOM
+library(kohonen)  # som
+library(gclus)
+
+set.seed(7)
+wcd.som <- som(wcd_scale, 
+                grid = somgrid(5, 4, topo = "hexagonal"))
+summary(wcd.som)
+attributes(wcd.som)
+
+wcd.som$distances
+wcd.som$unit.classif
+
+par(mfrow=c(1,2))
+plot(wcd.som, main="Wine data")
+plot(wcd.som, type="mapping",  col = wcd.som$unit.classif, 
+     pch = wcd.som$unit.classif, main="mapping plot")
+plot(wcd.som, type="counts", main="wine data: counts")
+plot(wcd.som, type="quality", main="wine data: mapping quality")
+par(mfrow=c(1,1))
+
+### DBSCAN
+library(dbscan)  #dbscan, knndist
+library(cluster)
+library(ggplot2)
+
+eps <- 0.2
+res1 <- dbscan(wcd_scale, eps = eps , minPts = 5)
+p1 <- ggplot(wcd, aes(Fresh,Milk, col=as.factor(res1$cluster)))+
+  geom_point()+
+  xlab("")+ylab("")+ggtitle(paste0('DBscan : epsilon = ', eps))+labs(col = "cluster")+
+  theme_bw()
+
+eps <- 0.3
+res2 <- dbscan(wcd_scale, eps = eps , minPts = 5)
+p2 <- ggplot(wcd, aes(Fresh,Milk, col=as.factor(res2$cluster)))+
+  geom_point()+
+  xlab("")+ylab("")+ggtitle(paste0('DBscan : epsilon = ', eps))+labs(col = "cluster")+
+  theme_bw()
+
+eps <- 0.7
+res3 <- dbscan(wcd_scale, eps = eps , minPts = 5)
+p3 <- ggplot(wcd, aes(Fresh,Milk, col=as.factor(res3$cluster)))+
+  geom_point()+
+  xlab("")+ylab("")+ggtitle(paste0('DBscan : epsilon = ', eps))+labs(col = "cluster")+
+  theme_bw()
+
+grid.arrange(p1, p2, p3, nrow = 1)
+
+m <- 3
+res1 <- dbscan(wcd_scale, eps = 0.3 , minPts = m)
+p1 <- ggplot(wcd, aes(Fresh,Milk, col=as.factor(res1$cluster)))+
+  geom_point()+
+  xlab("")+ylab("")+ggtitle(paste0('BDscan : minPts = ', m))+
+  labs(col = "cluster")+
+  theme_bw()
+
+m <- 5
+res2 <- dbscan(wcd_scale, eps = 0.3 , minPts = m)
+p2 <- ggplot(wcd, aes(Fresh,Milk, col=as.factor(res2$cluster)))+
+  geom_point()+
+  xlab("")+ylab("")+ggtitle(paste0('BDscan : minPts = ', m))+
+  labs(col = "cluster")+
+  theme_bw()
+
+m <- 10
+res3 <- dbscan(wcd_scale, eps = 0.3 , minPts = m)
+p3 <- ggplot(wcd, aes(Fresh,Milk, col=as.factor(res3$cluster)))+
+  geom_point()+
+  xlab("")+ylab("")+ggtitle(paste0('BDscan : minPts = ', m))+
+  labs(col = "cluster")+
+  theme_bw()
+
+grid.arrange(p1, p2, p3, nrow = 1)
+
+eps <- 0.2
+res1 <- dbscan(wcd_c_scale, eps = eps , minPts = 5)
+p1 <- ggplot(wcd_c, aes(Fresh,Milk, col=as.factor(res1$cluster)))+
+  geom_point()+
+  xlab("")+ylab("")+ggtitle(paste0('DBscan : epsilon = ', eps))+labs(col = "cluster")+
+  theme_bw()
+
+eps <- 0.3
+res2 <- dbscan(wcd_c_scale, eps = eps , minPts = 5)
+p2 <- ggplot(wcd_c, aes(Fresh,Milk, col=as.factor(res2$cluster)))+
+  geom_point()+
+  xlab("")+ylab("")+ggtitle(paste0('DBscan : epsilon = ', eps))+labs(col = "cluster")+
+  theme_bw()
+
+eps <- 0.7
+res3 <- dbscan(wcd_c_scale, eps = eps , minPts = 5)
+p3 <- ggplot(wcd_c, aes(Fresh,Milk, col=as.factor(res3$cluster)))+
+  geom_point()+
+  xlab("")+ylab("")+ggtitle(paste0('DBscan : epsilon = ', eps))+labs(col = "cluster")+
+  theme_bw()
+
+grid.arrange(p1, p2, p3, nrow = 1)
+
+m <- 3
+res1 <- dbscan(wcd_c_scale, eps = 0.3 , minPts = m)
+p1 <- ggplot(wcd_c, aes(Fresh,Milk, col=as.factor(res1$cluster)))+
+  geom_point()+
+  xlab("")+ylab("")+ggtitle(paste0('BDscan : minPts = ', m))+
+  labs(col = "cluster")+
+  theme_bw()
+
+m <- 5
+res2 <- dbscan(wcd_c_scale, eps = 0.3 , minPts = m)
+p2 <- ggplot(wcd_c, aes(Fresh,Milk, col=as.factor(res2$cluster)))+
+  geom_point()+
+  xlab("")+ylab("")+ggtitle(paste0('BDscan : minPts = ', m))+
+  labs(col = "cluster")+
+  theme_bw()
+
+m <- 10
+res3 <- dbscan(wcd_c_scale, eps = 0.3 , minPts = m)
+p3 <- ggplot(wcd_c, aes(Fresh,Milk, col=as.factor(res3$cluster)))+
+  geom_point()+
+  xlab("")+ylab("")+ggtitle(paste0('BDscan : minPts = ', m))+
+  labs(col = "cluster")+
+  theme_bw()
+
+grid.arrange(p1, p2, p3, nrow = 1)
