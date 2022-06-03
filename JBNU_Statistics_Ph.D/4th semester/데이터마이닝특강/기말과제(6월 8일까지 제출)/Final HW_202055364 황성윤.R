@@ -144,8 +144,8 @@ mtry_rf_dt <- function(m){
 tmp_dt <- data.table( num_tree = 1:500,
                       rf_1 = mtry_rf_dt(1),
                       rf_4 = mtry_rf_dt(4),
-                      rf_8 = mtry_rf_dt(7),
-                      rf_13 = mtry_rf_dt(15),
+                      rf_8 = mtry_rf_dt(8),
+                      rf_13 = mtry_rf_dt(13),
                       rf_20 = mtry_rf_dt(20))
 
 melt.tmp <- melt(tmp_dt, id=1)
