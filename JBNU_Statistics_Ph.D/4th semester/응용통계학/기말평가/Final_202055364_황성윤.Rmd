@@ -1,0 +1,211 @@
+---
+title: "Final"
+author: "Hwang Seong-Yun"
+date: '2022 6 17 '
+output: html_document
+---
+
+# Beijing PM2.5 Data Data Set
+
+- 본 데이터는 2010년 1월 1일부터 2014년 12월 31일까지 중국의 수도 베이징에서 측정한 대기관련 자료이며, 목적은 초미세먼지 농도를 측정하는 지표인 PM2.5에 어떠한 요인이 영향을 미치는지를 알아보는 데 있다.
+
+## Description of variables
+
+- No: row number
+
+- year: year of data in this row
+
+- month: month of data in this row
+
+- day: day of data in this row
+
+- hour: hour of data in this row
+
+- pm2.5: PM2.5 concentration (ug/m^3)
+
+- DEWP: Dew Point (â„ƒ)
+
+- TEMP: Temperature (â„ƒ)
+
+- PRES: Pressure (hPa)
+
+- cbwd: Combined wind direction
+
+- Iws: Cumulated wind speed (m/s)
+
+- Is: Cumulated hours of snow
+
+- Ir: Cumulated hours of rain
+
+`-` 우선 분석의 목적과 관련이 없다고 여겨지는 변수인 No, year, month, day, hour, cbwd는 제거할 필요가 있다고 보여지며, 결측치(NA)가 포함된 관측치도 모두 제거한 뒤에 분석을 진행하고자 한다.
+
+
+## Data loading
+
+```{r}
+PRSA <- read.csv("C:/Users/HSY/Desktop/PRSA.csv",sep=",",header=T)
+PRSA <- na.omit(PRSA)[,-c(1,2,3,4,5,10)]
+summary(PRSA)
+```
+
+
+## Generalized Linear Model
+
+### Logistic regression
+
+`1` 본 데이터에서 반응변수는 pm2.5($y$) 이고 이를 예측하기 위해 사용하는 설명변수는 DEWP($x_{1}$), TEMP($x_{2}$), PRES($x_{3}$), Iws($x_{4}$), Is($x_{5}$), Ir($x_{6}$) 이렇게 6가지이다.
+
+`2` 로지스틱 회귀모형을 적합하기 위해서는 반응변수인 pm2.5를 적당한 cut-off point를 기준으로 이진화해야 한다.
+
+- 이를 위해 반응변수 pm2.5를 살펴보면 다음과 같다.
+
+```{r}
+range(PRSA$pm2.5)
+```
+
+- pm2.5의 범위를 살펴보면 $(0,994)$이다. 그리고 density를 살펴보면 다음과 같다.
+
+```{r}
+density(PRSA$pm2.5)
+plot(density(PRSA$pm2.5))
+```
+
+- pm2.5는 오른쪽으로 꼬리가 긴 비대칭의 분포를 나타내고 있음을 확인할 수 있다. 이러한 점을 감안하여 이진화를 위한 cut-off point는 중앙값인 72로 설정하도록 한다. 평균값을 고려할 수도 있겠지만 이는 이상점이나 분포에 민감한 특성이 있으므로 이러한 사항에 상대적으로 둔감한 중앙값을 설정하는 것이 좋다고 판단된다. 
+
+```{r}
+median(PRSA$pm2.5)
+```
+
+- 이를 바탕으로 반응변수 pm2.5에 대한 이진화를 실시하고 이를 통해 만들어지는 새로운 반응변수를 pm.bin이라고 하자. 이 과정은 다음의 코드를 통해 수행할 수 있다.
+
+```{r}
+PRSA$pm.bin <- ifelse(PRSA$pm2.5 >= 72, 1, 0)
+```
+
+- 즉, 변수 pm.bin은 pm2.5의 값이 72 이상이면 1, 그렇지 않으면 0의 값을 가진다. 이 변수를 바탕으로 로지스틱 회귀모형을 적합해보도록 한다.
+
+`3` 로지스틱 회귀모형식은 다음과 같다. (logistic regression model)
+
+- $\log [\frac{p_{i}}{1-p_{i}}]=\beta_{0}+\beta_{1}x_{1i}+\beta_{2}x_{2i}+\beta_{3}x_{3i}+\beta_{4}x_{4i}+\beta_{5}x_{5i}+\beta_{6}x_{6i}$
+
+- 여기에서 확률 $p_{i}$는 pm2.5의 값이 72 이상일 확률을 나타낸다. 모형적합은 다음과 같이 할 수 있다.
+
+```{r}
+model1 <- glm(pm.bin ~ DEWP+TEMP+PRES+Iws+Is+Ir, family=binomial, data=PRSA)
+summary(model1)
+```
+
+- 적합결과, 설명변수 Is(Cumulated hours of snow)만 유의수준 $\alpha=0.05$ 기준에서 유의하지 않고 나머지 5개의 설명변수들은 모두 모형에 유의한 영향력이 있음을 알 수 있다. 이 모형에 대하여 몇가지 plot을 그리면 다음과 같다.
+
+```{r}
+par(mfrow=c(2,2))
+plot(model1)
+par(mfrow=c(1,1))
+```
+
+- plot을 통해서 살펴봤을 때 약간의 이상점이 존재하기는 하지만 전체적으로 적합된 모형이 안정적이라는 생각이 든다. 추가로 probit, cloglog 링크를 사용하는 모형을 다음과 같이 적합해볼 수 있다.
+
+`4` probit link
+
+- 모형식 : $\Phi^{-1}(p_{i})=\beta_{0}+\beta_{1}x_{1i}+\beta_{2}x_{2i}+\beta_{3}x_{3i}+\beta_{4}x_{4i}+\beta_{5}x_{5i}+\beta_{6}x_{6i}$
+- $\Phi$ : CDF of $N(0,1^2)$
+
+```{r}
+model2 <- glm(pm.bin ~ DEWP+TEMP+PRES+Iws+Is+Ir, family=binomial(link = probit), data=PRSA)
+summary(model2)
+```
+
+```{r}
+par(mfrow=c(2,2))
+plot(model2)
+par(mfrow=c(1,1))
+```
+
+`5` cloglog link
+
+- 모형식 : $\log (-\log (1-p_{i}))=\beta_{0}+\beta_{1}x_{1i}+\beta_{2}x_{2i}+\beta_{3}x_{3i}+\beta_{4}x_{4i}+\beta_{5}x_{5i}+\beta_{6}x_{6i}$
+
+```{r}
+model3 <- glm(pm.bin ~ DEWP+TEMP+PRES+Iws+Is+Ir, family=binomial(link = cloglog), data=PRSA)
+summary(model3)
+```
+
+```{r}
+par(mfrow=c(2,2))
+plot(model3)
+par(mfrow=c(1,1))
+```
+
+`6` summary
+
+- `3`~`5`를 통해서 살펴보면 link를 probit이나 cloglog로 바꿔서 모형을 적합해도 로지스틱 회귀모형을 적합했을 때의 결과와 비교했을 때 설명변수에 대한 유의성의 측면이나 이상점의 유무, 모형의 안정성 등의 측면에서 거의 동일한 해석을 이끌어낼 수 있음을 확인할 수 있다. 그리고 설명변수들 중 가장 영향력이 큰 변수는 DEWP(Dew Point)이며, 유의하지 않은 설명변수인 Is(Cumulated hours of snow)를 제거하거나 이상점이라고 판단되는 관측치를 제거하고 모형을 적합해보는 것도 괜찮은 방법이라고 생각한다.
+
+`7` kernel smoothing regression, local linear regression
+
+- `3`~`6`을 통해 가장 유의하다고 판단되는 설명변수인 DEWP(Dew Point)에 대해서 반응변수 pm2.5에 대한 kernel smoothing regression을 실시해보도록 한다. 여기에서 커널함수는 상대적으로 유연성이 좋다고 알려진 Gaussian kernel을 사용하여 국소상수인 Nadaraya-Watson 추정량을 사용하는 kernel smoothing regression과 각 설명변수의 값 근처에서 국소적으로 선형화하는 방법을 적용하는 local linear regression을 실시해보도록 한다. 이외에도 다양한 형태의 kernel이 존재한다.
+
+```{r}
+library(KernSmooth)
+with(PRSA, {
+    plot(DEWP, pm2.5, main="NW vs LL")
+    lines(ksmooth(DEWP, pm2.5, kernel="normal", bandwidth=0.5), col='red', lwd=2)
+    lines(locpoly(DEWP, pm2.5, kernel="normal", bandwidth=0.5), col='blue', lwd=2)
+    legend("topleft", legend=c("NW","LL"), col=c('red','blue'), lwd=c(2,2))
+})
+```
+
+- y축의 범위를 좁혀서 좀 더 자세하게 살펴보면 다음과 같다.
+
+```{r}
+with(PRSA, {
+    plot(DEWP, pm2.5, ylim=c(0,300), main="NW vs LL")
+    lines(ksmooth(DEWP, pm2.5, kernel="normal", bandwidth=0.5), col='red', lwd=2)
+    lines(locpoly(DEWP, pm2.5, kernel="normal", bandwidth=0.5), col='blue', lwd=2)
+    legend("topleft", legend=c("NW","LL"), col=c('red','blue'), lwd=c(2,2))
+})
+```
+
+- 위의 그림에서 빨간색선은 국소상수 추정량(NW)을, 파란색선은 국소선형 추정량(LL)을 나타낸다. 전체적으로 봤을 때 국소상수 추정량이 국소선형 추정량보다 데이터의 분포에 대해 좀 더 민감하게 반응하여 움직이는 것으로 보인다. 이러한 점을 감안했을 때 데이터를 설명하는 유연성의 측면에서는 국소선형 추정량이 국소상수 추정량보다 더 바람직하다고 판단할 수 있겠다. bandwidth을 2라고 설정하면 다음과 같은 결과를 얻을 수 있다.
+
+```{r}
+with(PRSA, {
+    plot(DEWP, pm2.5, ylim=c(0,300), main="NW vs LL")
+    lines(ksmooth(DEWP, pm2.5, kernel="normal", bandwidth=2), col='red', lwd=2)
+    lines(locpoly(DEWP, pm2.5, kernel="normal", bandwidth=2), col='blue', lwd=2)
+    legend("topleft", legend=c("NW","LL"), col=c('red','blue'), lwd=c(2,2))
+})
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
