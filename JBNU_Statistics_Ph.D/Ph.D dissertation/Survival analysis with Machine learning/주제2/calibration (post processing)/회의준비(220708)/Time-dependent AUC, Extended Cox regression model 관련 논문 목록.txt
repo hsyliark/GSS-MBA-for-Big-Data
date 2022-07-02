@@ -1,0 +1,10 @@
+* Time-dependent AUC
+
+1. Time-Dependent AUC with Right-Censored Data: A Survey
+(link : https://link.springer.com/chapter/10.1007/978-1-4614-8981-8_11)
+
+2.
+
+* Extended Cox regression model
+
+1.
