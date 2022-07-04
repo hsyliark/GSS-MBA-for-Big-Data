@@ -3,8 +3,8 @@
 1. Review for time-dependent ROC analysis under diverse survival models
 (link : https://doi.org/10.5351/KJAS.2022.35.1.035)
 
-2. Time-Dependent AUC with Right-Censored Data: A Survey
-(link : https://doi.org/10.1007/978-1-4614-8981-8_11)
+2. Estimation of time-dependent area under the ROC curve for long-term risk prediction  
+(link : https://doi.org/10.1002/sim.2299)
 
 3. Time-Dependent ROC Curves for Censored Survival Data and a Diagnostic Marker 
 (link : https://doi.org/10.1111/j.0006-341X.2000.00337.x)
@@ -12,22 +12,32 @@
 4. A statistical approach to evaluate the performance of cardiac biomarkers in predicting death due to acute myocardial infarction: time-dependent ROC curve
 (link : https://doi.org/10.3906/sag-1708-108)
 
-5. Concordance measures and time-dependent ROC methods
-(link : https://doi.org/10.1080/24709360.2021.1926189)
+5. Time-dependent ROC analysis under diverse censoring patterns
+(link : https://doi.org/10.1002/sim.4178)
 
-6.
+6. Review and comparison of ROC curve estimators for a time-dependent outcome with marker-dependent censoring
+(link : https://doi.org/10.1002/bimj.201200045)
 
 
 
 * Extended Cox regression model
 
-1.
+1. Fitting Time to First Birth Using Extended Cox Regression Model in Presence of Nonproportional Hazard 
+(link : https://doi.org/10.3329/dujs.v63i1.21764)
 
-2.
+2. The Application of Extended Cox Proportional Hazard Method for Estimating Survival Time of Breast Cancer
+(link : https://doi.org/10.1088/1742-6596/979/1/012087)
 
-3.
+3. Estimating Survival Time of Dengue Haemorrhagic Fever Using Extended Cox Model
+(link : https://doi.org/10.1088/1742-6596/1188/1/012017)
 
 4.
+(link : )
 
 5.
+(link : )
+
+
+
+
 
