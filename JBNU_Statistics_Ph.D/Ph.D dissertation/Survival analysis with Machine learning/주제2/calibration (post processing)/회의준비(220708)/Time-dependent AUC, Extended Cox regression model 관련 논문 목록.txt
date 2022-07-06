@@ -31,11 +31,10 @@
 3. Estimating Survival Time of Dengue Haemorrhagic Fever Using Extended Cox Model
 (link : https://doi.org/10.1088/1742-6596/1188/1/012017)
 
-4.
-(link : )
+4. Cox regression models with nonproportional hazards applied to lung cancer survival data
+(link : https://dergipark.org.tr/en/download/article-file/86897)
 
-5.
-(link : )
+
 
 
 
