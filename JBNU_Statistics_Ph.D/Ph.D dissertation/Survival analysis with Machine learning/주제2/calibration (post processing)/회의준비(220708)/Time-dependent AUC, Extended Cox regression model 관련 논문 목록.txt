@@ -34,6 +34,9 @@
 4. Cox regression models with nonproportional hazards applied to lung cancer survival data
 (link : https://dergipark.org.tr/en/download/article-file/86897)
 
+5. Using Time Dependent Covariates and Time Dependent Coefficients in the Cox Model
+(link : https://cran.biodisk.org/web/packages/survival/vignettes/timedep.pdf) 
+
 
 
 
