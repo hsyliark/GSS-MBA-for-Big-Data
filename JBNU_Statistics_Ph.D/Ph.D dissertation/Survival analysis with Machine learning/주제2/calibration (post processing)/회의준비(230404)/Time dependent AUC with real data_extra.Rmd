@@ -1,0 +1,544 @@
+---
+title: "Time dependent AUC with real data_extra"
+author: "Seong-Yun Hwang"
+date: "2023-04-04"
+output: html_document
+---
+
+# Loading packages
+
+```{r warning = FALSE, message = FALSE}
+library(survival) 
+library(timeROC)
+library(timereg)
+library(ggplot2)
+library(reshape)
+library(plyr)
+library(tidyverse)
+library(coxed)
+library(gridExtra)
+library(mgcv)
+```
+
+
+# Real survival data (in package 'survival')
+
+```{r}
+data(pbc)
+head(pbc)
+pbc$status[(pbc$status == 1)] = 0
+pbc$status[(pbc$status == 2)] = 1
+pbc$edema <- as.factor(pbc$edema)
+```
+
+
+
+# 3 explanatory variables
+
+## Time dependent AUC (Cumulative/Dynamic time-dependent ROC curve)
+
+```{r}
+dt5 <- na.omit(pbc)
+cox.dep.dt5 <- coxph(Surv(time,status) ~ edema, data=dt5)
+summary(cox.dep.dt5)
+```
+
+```{r}
+risk.dep.dt5 <- predict(object=cox.dep.dt5, newdata=dt5, type="risk") # risk score
+dt5$risk.dep.dt5 <- risk.dep.dt5
+ROC.risk.dep.dt5 <- timeROC(T=dt5$time,
+                         delta=dt5$status,marker=dt5$risk.dep.dt5,
+                         cause=1,weighting="marginal",
+                         times=dt5$time)
+ROC.risk.dep.dt5
+```
+
+```{r}
+TP1 <- ROC.risk.dep.dt5[["TP"]][,colnames(ROC.risk.dep.dt5[["TP"]])=="t=1191"][,1]
+FP1 <- ROC.risk.dep.dt5[["FP"]][,colnames(ROC.risk.dep.dt5[["FP"]])=="t=1191"][,1]
+TP2 <- ROC.risk.dep.dt5[["TP"]][,colnames(ROC.risk.dep.dt5[["TP"]])=="t=1786"]
+FP2 <- ROC.risk.dep.dt5[["FP"]][,colnames(ROC.risk.dep.dt5[["FP"]])=="t=1786"]
+TP3 <- ROC.risk.dep.dt5[["TP"]][,colnames(ROC.risk.dep.dt5[["TP"]])=="t=2689"]
+FP3 <- ROC.risk.dep.dt5[["FP"]][,colnames(ROC.risk.dep.dt5[["FP"]])=="t=2689"]
+TP4 <- ROC.risk.dep.dt5[["TP"]][,colnames(ROC.risk.dep.dt5[["TP"]])=="t=3422"]
+FP4 <- ROC.risk.dep.dt5[["FP"]][,colnames(ROC.risk.dep.dt5[["FP"]])=="t=3422"]
+TP5 <- ROC.risk.dep.dt5[["TP"]][,colnames(ROC.risk.dep.dt5[["TP"]])=="t=4032"]
+FP5 <- ROC.risk.dep.dt5[["FP"]][,colnames(ROC.risk.dep.dt5[["FP"]])=="t=4032"]
+TP <- c(TP1,TP2,TP3,TP4,TP5)
+FP <- c(FP1,FP2,FP3,FP4,FP5)
+time.survival <- c(rep("t=1191",4),rep("t=1786",4),rep("t=2689",4),
+                   rep("t=3422",4),rep("t=4032",4))
+dt6 <- data.frame(times=time.survival,TP=TP,FP=FP)
+```
+
+```{r}
+ggplot(data=dt6)+
+  geom_line(mapping=aes(x=FP,
+                        y=TP,
+                        group=times,
+                        color=times),
+            size=1) +
+  ggtitle("Time dependent ROC curve (pbc data) - 1 explanatory variable") +
+  xlab("False Positive Rate") + ylab("True Positive Rate") +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+
+
+## Make AUC data
+
+```{r}
+# uncensored
+uncensored.density5 <- density(dt5$time[dt5$status==1])
+data5_1 <- data.frame(time=uncensored.density5[["x"]], 
+                    density=uncensored.density5[["y"]])
+data5_1$density.adjusted <- (max(na.omit(ROC.risk.dep.dt5[["AUC"]]))-min(na.omit(ROC.risk.dep.dt5[["AUC"]])))*(uncensored.density5[["y"]]-min(uncensored.density5[["y"]]))/(max(uncensored.density5[["y"]])-min(uncensored.density5[["y"]]))+min(na.omit(ROC.risk.dep.dt5[["AUC"]]))
+
+# censored
+censored.density5 <- density(dt5$time[dt5$status==0])
+data5_2 <- data.frame(time=censored.density5[["x"]], 
+                    density=censored.density5[["y"]])
+data5_2$density.adjusted <- (max(na.omit(ROC.risk.dep.dt5[["AUC"]]))-min(na.omit(ROC.risk.dep.dt5[["AUC"]])))*(censored.density5[["y"]]-min(censored.density5[["y"]]))/(max(censored.density5[["y"]])-min(censored.density5[["y"]]))+min(na.omit(ROC.risk.dep.dt5[["AUC"]]))
+
+res5 <- data.frame(time=ROC.risk.dep.dt5[["times"]],
+                    cox.dep.dt5=ROC.risk.dep.dt5[["AUC"]])
+res5 <- melt(data = res5, 
+                   id.vars = "time", 
+                   measure.vars = c("cox.dep.dt5"))
+```
+
+
+## Time dependent AUC plot with ggplot2 
+
+```{r}
+dt5$censor1 <- ifelse(dt5$status==1,
+                    1,min(na.omit(ROC.risk.dep.dt5[["AUC"]])))
+ggplot() +
+  geom_line(data=res5, aes(x=time, y=value,
+                            group=variable, color=variable)) +
+  geom_point(data=dt5, aes(x=time, y=censor1, color=as.factor(status))) +
+  geom_line(data=data5_1, aes(x=time, y=density.adjusted), 
+            size=1, colour='black') +
+  geom_line(data=data5_2, aes(x=time, y=density.adjusted), 
+            size=1, colour='orange') +
+  scale_x_continuous(limits = c(0, max(dt5$time))) +
+  geom_vline(xintercept = min(dt5$time[dt5$status==1]),
+             linetype="dotted", color = "blue", size=1) +
+  ggtitle("Time dependent AUC with risk score (pbc data) - 1 explanatory variable") +
+  xlab("time") + ylab("AUC") +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+
+
+
+
+
+
+
+
+# 3 explanatory variables
+
+## Time dependent AUC (Cumulative/Dynamic time-dependent ROC curve)
+
+```{r}
+dt5 <- na.omit(pbc)
+cox.dep.dt5 <- coxph(Surv(time,status) ~ edema+bili+albumin, data=dt5)
+summary(cox.dep.dt5)
+```
+
+```{r}
+risk.dep.dt5 <- predict(object=cox.dep.dt5, newdata=dt5, type="risk") # risk score
+dt5$risk.dep.dt5 <- risk.dep.dt5
+ROC.risk.dep.dt5 <- timeROC(T=dt5$time,
+                         delta=dt5$status,marker=dt5$risk.dep.dt5,
+                         cause=1,weighting="marginal",
+                         times=dt5$time)
+ROC.risk.dep.dt5
+```
+
+```{r}
+TP1 <- ROC.risk.dep.dt5[["TP"]][,colnames(ROC.risk.dep.dt5[["TP"]])=="t=1191"][,1]
+FP1 <- ROC.risk.dep.dt5[["FP"]][,colnames(ROC.risk.dep.dt5[["FP"]])=="t=1191"][,1]
+TP2 <- ROC.risk.dep.dt5[["TP"]][,colnames(ROC.risk.dep.dt5[["TP"]])=="t=1786"]
+FP2 <- ROC.risk.dep.dt5[["FP"]][,colnames(ROC.risk.dep.dt5[["FP"]])=="t=1786"]
+TP3 <- ROC.risk.dep.dt5[["TP"]][,colnames(ROC.risk.dep.dt5[["TP"]])=="t=2689"]
+FP3 <- ROC.risk.dep.dt5[["FP"]][,colnames(ROC.risk.dep.dt5[["FP"]])=="t=2689"]
+TP4 <- ROC.risk.dep.dt5[["TP"]][,colnames(ROC.risk.dep.dt5[["TP"]])=="t=3422"]
+FP4 <- ROC.risk.dep.dt5[["FP"]][,colnames(ROC.risk.dep.dt5[["FP"]])=="t=3422"]
+TP5 <- ROC.risk.dep.dt5[["TP"]][,colnames(ROC.risk.dep.dt5[["TP"]])=="t=4032"]
+FP5 <- ROC.risk.dep.dt5[["FP"]][,colnames(ROC.risk.dep.dt5[["FP"]])=="t=4032"]
+TP <- c(TP1,TP2,TP3,TP4,TP5)
+FP <- c(FP1,FP2,FP3,FP4,FP5)
+time.survival <- c(rep("t=1191",272),rep("t=1786",272),rep("t=2689",272),
+                   rep("t=3422",272),rep("t=4032",272))
+dt6 <- data.frame(times=time.survival,TP=TP,FP=FP)
+```
+
+```{r}
+ggplot(data=dt6)+
+  geom_line(mapping=aes(x=FP,
+                        y=TP,
+                        group=times,
+                        color=times),
+            size=1) +
+  ggtitle("Time dependent ROC curve (pbc data) - 3 explanatory variables") +
+  xlab("False Positive Rate") + ylab("True Positive Rate") +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+
+
+## Make AUC data
+
+```{r}
+# uncensored
+uncensored.density5 <- density(dt5$time[dt5$status==1])
+data5_1 <- data.frame(time=uncensored.density5[["x"]], 
+                    density=uncensored.density5[["y"]])
+data5_1$density.adjusted <- (max(na.omit(ROC.risk.dep.dt5[["AUC"]]))-min(na.omit(ROC.risk.dep.dt5[["AUC"]])))*(uncensored.density5[["y"]]-min(uncensored.density5[["y"]]))/(max(uncensored.density5[["y"]])-min(uncensored.density5[["y"]]))+min(na.omit(ROC.risk.dep.dt5[["AUC"]]))
+
+# censored
+censored.density5 <- density(dt5$time[dt5$status==0])
+data5_2 <- data.frame(time=censored.density5[["x"]], 
+                    density=censored.density5[["y"]])
+data5_2$density.adjusted <- (max(na.omit(ROC.risk.dep.dt5[["AUC"]]))-min(na.omit(ROC.risk.dep.dt5[["AUC"]])))*(censored.density5[["y"]]-min(censored.density5[["y"]]))/(max(censored.density5[["y"]])-min(censored.density5[["y"]]))+min(na.omit(ROC.risk.dep.dt5[["AUC"]]))
+
+res5 <- data.frame(time=ROC.risk.dep.dt5[["times"]],
+                    cox.dep.dt5=ROC.risk.dep.dt5[["AUC"]])
+res5 <- melt(data = res5, 
+                   id.vars = "time", 
+                   measure.vars = c("cox.dep.dt5"))
+```
+
+
+## Time dependent AUC plot with ggplot2 
+
+```{r}
+dt5$censor1 <- ifelse(dt5$status==1,
+                    1,min(na.omit(ROC.risk.dep.dt5[["AUC"]])))
+ggplot() +
+  geom_line(data=res5, aes(x=time, y=value,
+                            group=variable, color=variable)) +
+  geom_point(data=dt5, aes(x=time, y=censor1, color=as.factor(status))) +
+  geom_line(data=data5_1, aes(x=time, y=density.adjusted), 
+            size=1, colour='black') +
+  geom_line(data=data5_2, aes(x=time, y=density.adjusted), 
+            size=1, colour='orange') +
+  scale_x_continuous(limits = c(0, max(dt5$time))) +
+  geom_vline(xintercept = min(dt5$time[dt5$status==1]),
+             linetype="dotted", color = "blue", size=1) +
+  ggtitle("Time dependent AUC with risk score (pbc data) - 3 explanatory variables") +
+  xlab("time") + ylab("AUC") +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+
+
+
+
+
+
+
+# 5 explanatory variables
+
+## Time dependent AUC (Cumulative/Dynamic time-dependent ROC curve)
+
+```{r}
+dt5 <- na.omit(pbc)
+cox.dep.dt5 <- coxph(Surv(time,status) ~ edema+bili+albumin+age+copper, data=dt5)
+summary(cox.dep.dt5)
+```
+
+```{r}
+risk.dep.dt5 <- predict(object=cox.dep.dt5, newdata=dt5, type="risk") # risk score
+dt5$risk.dep.dt5 <- risk.dep.dt5
+ROC.risk.dep.dt5 <- timeROC(T=dt5$time,
+                         delta=dt5$status,marker=dt5$risk.dep.dt5,
+                         cause=1,weighting="marginal",
+                         times=dt5$time)
+ROC.risk.dep.dt5
+```
+
+```{r}
+TP1 <- ROC.risk.dep.dt5[["TP"]][,colnames(ROC.risk.dep.dt5[["TP"]])=="t=1191"][,1]
+FP1 <- ROC.risk.dep.dt5[["FP"]][,colnames(ROC.risk.dep.dt5[["FP"]])=="t=1191"][,1]
+TP2 <- ROC.risk.dep.dt5[["TP"]][,colnames(ROC.risk.dep.dt5[["TP"]])=="t=1786"]
+FP2 <- ROC.risk.dep.dt5[["FP"]][,colnames(ROC.risk.dep.dt5[["FP"]])=="t=1786"]
+TP3 <- ROC.risk.dep.dt5[["TP"]][,colnames(ROC.risk.dep.dt5[["TP"]])=="t=2689"]
+FP3 <- ROC.risk.dep.dt5[["FP"]][,colnames(ROC.risk.dep.dt5[["FP"]])=="t=2689"]
+TP4 <- ROC.risk.dep.dt5[["TP"]][,colnames(ROC.risk.dep.dt5[["TP"]])=="t=3422"]
+FP4 <- ROC.risk.dep.dt5[["FP"]][,colnames(ROC.risk.dep.dt5[["FP"]])=="t=3422"]
+TP5 <- ROC.risk.dep.dt5[["TP"]][,colnames(ROC.risk.dep.dt5[["TP"]])=="t=4032"]
+FP5 <- ROC.risk.dep.dt5[["FP"]][,colnames(ROC.risk.dep.dt5[["FP"]])=="t=4032"]
+TP <- c(TP1,TP2,TP3,TP4,TP5)
+FP <- c(FP1,FP2,FP3,FP4,FP5)
+time.survival <- c(rep("t=1191",277),rep("t=1786",277),rep("t=2689",277),
+                   rep("t=3422",277),rep("t=4032",277))
+dt6 <- data.frame(times=time.survival,TP=TP,FP=FP)
+```
+
+```{r}
+ggplot(data=dt6)+
+  geom_line(mapping=aes(x=FP,
+                        y=TP,
+                        group=times,
+                        color=times),
+            size=1) +
+  ggtitle("Time dependent ROC curve (pbc data) - 5 explanatory variables") +
+  xlab("False Positive Rate") + ylab("True Positive Rate") +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+
+
+## Make AUC data
+
+```{r}
+# uncensored
+uncensored.density5 <- density(dt5$time[dt5$status==1])
+data5_1 <- data.frame(time=uncensored.density5[["x"]], 
+                    density=uncensored.density5[["y"]])
+data5_1$density.adjusted <- (max(na.omit(ROC.risk.dep.dt5[["AUC"]]))-min(na.omit(ROC.risk.dep.dt5[["AUC"]])))*(uncensored.density5[["y"]]-min(uncensored.density5[["y"]]))/(max(uncensored.density5[["y"]])-min(uncensored.density5[["y"]]))+min(na.omit(ROC.risk.dep.dt5[["AUC"]]))
+
+# censored
+censored.density5 <- density(dt5$time[dt5$status==0])
+data5_2 <- data.frame(time=censored.density5[["x"]], 
+                    density=censored.density5[["y"]])
+data5_2$density.adjusted <- (max(na.omit(ROC.risk.dep.dt5[["AUC"]]))-min(na.omit(ROC.risk.dep.dt5[["AUC"]])))*(censored.density5[["y"]]-min(censored.density5[["y"]]))/(max(censored.density5[["y"]])-min(censored.density5[["y"]]))+min(na.omit(ROC.risk.dep.dt5[["AUC"]]))
+
+res5 <- data.frame(time=ROC.risk.dep.dt5[["times"]],
+                    cox.dep.dt5=ROC.risk.dep.dt5[["AUC"]])
+res5 <- melt(data = res5, 
+                   id.vars = "time", 
+                   measure.vars = c("cox.dep.dt5"))
+```
+
+
+## Time dependent AUC plot with ggplot2 
+
+```{r}
+dt5$censor1 <- ifelse(dt5$status==1,
+                    1,min(na.omit(ROC.risk.dep.dt5[["AUC"]])))
+ggplot() +
+  geom_line(data=res5, aes(x=time, y=value,
+                            group=variable, color=variable)) +
+  geom_point(data=dt5, aes(x=time, y=censor1, color=as.factor(status))) +
+  geom_line(data=data5_1, aes(x=time, y=density.adjusted), 
+            size=1, colour='black') +
+  geom_line(data=data5_2, aes(x=time, y=density.adjusted), 
+            size=1, colour='orange') +
+  scale_x_continuous(limits = c(0, max(dt5$time))) +
+  geom_vline(xintercept = min(dt5$time[dt5$status==1]),
+             linetype="dotted", color = "blue", size=1) +
+  ggtitle("Time dependent AUC with risk score (pbc data) - 5 explanatory variables") +
+  xlab("time") + ylab("AUC") +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+
+
+
+
+
+
+
+# 7 explanatory variables
+
+## Time dependent AUC (Cumulative/Dynamic time-dependent ROC curve)
+
+```{r}
+dt5 <- na.omit(pbc)
+cox.dep.dt5 <- coxph(Surv(time,status) ~ edema+bili+albumin+age+copper+protime+stage, data=dt5)
+summary(cox.dep.dt5)
+```
+
+```{r}
+risk.dep.dt5 <- predict(object=cox.dep.dt5, newdata=dt5, type="risk") # risk score
+dt5$risk.dep.dt5 <- risk.dep.dt5
+ROC.risk.dep.dt5 <- timeROC(T=dt5$time,
+                         delta=dt5$status,marker=dt5$risk.dep.dt5,
+                         cause=1,weighting="marginal",
+                         times=dt5$time)
+ROC.risk.dep.dt5
+```
+
+```{r}
+TP1 <- ROC.risk.dep.dt5[["TP"]][,colnames(ROC.risk.dep.dt5[["TP"]])=="t=1191"][,1]
+FP1 <- ROC.risk.dep.dt5[["FP"]][,colnames(ROC.risk.dep.dt5[["FP"]])=="t=1191"][,1]
+TP2 <- ROC.risk.dep.dt5[["TP"]][,colnames(ROC.risk.dep.dt5[["TP"]])=="t=1786"]
+FP2 <- ROC.risk.dep.dt5[["FP"]][,colnames(ROC.risk.dep.dt5[["FP"]])=="t=1786"]
+TP3 <- ROC.risk.dep.dt5[["TP"]][,colnames(ROC.risk.dep.dt5[["TP"]])=="t=2689"]
+FP3 <- ROC.risk.dep.dt5[["FP"]][,colnames(ROC.risk.dep.dt5[["FP"]])=="t=2689"]
+TP4 <- ROC.risk.dep.dt5[["TP"]][,colnames(ROC.risk.dep.dt5[["TP"]])=="t=3422"]
+FP4 <- ROC.risk.dep.dt5[["FP"]][,colnames(ROC.risk.dep.dt5[["FP"]])=="t=3422"]
+TP5 <- ROC.risk.dep.dt5[["TP"]][,colnames(ROC.risk.dep.dt5[["TP"]])=="t=4032"]
+FP5 <- ROC.risk.dep.dt5[["FP"]][,colnames(ROC.risk.dep.dt5[["FP"]])=="t=4032"]
+TP <- c(TP1,TP2,TP3,TP4,TP5)
+FP <- c(FP1,FP2,FP3,FP4,FP5)
+time.survival <- c(rep("t=1191",277),rep("t=1786",277),rep("t=2689",277),
+                   rep("t=3422",277),rep("t=4032",277))
+dt6 <- data.frame(times=time.survival,TP=TP,FP=FP)
+```
+
+```{r}
+ggplot(data=dt6)+
+  geom_line(mapping=aes(x=FP,
+                        y=TP,
+                        group=times,
+                        color=times),
+            size=1) +
+  ggtitle("Time dependent ROC curve (pbc data) - 7 explanatory variables") +
+  xlab("False Positive Rate") + ylab("True Positive Rate") +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+
+
+## Make AUC data
+
+```{r}
+# uncensored
+uncensored.density5 <- density(dt5$time[dt5$status==1])
+data5_1 <- data.frame(time=uncensored.density5[["x"]], 
+                    density=uncensored.density5[["y"]])
+data5_1$density.adjusted <- (max(na.omit(ROC.risk.dep.dt5[["AUC"]]))-min(na.omit(ROC.risk.dep.dt5[["AUC"]])))*(uncensored.density5[["y"]]-min(uncensored.density5[["y"]]))/(max(uncensored.density5[["y"]])-min(uncensored.density5[["y"]]))+min(na.omit(ROC.risk.dep.dt5[["AUC"]]))
+
+# censored
+censored.density5 <- density(dt5$time[dt5$status==0])
+data5_2 <- data.frame(time=censored.density5[["x"]], 
+                    density=censored.density5[["y"]])
+data5_2$density.adjusted <- (max(na.omit(ROC.risk.dep.dt5[["AUC"]]))-min(na.omit(ROC.risk.dep.dt5[["AUC"]])))*(censored.density5[["y"]]-min(censored.density5[["y"]]))/(max(censored.density5[["y"]])-min(censored.density5[["y"]]))+min(na.omit(ROC.risk.dep.dt5[["AUC"]]))
+
+res5 <- data.frame(time=ROC.risk.dep.dt5[["times"]],
+                    cox.dep.dt5=ROC.risk.dep.dt5[["AUC"]])
+res5 <- melt(data = res5, 
+                   id.vars = "time", 
+                   measure.vars = c("cox.dep.dt5"))
+```
+
+
+## Time dependent AUC plot with ggplot2 
+
+```{r}
+dt5$censor1 <- ifelse(dt5$status==1,
+                    1,min(na.omit(ROC.risk.dep.dt5[["AUC"]])))
+ggplot() +
+  geom_line(data=res5, aes(x=time, y=value,
+                            group=variable, color=variable)) +
+  geom_point(data=dt5, aes(x=time, y=censor1, color=as.factor(status))) +
+  geom_line(data=data5_1, aes(x=time, y=density.adjusted), 
+            size=1, colour='black') +
+  geom_line(data=data5_2, aes(x=time, y=density.adjusted), 
+            size=1, colour='orange') +
+  scale_x_continuous(limits = c(0, max(dt5$time))) +
+  geom_vline(xintercept = min(dt5$time[dt5$status==1]),
+             linetype="dotted", color = "blue", size=1) +
+  ggtitle("Time dependent AUC with risk score (pbc data) - 7 explanatory variables") +
+  xlab("time") + ylab("AUC") +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+
+
+
+
+
+
+
+# 9 explanatory variables
+
+## Time dependent AUC (Cumulative/Dynamic time-dependent ROC curve)
+
+```{r}
+dt5 <- na.omit(pbc)
+cox.dep.dt5 <- coxph(Surv(time,status) ~ edema+bili+albumin+age+copper+protime+stage+ast+sex, data=dt5)
+summary(cox.dep.dt5)
+```
+
+```{r}
+risk.dep.dt5 <- predict(object=cox.dep.dt5, newdata=dt5, type="risk") # risk score
+dt5$risk.dep.dt5 <- risk.dep.dt5
+ROC.risk.dep.dt5 <- timeROC(T=dt5$time,
+                         delta=dt5$status,marker=dt5$risk.dep.dt5,
+                         cause=1,weighting="marginal",
+                         times=dt5$time)
+ROC.risk.dep.dt5
+```
+
+```{r}
+TP1 <- ROC.risk.dep.dt5[["TP"]][,colnames(ROC.risk.dep.dt5[["TP"]])=="t=1191"][,1]
+FP1 <- ROC.risk.dep.dt5[["FP"]][,colnames(ROC.risk.dep.dt5[["FP"]])=="t=1191"][,1]
+TP2 <- ROC.risk.dep.dt5[["TP"]][,colnames(ROC.risk.dep.dt5[["TP"]])=="t=1786"]
+FP2 <- ROC.risk.dep.dt5[["FP"]][,colnames(ROC.risk.dep.dt5[["FP"]])=="t=1786"]
+TP3 <- ROC.risk.dep.dt5[["TP"]][,colnames(ROC.risk.dep.dt5[["TP"]])=="t=2689"]
+FP3 <- ROC.risk.dep.dt5[["FP"]][,colnames(ROC.risk.dep.dt5[["FP"]])=="t=2689"]
+TP4 <- ROC.risk.dep.dt5[["TP"]][,colnames(ROC.risk.dep.dt5[["TP"]])=="t=3422"]
+FP4 <- ROC.risk.dep.dt5[["FP"]][,colnames(ROC.risk.dep.dt5[["FP"]])=="t=3422"]
+TP5 <- ROC.risk.dep.dt5[["TP"]][,colnames(ROC.risk.dep.dt5[["TP"]])=="t=4032"]
+FP5 <- ROC.risk.dep.dt5[["FP"]][,colnames(ROC.risk.dep.dt5[["FP"]])=="t=4032"]
+TP <- c(TP1,TP2,TP3,TP4,TP5)
+FP <- c(FP1,FP2,FP3,FP4,FP5)
+time.survival <- c(rep("t=1191",277),rep("t=1786",277),rep("t=2689",277),
+                   rep("t=3422",277),rep("t=4032",277))
+dt6 <- data.frame(times=time.survival,TP=TP,FP=FP)
+```
+
+```{r}
+ggplot(data=dt6)+
+  geom_line(mapping=aes(x=FP,
+                        y=TP,
+                        group=times,
+                        color=times),
+            size=1) +
+  ggtitle("Time dependent ROC curve (pbc data) - 9 explanatory variables") +
+  xlab("False Positive Rate") + ylab("True Positive Rate") +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+
+
+## Make AUC data
+
+```{r}
+# uncensored
+uncensored.density5 <- density(dt5$time[dt5$status==1])
+data5_1 <- data.frame(time=uncensored.density5[["x"]], 
+                    density=uncensored.density5[["y"]])
+data5_1$density.adjusted <- (max(na.omit(ROC.risk.dep.dt5[["AUC"]]))-min(na.omit(ROC.risk.dep.dt5[["AUC"]])))*(uncensored.density5[["y"]]-min(uncensored.density5[["y"]]))/(max(uncensored.density5[["y"]])-min(uncensored.density5[["y"]]))+min(na.omit(ROC.risk.dep.dt5[["AUC"]]))
+
+# censored
+censored.density5 <- density(dt5$time[dt5$status==0])
+data5_2 <- data.frame(time=censored.density5[["x"]], 
+                    density=censored.density5[["y"]])
+data5_2$density.adjusted <- (max(na.omit(ROC.risk.dep.dt5[["AUC"]]))-min(na.omit(ROC.risk.dep.dt5[["AUC"]])))*(censored.density5[["y"]]-min(censored.density5[["y"]]))/(max(censored.density5[["y"]])-min(censored.density5[["y"]]))+min(na.omit(ROC.risk.dep.dt5[["AUC"]]))
+
+res5 <- data.frame(time=ROC.risk.dep.dt5[["times"]],
+                    cox.dep.dt5=ROC.risk.dep.dt5[["AUC"]])
+res5 <- melt(data = res5, 
+                   id.vars = "time", 
+                   measure.vars = c("cox.dep.dt5"))
+```
+
+
+## Time dependent AUC plot with ggplot2 
+
+```{r}
+dt5$censor1 <- ifelse(dt5$status==1,
+                    1,min(na.omit(ROC.risk.dep.dt5[["AUC"]])))
+ggplot() +
+  geom_line(data=res5, aes(x=time, y=value,
+                            group=variable, color=variable)) +
+  geom_point(data=dt5, aes(x=time, y=censor1, color=as.factor(status))) +
+  geom_line(data=data5_1, aes(x=time, y=density.adjusted), 
+            size=1, colour='black') +
+  geom_line(data=data5_2, aes(x=time, y=density.adjusted), 
+            size=1, colour='orange') +
+  scale_x_continuous(limits = c(0, max(dt5$time))) +
+  geom_vline(xintercept = min(dt5$time[dt5$status==1]),
+             linetype="dotted", color = "blue", size=1) +
+  ggtitle("Time dependent AUC with risk score (pbc data) - 9 explanatory variables") +
+  xlab("time") + ylab("AUC") +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
