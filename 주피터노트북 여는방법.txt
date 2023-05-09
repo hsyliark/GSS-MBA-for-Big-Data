@@ -1,0 +1,2 @@
+Anaconda Prompt 들어가서 다음 명령어 입력
+-> jupyter notebook --notebook-dir='주소입력'
