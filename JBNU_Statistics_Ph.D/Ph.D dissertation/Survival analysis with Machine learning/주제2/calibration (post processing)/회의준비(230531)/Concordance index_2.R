@@ -189,6 +189,10 @@ der_Q_beta <- function(So,beta,X,lambda) {
   return(der_loss_Q)
 }
 
+
+# Gradient descent algorithm
+
+
   
 
 
