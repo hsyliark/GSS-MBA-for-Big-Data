@@ -190,8 +190,128 @@ der_Q_beta <- function(So,beta,X,lambda) {
 }
 
 
+#--------------------------------------------------------------------------------#
+
+
+
 # Gradient descent algorithm
 
+my.gradient.descent <- function(So, X, alpha, lambda) {
+  
+  # alpha : learning rate
+  # lambda : penalty parameter
+  
+  if(lambda <= 0) 
+    stop("Lambda is non-positive value. Please insert positive value of lambda.")
+  
+  X <-as.matrix(X)
+  
+  beta.old <- rep(1,ncol(X)) # The initial value of coefficient vector
+  beta.old <- beta.old/sqrt(sum(beta.old^2))
+  
+  for (i in 1:100) {
+    
+    
+    beta.new <- beta.old - alpha*der_Q_beta(So,beta.old,X,lambda)
+    
+    diff <- abs(C_tilde_beta(So,beta.new,X) - C_tilde_beta(So,beta.old,X))  
+    
+    # diff <- sqrt(sum((beta.new - beta.old)^2))/sqrt(sum(beta.old^2))
+    
+    cat("( iteration , difference ) = (", i, ",", diff, ")\n")
+    
+    if (diff < 1E-8) break
+    
+    beta.old <- beta.new
+    
+  }
+  
+  cat("Algorithm converged...","\n\n")
+  
+  return(beta.new)
+  
+}
+
+
+
+# K-fold crossvalidation
+
+my.cross <- function(y.train, K.train, k, grid.l) {
+  
+  
+  # y.train : Dependent variable of training data
+  # K.train : Kernel matrix from training data 
+  # k : number of criterion for K-fold crossvalidation
+  # grid.l : The row of penalty parameter lambda
+  
+  check <- (grid.l > 0)
+  n.check <- length(check)
+  
+  if(sum(check) != n.check)
+    stop("Some of lambda's values are non-positive.
+         Please insert positive values of lambda vector...","\n")
+  
+  
+  lambda <- grid.l
+  r <- length(lambda)
+  
+  
+  K.sim <- as.matrix(K.train)
+  y.sim <- as.matrix(y.train)
+  n <- nrow(K.sim)
+  
+  cv.index <- sample(1:n,n,replace=F)  
+  cv.logL <- NULL   
+  
+  cat("K-fold crossvalidation is start...","\n")
+  
+  
+  for (j in 1:r) {
+    
+    logL <- NULL # minus log-likelihood
+    
+    
+    for (i in 0:(k-1)) {
+      
+      
+      test.index <- cv.index[(1:n)%/%k==i]
+      
+      K.sim.train <- K.sim[-test.index, -test.index] ; K.sim.test <- K.sim[-test.index, test.index]
+      y.sim.train <- y.sim[-test.index,] ; y.sim.test <- y.sim[test.index,]
+      test.size <- length(test.index)
+      
+      
+      a1 <- fit.kernel(y.sim.train, K.sim.train, lambda[j])
+      train.d.hat <- a1$d.hat
+      
+      a2 <- pred.kernel(y.sim.test, K.sim.test, train.d.hat)
+      test.logit.hat <- a2$logit.hat      
+      
+      
+      logL <- c(logL, -sum(y.sim.test*test.logit.hat - log(1+exp(test.logit.hat))) )
+      
+      
+    }
+    
+    cv.logL <- rbind(cv.logL, logL)
+    cat(j,"\n","\n")
+  }
+  
+  cat("\n","K-fold crossvalidation complete...")
+  
+  se.logL <- apply(cv.logL, 1, sd)
+  mean.logL <- rowMeans(cv.logL)
+  idx <- which.min(mean.logL)
+  
+  plot(log(grid.l, base=10),rowMeans(cv.logL),xlab="log10(lambda)",ylab="Minus log-likelihood"
+       ,main="K-fold crossvalidation",type="b")
+  abline(h=mean.logL[idx]+se.logL[idx], col="red", lty=2)
+  abline(v=log(max(lambda[ mean.logL < mean.logL[idx]+se.logL[idx] ]), base=10), col="blue", lty=2)
+  
+  result <- list(lambda=grid.l, cv.logL=cv.logL)
+  
+  
+}
 
   
 
