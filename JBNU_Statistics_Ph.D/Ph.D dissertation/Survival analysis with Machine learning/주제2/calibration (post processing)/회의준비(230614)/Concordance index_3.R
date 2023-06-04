@@ -80,6 +80,13 @@ dl_eta <- function(X,eta,So) {
 
 
 
+
+
+
+
+
+
+
 #--------------------------------------------------------------------------#
 
 ## minimize Q(\beta)
@@ -190,9 +197,6 @@ der_Q_beta <- function(So,beta,X,lambda) {
 }
 
 
-#--------------------------------------------------------------------------------#
-
-
 
 # Gradient descent algorithm
 
@@ -209,7 +213,7 @@ my.gradient.descent <- function(So, X, alpha, lambda) {
   beta.old <- rep(1,ncol(X)) # The initial value of coefficient vector
   beta.old <- beta.old/sqrt(sum(beta.old^2))
   
-  for (i in 1:100) {
+  for (i in 1:1000) {
     
     
     beta.new <- beta.old - alpha*der_Q_beta(So,beta.old,X,lambda)
@@ -234,86 +238,175 @@ my.gradient.descent <- function(So, X, alpha, lambda) {
 
 
 
-# K-fold crossvalidation
 
-my.cross <- function(y.train, K.train, k, grid.l) {
-  
-  
-  # y.train : Dependent variable of training data
-  # K.train : Kernel matrix from training data 
-  # k : number of criterion for K-fold crossvalidation
-  # grid.l : The row of penalty parameter lambda
-  
-  check <- (grid.l > 0)
-  n.check <- length(check)
-  
-  if(sum(check) != n.check)
-    stop("Some of lambda's values are non-positive.
-         Please insert positive values of lambda vector...","\n")
-  
-  
-  lambda <- grid.l
-  r <- length(lambda)
-  
-  
-  K.sim <- as.matrix(K.train)
-  y.sim <- as.matrix(y.train)
-  n <- nrow(K.sim)
-  
-  cv.index <- sample(1:n,n,replace=F)  
-  cv.logL <- NULL   
-  
-  cat("K-fold crossvalidation is start...","\n")
-  
-  
-  for (j in 1:r) {
-    
-    logL <- NULL # minus log-likelihood
-    
-    
-    for (i in 0:(k-1)) {
-      
-      
-      test.index <- cv.index[(1:n)%/%k==i]
-      
-      K.sim.train <- K.sim[-test.index, -test.index] ; K.sim.test <- K.sim[-test.index, test.index]
-      y.sim.train <- y.sim[-test.index,] ; y.sim.test <- y.sim[test.index,]
-      test.size <- length(test.index)
-      
-      
-      a1 <- fit.kernel(y.sim.train, K.sim.train, lambda[j])
-      train.d.hat <- a1$d.hat
-      
-      a2 <- pred.kernel(y.sim.test, K.sim.test, train.d.hat)
-      test.logit.hat <- a2$logit.hat      
-      
-      
-      logL <- c(logL, -sum(y.sim.test*test.logit.hat - log(1+exp(test.logit.hat))) )
-      
-      
-    }
-    
-    cv.logL <- rbind(cv.logL, logL)
-    cat(j,"\n","\n")
+
+
+
+
+#--------------------------------------------------------------------------#
+
+## Generalization
+
+library(survival)
+So <- with(veteran,Surv(time,status==1))
+X <- model.matrix(~factor(trt)+karno+diagtime+age+factor(prior),data=veteran)[,-1]
+eta <- predict(coxph(So ~ X))
+model1 <- coxph(So ~ X)
+beta_hat <- model1[["coefficients"]]
+beta <- as.matrix(rep(0.5,ncol(X)))
+time.sort <- sort(So[,1]) # sorting survival time
+lambda <- seq(0,1,0.01) # parameter for k-fold crossvalidation
+
+
+# U(\beta)
+
+sigmoid <- function(x) { 1/(1+exp(-x)) }
+
+C_tilde_beta_i <- function(So,beta,X,i) {
+  tt_i <- So[i,1]
+  dd_i <- So[i,2]
+  loss.i <- 0
+  for (j in which(So[,1] > tt_i)) {
+    loss.i <- loss.i + (1 + log( sigmoid( t(beta)%*%(as.matrix(X[i,]) - as.matrix(X[j,])) ) )/log(2))
   }
-  
-  cat("\n","K-fold crossvalidation complete...")
-  
-  se.logL <- apply(cv.logL, 1, sd)
-  mean.logL <- rowMeans(cv.logL)
-  idx <- which.min(mean.logL)
-  
-  plot(log(grid.l, base=10),rowMeans(cv.logL),xlab="log10(lambda)",ylab="Minus log-likelihood"
-       ,main="K-fold crossvalidation",type="b")
-  abline(h=mean.logL[idx]+se.logL[idx], col="red", lty=2)
-  abline(v=log(max(lambda[ mean.logL < mean.logL[idx]+se.logL[idx] ]), base=10), col="blue", lty=2)
-  
-  result <- list(lambda=grid.l, cv.logL=cv.logL)
-  
-  
+  return(loss.i)
 }
 
+C_tilde_beta <- function(So,beta,X) {
+  loss <- 0
+  for (i in which(So[,2] == 1)) {
+    loss <- loss + C_tilde_beta_i(So,beta,X,i)
+  }
+  return(loss / nrow(So)^2)
+}
+
+C_tilde_t_beta_i <- function(So,beta,X,t,i) {
+  tt_i <- So[i,1]
+  dd_i <- So[i,2]
+  loss.i <- 0
+  for (j in which(So[,1] > t)) {
+    loss.i <- loss.i + (1 + log( sigmoid( t(beta)%*%(as.matrix(X[i,]) - as.matrix(X[j,])) ) )/log(2))
+  }
+  return(loss.i)
+} 
+
+C_tilde_t_beta <- function(So,beta,X,t) {
+  loss <- 0
+  for ( i in which((So[,2] == 1) & (So[,1] <= t)) ) {
+    loss <- loss + C_tilde_t_beta_i(So,beta,X,t,i)
+  }
+  return(loss / nrow(So)^2)
+}
+
+sum_C_tilde_t_beta <- function(So,beta,X,time.sort) {
+  loss <- 0
+  for ( k in 2:nrow(X) ) {
+    loss <- loss + (C_tilde_t_beta(So,beta,X,time.sort[k]) - C_tilde_t_beta(So,beta,X,time.sort[k-1]))^2
+  }
+  return(loss)
+}
+
+U_beta <- function(So,beta,X,lambda,time.sort) {
+  loss_U <- -C_tilde_beta(So,beta,X) + 
+    lambda*sum_C_tilde_t_beta(So,beta,X,time.sort)
+  return(loss_U)
+}
+
+
+
+# Take the derivative U(\beta) by \beta
+
+der_C_tilde_beta_i <- function(So,beta,X,i) {
+  tt_i <- So[i,1]
+  dd_i <- So[i,2]
+  loss.i <- 0
+  for (j in which(So[,1] > tt_i)) {
+    loss.i <- loss.i + 
+      (as.matrix(X[j,]) - as.matrix(X[i,]))%*%sigmoid( t(beta)%*%(as.matrix(X[j,]) - as.matrix(X[i,])) )
+  }
+  return(-loss.i)
+}
+
+der_C_tilde_beta <- function(So,beta,X) {
+  loss <- 0
+  for (i in which(So[,2] == 1)) {
+    loss <- loss + der_C_tilde_beta_i(So,beta,X,i)
+  }
+  return(loss / nrow(So)^2 / log(2))
+}
+
+der_C_tilde_t_beta_i <- function(So,beta,X,t,i) {
+  tt_i <- So[i,1]
+  dd_i <- So[i,2]
+  loss.i <- 0
+  for (j in which(So[,1] > t)) {
+    loss.i <- loss.i + 
+      (as.matrix(X[j,]) - as.matrix(X[i,]))%*%sigmoid( t(beta)%*%(as.matrix(X[j,]) - as.matrix(X[i,])) )
+  }
+  return(-loss.i)
+} 
+
+der_C_tilde_t_beta <- function(So,beta,X,t) {
+  loss <- 0
+  for ( i in which((So[,2] == 1) & (So[,1] <= t)) ) {
+    loss <- loss + der_C_tilde_t_beta_i(So,beta,X,t,i)
+  }
+  return(loss / nrow(So)^2 / log(2))
+}
+
+sum_der_C_tilde_t_beta <- function(So,beta,X,time.sort) {
+  loss <- 0
+  for ( k in 2:nrow(X) ) {
+    loss <- loss + as.numeric(C_tilde_t_beta(So,beta,X,time.sort[k]) - C_tilde_t_beta(So,beta,X,time.sort[k-1]))*
+      (der_C_tilde_t_beta(So,beta,X,time.sort[k]) - der_C_tilde_t_beta(So,beta,X,time.sort[k-1]))
+  }
+  return(loss)
+}
+
+der_U_beta <- function(So,beta,X,lambda,time.sort) {
+  der_loss_Q <- -der_C_tilde_beta(So,beta,X) + 
+    2*lambda*sum_der_C_tilde_t_beta(So,beta,X,time.sort)
+  return(der_loss_Q)
+}
+
+
+# Gradient descent algorithm
+
+my.gradient.descent.U <- function(So, X, alpha, lambda, time.sort) {
   
+  # alpha : learning rate
+  # lambda : penalty parameter
+  
+  if(lambda <= 0) 
+    stop("Lambda is non-positive value. Please insert positive value of lambda.")
+  
+  X <-as.matrix(X)
+  
+  beta.old <- rep(1,ncol(X)) # The initial value of coefficient vector
+  beta.old <- beta.old/sqrt(sum(beta.old^2))
+  
+  for (i in 1:100) {
+    
+    
+    beta.new <- beta.old - alpha*der_U_beta(So,beta.old,X,lambda,time.sort)
+    
+    diff <- abs(C_tilde_beta(So,beta.new,X) - C_tilde_beta(So,beta.old,X))  
+    
+    # diff <- sqrt(sum((beta.new - beta.old)^2))/sqrt(sum(beta.old^2))
+    
+    cat("( iteration , difference ) = (", i, ",", diff, ")\n")
+    
+    if (diff < 1E-8) break
+    
+    beta.old <- beta.new
+    
+  }
+  
+  cat("Algorithm converged...","\n\n")
+  
+  return(beta.new)
+  
+}  
 
 
 
