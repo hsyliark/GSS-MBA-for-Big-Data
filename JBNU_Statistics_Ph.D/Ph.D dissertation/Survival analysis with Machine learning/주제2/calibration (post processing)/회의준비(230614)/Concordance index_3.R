@@ -248,21 +248,23 @@ my.gradient.descent <- function(So, X, alpha, lambda) {
 ## Generalization
 
 library(survival)
-So <- with(veteran,Surv(time,status==1))
-X <- model.matrix(~factor(trt)+karno+diagtime+age+factor(prior),data=veteran)[,-1]
+So <- with(veteran, Surv(time,status==1))
+X <- model.matrix(~factor(trt)+karno+diagtime+age+factor(prior), data=veteran)[,-1]
 eta <- predict(coxph(So ~ X))
 model1 <- coxph(So ~ X)
 beta_hat <- model1[["coefficients"]]
-beta <- as.matrix(rep(0.5,ncol(X)))
+beta <- as.matrix(rep(0.5, ncol(X)))
 time.sort <- sort(So[,1]) # sorting survival time
 lambda <- seq(0,1,0.01) # parameter for k-fold crossvalidation
+
+
 
 
 # U(\beta)
 
 sigmoid <- function(x) { 1/(1+exp(-x)) }
 
-C_tilde_beta_i <- function(So,beta,X,i) {
+C_tilde_beta_i <- function(So, beta, X, i) {
   tt_i <- So[i,1]
   dd_i <- So[i,2]
   loss.i <- 0
@@ -272,7 +274,7 @@ C_tilde_beta_i <- function(So,beta,X,i) {
   return(loss.i)
 }
 
-C_tilde_beta <- function(So,beta,X) {
+C_tilde_beta <- function(So, beta, X) {
   loss <- 0
   for (i in which(So[,2] == 1)) {
     loss <- loss + C_tilde_beta_i(So,beta,X,i)
@@ -280,7 +282,7 @@ C_tilde_beta <- function(So,beta,X) {
   return(loss / nrow(So)^2)
 }
 
-C_tilde_t_beta_i <- function(So,beta,X,t,i) {
+C_tilde_t_beta_i <- function(So, beta, X, t, i) {
   tt_i <- So[i,1]
   dd_i <- So[i,2]
   loss.i <- 0
@@ -290,33 +292,34 @@ C_tilde_t_beta_i <- function(So,beta,X,t,i) {
   return(loss.i)
 } 
 
-C_tilde_t_beta <- function(So,beta,X,t) {
+C_tilde_t_beta <- function(So, beta, X, t) {
   loss <- 0
   for ( i in which((So[,2] == 1) & (So[,1] <= t)) ) {
-    loss <- loss + C_tilde_t_beta_i(So,beta,X,t,i)
+    loss <- loss + C_tilde_t_beta_i(So, beta, X, t, i)
   }
   return(loss / nrow(So)^2)
 }
 
-sum_C_tilde_t_beta <- function(So,beta,X,time.sort) {
+sum_C_tilde_t_beta <- function(So, beta, X, time.sort) {
   loss <- 0
   for ( k in 2:nrow(X) ) {
-    loss <- loss + (C_tilde_t_beta(So,beta,X,time.sort[k]) - C_tilde_t_beta(So,beta,X,time.sort[k-1]))^2
+    loss <- loss + (C_tilde_t_beta(So, beta, X, time.sort[k]) - C_tilde_t_beta(So, beta, X, time.sort[k-1]))^2
   }
   return(loss)
 }
 
-U_beta <- function(So,beta,X,lambda,time.sort) {
-  loss_U <- -C_tilde_beta(So,beta,X) + 
-    lambda*sum_C_tilde_t_beta(So,beta,X,time.sort)
+U_beta <- function(So, beta, X, lambda, time.sort) {
+  loss_U <- -C_tilde_beta(So, beta, X) + 
+    lambda*sum_C_tilde_t_beta(So, beta, X, time.sort)
   return(loss_U)
 }
 
 
 
+
 # Take the derivative U(\beta) by \beta
 
-der_C_tilde_beta_i <- function(So,beta,X,i) {
+der_C_tilde_beta_i <- function(So, beta, X, i) {
   tt_i <- So[i,1]
   dd_i <- So[i,2]
   loss.i <- 0
@@ -327,15 +330,15 @@ der_C_tilde_beta_i <- function(So,beta,X,i) {
   return(-loss.i)
 }
 
-der_C_tilde_beta <- function(So,beta,X) {
+der_C_tilde_beta <- function(So, beta, X) {
   loss <- 0
   for (i in which(So[,2] == 1)) {
-    loss <- loss + der_C_tilde_beta_i(So,beta,X,i)
+    loss <- loss + der_C_tilde_beta_i(So, beta, X, i)
   }
   return(loss / nrow(So)^2 / log(2))
 }
 
-der_C_tilde_t_beta_i <- function(So,beta,X,t,i) {
+der_C_tilde_t_beta_i <- function(So, beta, X, t, i) {
   tt_i <- So[i,1]
   dd_i <- So[i,2]
   loss.i <- 0
@@ -346,28 +349,30 @@ der_C_tilde_t_beta_i <- function(So,beta,X,t,i) {
   return(-loss.i)
 } 
 
-der_C_tilde_t_beta <- function(So,beta,X,t) {
+der_C_tilde_t_beta <- function(So, beta, X, t) {
   loss <- 0
   for ( i in which((So[,2] == 1) & (So[,1] <= t)) ) {
-    loss <- loss + der_C_tilde_t_beta_i(So,beta,X,t,i)
+    loss <- loss + der_C_tilde_t_beta_i(So, beta, X, t, i)
   }
   return(loss / nrow(So)^2 / log(2))
 }
 
-sum_der_C_tilde_t_beta <- function(So,beta,X,time.sort) {
+sum_der_C_tilde_t_beta <- function(So, beta, X, time.sort) {
   loss <- 0
   for ( k in 2:nrow(X) ) {
-    loss <- loss + as.numeric(C_tilde_t_beta(So,beta,X,time.sort[k]) - C_tilde_t_beta(So,beta,X,time.sort[k-1]))*
-      (der_C_tilde_t_beta(So,beta,X,time.sort[k]) - der_C_tilde_t_beta(So,beta,X,time.sort[k-1]))
+    loss <- loss + as.numeric(C_tilde_t_beta(So, beta, X, time.sort[k]) - C_tilde_t_beta(So, beta, X, time.sort[k-1]))*
+      (der_C_tilde_t_beta(So, beta, X, time.sort[k]) - der_C_tilde_t_beta(So, beta, X, time.sort[k-1]))
   }
   return(loss)
 }
 
-der_U_beta <- function(So,beta,X,lambda,time.sort) {
-  der_loss_Q <- -der_C_tilde_beta(So,beta,X) + 
-    2*lambda*sum_der_C_tilde_t_beta(So,beta,X,time.sort)
+der_U_beta <- function(So, beta, X, lambda, time.sort) {
+  der_loss_Q <- -der_C_tilde_beta(So, beta, X) + 
+    2*lambda*sum_der_C_tilde_t_beta(So, beta, X, time.sort)
   return(der_loss_Q)
 }
+
+
 
 
 # Gradient descent algorithm
@@ -382,15 +387,15 @@ my.gradient.descent.U <- function(So, X, alpha, lambda, time.sort) {
   
   X <-as.matrix(X)
   
-  beta.old <- rep(1,ncol(X)) # The initial value of coefficient vector
+  beta.old <- rep(0.5,ncol(X)) # The initial value of coefficient vector
   beta.old <- beta.old/sqrt(sum(beta.old^2))
   
   for (i in 1:100) {
     
     
-    beta.new <- beta.old - alpha*der_U_beta(So,beta.old,X,lambda,time.sort)
+    beta.new <- beta.old - alpha*der_U_beta(So, beta.old, X, lambda, time.sort)
     
-    diff <- abs(C_tilde_beta(So,beta.new,X) - C_tilde_beta(So,beta.old,X))  
+    diff <- abs(C_tilde_beta(So, beta.new, X) - C_tilde_beta(So, beta.old, X))  
     
     # diff <- sqrt(sum((beta.new - beta.old)^2))/sqrt(sum(beta.old^2))
     
@@ -407,6 +412,61 @@ my.gradient.descent.U <- function(So, X, alpha, lambda, time.sort) {
   return(beta.new)
   
 }  
+
+
+
+
+# Mini-batch(Stochastic) gradient descent algorithm
+# reference : https://jjeongil.tistory.com/577 (stochastic)
+# reference : https://data-science-hi.tistory.com/164 (mini-batch)
+
+my.mini.gradient.U <- function(So, X, alpha, lambda, k, time.sort) {
+  
+  # alpha : learning rate
+  # lambda : penalty parameter
+  
+  if(lambda <= 0) 
+    stop("Lambda is non-positive value. Please insert positive value of lambda.")
+  
+  X <-as.matrix(X)
+  
+  beta.old <- rep(0.5,ncol(X)) # The initial value of coefficient vector
+  beta.old <- beta.old/sqrt(sum(beta.old^2))
+  
+  for (i in 1:100) {
+    
+    idx <- sample(1:nrow(X), nrow(X), replace=F)
+    grad <- 0
+    
+    for (j in 0:(k-1)) {
+      batch.idx <- idx[(1:nrow(X))%/%k==j]
+      batch.So <- So[batch.idx,]
+      batch.X <- X[batch.idx,]
+      
+      grad <- grad + der_U_beta(batch.So, beta.old, batch.X, lambda, time.sort) 
+    }
+    
+    mean_grad <- grad/k
+      
+    beta.new <- beta.old - alpha*mean_grad
+    
+    diff <- abs(C_tilde_beta(So, beta.new, X) - C_tilde_beta(So, beta.old, X))  
+    
+    # diff <- sqrt(sum((beta.new - beta.old)^2))/sqrt(sum(beta.old^2))
+    
+    cat("( iteration , difference ) = (", i, ",", diff, ")\n")
+    
+    if (diff < 1E-8) break
+    
+    beta.old <- beta.new
+  }
+
+  cat("Algorithm converged...","\n\n")
+  
+  return(beta.new)
+  
+}  
+
 
 
 
