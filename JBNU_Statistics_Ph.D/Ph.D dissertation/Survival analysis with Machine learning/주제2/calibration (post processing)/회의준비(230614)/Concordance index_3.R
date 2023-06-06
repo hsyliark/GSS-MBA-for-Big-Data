@@ -419,11 +419,17 @@ my.gradient.descent.U <- function(So, X, alpha, lambda, time.sort) {
 # Mini-batch(Stochastic) gradient descent algorithm
 # reference : https://jjeongil.tistory.com/577 (stochastic)
 # reference : https://data-science-hi.tistory.com/164 (mini-batch)
+# reference : https://brunch.co.kr/@linecard/561 (mini-batch)
+# reference : https://sonny-daily-story.tistory.com/5 (mini-batch)
+# reference : https://www.youtube.com/watch?v=87Q2LIlMWoY (mini-batch)
+# reference : https://light-tree.tistory.com/133 (mini-batch)
+# reference : https://89douner.tistory.com/43 (mini-batch)
 
 my.mini.gradient.U <- function(So, X, alpha, lambda, k, time.sort) {
   
   # alpha : learning rate
   # lambda : penalty parameter
+  # k : number of batch
   
   if(lambda <= 0) 
     stop("Lambda is non-positive value. Please insert positive value of lambda.")
@@ -432,43 +438,59 @@ my.mini.gradient.U <- function(So, X, alpha, lambda, k, time.sort) {
   
   beta.old <- rep(0.5,ncol(X)) # The initial value of coefficient vector
   beta.old <- beta.old/sqrt(sum(beta.old^2))
+  iteration <- c()
+  difference <- c()
   
   for (i in 1:100) {
     
     idx <- sample(1:nrow(X), nrow(X), replace=F)
     grad <- 0
     
+    
     for (j in 0:(k-1)) {
-      batch.idx <- idx[(1:nrow(X))%/%k==j]
+      batch.idx <- idx[(1:nrow(X))%%k==j]
       batch.So <- So[batch.idx,]
       batch.X <- X[batch.idx,]
       
-      grad <- grad + der_U_beta(batch.So, beta.old, batch.X, lambda, time.sort) 
+      grad <- grad + der_U_beta(batch.So, beta.old, batch.X, lambda, time.sort)
+      
+      cat("( batch ) = ", j+1, "\n")
     }
     
     mean_grad <- grad/k
       
     beta.new <- beta.old - alpha*mean_grad
+      
+    diff <- abs(C_tilde_beta(So, beta.new, X) - C_tilde_beta(So, beta.old, X))
     
-    diff <- abs(C_tilde_beta(So, beta.new, X) - C_tilde_beta(So, beta.old, X))  
-    
-    # diff <- sqrt(sum((beta.new - beta.old)^2))/sqrt(sum(beta.old^2))
-    
+    iteration <- c(iteration, i)
+    difference <- c(difference, diff)
+      
     cat("( iteration , difference ) = (", i, ",", diff, ")\n")
-    
-    if (diff < 1E-8) break
-    
+      
+    if (diff < 1E-6) break
+      
     beta.old <- beta.new
-  }
+    }
+    
 
   cat("Algorithm converged...","\n\n")
   
-  return(beta.new)
+  return(list(beta.new=beta.new, iteration=iteration, difference=difference))
   
 }  
 
+res <- my.mini.gradient.U(So, X, alpha=0.02, lambda=0.3, k=5, time.sort)
 
+library(ggplot2)
+dat <- data.frame(iteration=res$iteration, difference=res$difference)
+ggplot(data=dat, aes(x=iteration, y=difference, group=1)) +
+  geom_line()+
+  geom_point()+
+  ggtitle('Mini-batch gradient descent algorithm (alpha=0.02, lambda=0.3, k=5)')+
+  theme(plot.title = element_text(hjust = 0.5,size=12,face='bold'))
 
-
-
+# result of beta estimate 
+# Cox PH model : (0.193053118, -0.034084486, 0.001723026, -0.003882848, -0.077640942) 
+# minimize U(\beta) (alpha=0.02, lambda=0.3, k=5) : (0.424385535, -0.050732304, -0.012636304, -0.007454847, 0.403322836)
 
