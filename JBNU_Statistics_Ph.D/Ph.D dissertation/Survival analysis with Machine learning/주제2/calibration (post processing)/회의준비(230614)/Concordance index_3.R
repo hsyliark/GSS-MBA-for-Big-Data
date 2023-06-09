@@ -401,7 +401,7 @@ my.gradient.descent.U <- function(So, X, alpha, lambda, time.sort) {
     
     cat("( iteration , difference ) = (", i, ",", diff, ")\n")
     
-    if (diff < 1E-8) break
+    if (diff < 1E-6) break
     
     beta.old <- beta.new
     
@@ -409,7 +409,7 @@ my.gradient.descent.U <- function(So, X, alpha, lambda, time.sort) {
   
   cat("Algorithm converged...","\n\n")
   
-  return(beta.new)
+  return(list(beta.new=beta.new, iteration=iteration, difference=difference))
   
 }  
 
