@@ -404,7 +404,7 @@ my.gradient.descent.U <- function(So, X, alpha, lambda, time.sort) {
     
     cat("( iteration , difference ) = (", i, ",", diff, ")\n")
     
-    if (diff < 1E-6) break
+    if (diff < 1E-5) break
     
     beta.old <- beta.new
     
@@ -471,7 +471,7 @@ my.mini.gradient.U <- function(So, X, alpha, lambda, k, time.sort) {
       
     cat("( iteration , difference ) = (", i, ",", diff, ")\n")
       
-    if (diff < 1E-6) break
+    if (diff < 1E-5) break
       
     beta.old <- beta.new
     }
@@ -516,82 +516,92 @@ time.sort <- sort(So[,1]) # sorting survival time
 lambda <- seq(0,1,0.01) # parameter for k-fold crossvalidation
 
 
-# alpha=0.01, lambda=0, k=5 (case01)
-time.sort_01 <- seq(from=min(So[,1]), to=max(So[,1]), length.out=2)
-res00 <- my.mini.gradient.U(So, X, alpha=0.01, lambda=0, k=5, time.sort_01)
-risk.score_00 <- exp(X%*%res00$beta.new)
-res00_1 <- my.gradient.descent.U(So, X, alpha=0.01, lambda=0, time.sort_01)
-risk.score_00_1 <- exp(X%*%res00_1$beta.new)
-
-# alpha=0.01, lambda=0.1, k=5, number of sorting time=2 (case02)
+# alpha=0.01, lambda=0.1, k=5, number of sorting time=2 (case01)
 time.sort_01 <- seq(from=min(So[,1]), to=max(So[,1]), length.out=2)
 res01 <- my.mini.gradient.U(So, X, alpha=0.01, lambda=0.1, k=5, time.sort_01)
 risk.score_01 <- exp(X%*%res01$beta.new)
 res01_1 <- my.gradient.descent.U(So, X, alpha=0.01, lambda=0.1, time.sort_01)
 risk.score_01_1 <- exp(X%*%res01_1$beta.new)
 
-# alpha=0.01, lambda=0.3, k=5, number of sorting time=2 (case03)
-time.sort_01 <- seq(from=min(So[,1]), to=max(So[,1]), length.out=2)
-res02 <- my.mini.gradient.U(So, X, alpha=0.01, lambda=0.3, k=5, time.sort_01)
+# alpha=0.01, lambda=0.1, k=5, number of sorting time=10 (case02)
+time.sort_02 <- seq(from=min(So[,1]), to=max(So[,1]), length.out=10)
+res02 <- my.mini.gradient.U(So, X, alpha=0.01, lambda=0.1, k=5, time.sort_02)
 risk.score_02 <- exp(X%*%res02$beta.new)
-res02_1 <- my.gradient.descent.U(So, X, alpha=0.01, lambda=0.3, time.sort_01)
+res02_1 <- my.gradient.descent.U(So, X, alpha=0.01, lambda=0.1, time.sort_02)
 risk.score_02_1 <- exp(X%*%res02_1$beta.new)
 
-# alpha=0.01, lambda=0.1, k=5, number of sorting time=5 (case04)
-time.sort_02 <- seq(from=min(So[,1]), to=max(So[,1]), length.out=5)
-res03 <- my.mini.gradient.U(So, X, alpha=0.01, lambda=0.1, k=5, time.sort_02)
+# alpha=0.01, lambda=0.1, k=5, number of sorting time=100 (case03)
+time.sort_03 <- seq(from=min(So[,1]), to=max(So[,1]), length.out=100)
+res03 <- my.mini.gradient.U(So, X, alpha=0.01, lambda=0.1, k=5, time.sort_03)
 risk.score_03 <- exp(X%*%res03$beta.new)
-res03_1 <- my.gradient.descent.U(So, X, alpha=0.01, lambda=0.1, time.sort_02)
+res03_1 <- my.gradient.descent.U(So, X, alpha=0.01, lambda=0.1, time.sort_03)
 risk.score_03_1 <- exp(X%*%res03_1$beta.new)
 
-# alpha=0.01, lambda=0.3, k=5, number of sorting time=5 (case05)
-time.sort_02 <- seq(from=min(So[,1]), to=max(So[,1]), length.out=5)
-res04 <- my.mini.gradient.U(So, X, alpha=0.01, lambda=0.3, k=5, time.sort_02)
+
+# alpha=0.01, lambda=1, k=5, number of sorting time=2 (case04)
+time.sort_04 <- seq(from=min(So[,1]), to=max(So[,1]), length.out=2)
+res04 <- my.mini.gradient.U(So, X, alpha=0.01, lambda=1, k=5, time.sort_04)
 risk.score_04 <- exp(X%*%res04$beta.new)
-res04_1 <- my.gradient.descent.U(So, X, alpha=0.01, lambda=0.3, time.sort_02)
+res04_1 <- my.gradient.descent.U(So, X, alpha=0.01, lambda=1, time.sort_04)
 risk.score_04_1 <- exp(X%*%res04_1$beta.new)
 
-# alpha=0.01, lambda=0.1, k=5, number of sorting time=10 (case06)
-time.sort_03 <- seq(from=min(So[,1]), to=max(So[,1]), length.out=10)
-res05 <- my.mini.gradient.U(So, X, alpha=0.01, lambda=0.1, k=5, time.sort_03)
+# alpha=0.01, lambda=1, k=5, number of sorting time=10 (case05)
+time.sort_05 <- seq(from=min(So[,1]), to=max(So[,1]), length.out=10)
+res05 <- my.mini.gradient.U(So, X, alpha=0.01, lambda=1, k=5, time.sort_05)
 risk.score_05 <- exp(X%*%res05$beta.new)
-res05_1 <- my.gradient.descent.U(So, X, alpha=0.01, lambda=0.1, time.sort_03)
+res05_1 <- my.gradient.descent.U(So, X, alpha=0.01, lambda=1, time.sort_05)
 risk.score_05_1 <- exp(X%*%res05_1$beta.new)
 
-# alpha=0.01, lambda=0.3, k=5, number of sorting time=10 (case07)
-time.sort_03 <- seq(from=min(So[,1]), to=max(So[,1]), length.out=10)
-res06 <- my.mini.gradient.U(So, X, alpha=0.01, lambda=0.3, k=5, time.sort_03)
+# alpha=0.01, lambda=1, k=5, number of sorting time=100 (case06)
+time.sort_06 <- seq(from=min(So[,1]), to=max(So[,1]), length.out=100)
+res06 <- my.mini.gradient.U(So, X, alpha=0.01, lambda=1, k=5, time.sort_06)
 risk.score_06 <- exp(X%*%res06$beta.new)
-res06_1 <- my.gradient.descent.U(So, X, alpha=0.01, lambda=0.3, time.sort_03)
+res06_1 <- my.gradient.descent.U(So, X, alpha=0.01, lambda=1, time.sort_06)
 risk.score_06_1 <- exp(X%*%res06_1$beta.new)
 
-# alpha=0.01, lambda=0.1, k=5, number of sorting time=50 (case08)
-time.sort_04 <- seq(from=min(So[,1]), to=max(So[,1]), length.out=50)
-res07 <- my.mini.gradient.U(So, X, alpha=0.01, lambda=0.1, k=5, time.sort_04)
+
+# alpha=0.01, lambda=5, k=5, number of sorting time=2 (case07)
+time.sort_07 <- seq(from=min(So[,1]), to=max(So[,1]), length.out=2)
+res07 <- my.mini.gradient.U(So, X, alpha=0.01, lambda=5, k=5, time.sort_07)
 risk.score_07 <- exp(X%*%res07$beta.new)
-res07_1 <- my.gradient.descent.U(So, X, alpha=0.01, lambda=0.1, time.sort_04)
+res07_1 <- my.gradient.descent.U(So, X, alpha=0.01, lambda=5, time.sort_07)
 risk.score_07_1 <- exp(X%*%res07_1$beta.new)
 
-# alpha=0.01, lambda=0.3, k=5, number of sorting time=50 (case09)
-time.sort_04 <- seq(from=min(So[,1]), to=max(So[,1]), length.out=50)
-res08 <- my.mini.gradient.U(So, X, alpha=0.01, lambda=0.3, k=5, time.sort_04)
+# alpha=0.01, lambda=5, k=5, number of sorting time=10 (case08)
+time.sort_08 <- seq(from=min(So[,1]), to=max(So[,1]), length.out=10)
+res08 <- my.mini.gradient.U(So, X, alpha=0.01, lambda=5, k=5, time.sort_08)
 risk.score_08 <- exp(X%*%res08$beta.new)
-res08_1 <- my.gradient.descent.U(So, X, alpha=0.01, lambda=0.3, time.sort_04)
+res08_1 <- my.gradient.descent.U(So, X, alpha=0.01, lambda=5, time.sort_08)
 risk.score_08_1 <- exp(X%*%res08_1$beta.new)
 
-# alpha=0.01, lambda=0.1, k=5, number of sorting time=100 (case10)
-time.sort_05 <- seq(from=min(So[,1]), to=max(So[,1]), length.out=100)
-res09 <- my.mini.gradient.U(So, X, alpha=0.01, lambda=0.1, k=5, time.sort_05)
+# alpha=0.01, lambda=5, k=5, number of sorting time=100 (case09)
+time.sort_09 <- seq(from=min(So[,1]), to=max(So[,1]), length.out=100)
+res09 <- my.mini.gradient.U(So, X, alpha=0.01, lambda=5, k=5, time.sort_09)
 risk.score_09 <- exp(X%*%res09$beta.new)
-res09_1 <- my.gradient.descent.U(So, X, alpha=0.01, lambda=0.1, time.sort_05)
+res09_1 <- my.gradient.descent.U(So, X, alpha=0.01, lambda=5, time.sort_09)
 risk.score_09_1 <- exp(X%*%res09_1$beta.new)
 
-# alpha=0.01, lambda=0.3, k=5, number of sorting time=100 (case11)
-time.sort_05 <- seq(from=min(So[,1]), to=max(So[,1]), length.out=100)
-res10 <- my.mini.gradient.U(So, X, alpha=0.01, lambda=0.3, k=5, time.sort_05)
+
+# alpha=0.01, lambda=10, k=5, number of sorting time=2 (case10)
+time.sort_10 <- seq(from=min(So[,1]), to=max(So[,1]), length.out=2)
+res10 <- my.mini.gradient.U(So, X, alpha=0.01, lambda=10, k=5, time.sort_10)
 risk.score_10 <- exp(X%*%res10$beta.new)
-res10_1 <- my.gradient.descent.U(So, X, alpha=0.01, lambda=0.3, time.sort_05)
+res10_1 <- my.gradient.descent.U(So, X, alpha=0.01, lambda=10, time.sort_10)
 risk.score_10_1 <- exp(X%*%res10_1$beta.new)
+
+# alpha=0.01, lambda=10, k=5, number of sorting time=10 (case11)
+time.sort_11 <- seq(from=min(So[,1]), to=max(So[,1]), length.out=10)
+res11 <- my.mini.gradient.U(So, X, alpha=0.01, lambda=10, k=5, time.sort_11)
+risk.score_11 <- exp(X%*%res11$beta.new)
+res11_1 <- my.gradient.descent.U(So, X, alpha=0.01, lambda=10, time.sort_11)
+risk.score_11_1 <- exp(X%*%res11_1$beta.new)
+
+# alpha=0.01, lambda=10, k=5, number of sorting time=100 (case12)
+time.sort_12 <- seq(from=min(So[,1]), to=max(So[,1]), length.out=100)
+res12 <- my.mini.gradient.U(So, X, alpha=0.01, lambda=10, k=5, time.sort_12)
+risk.score_12 <- exp(X%*%res12$beta.new)
+res12_1 <- my.gradient.descent.U(So, X, alpha=0.01, lambda=10, time.sort_12)
+risk.score_12_1 <- exp(X%*%res12_1$beta.new)
 
 
 
@@ -617,67 +627,71 @@ library(mgcv)
 
 # mini-batch gradient descent
 
-ROC.td <- timeROC(T=So[,1],delta=So[,2],marker=risk.score_cox,
+ROC.00 <- timeROC(T=So[,1],delta=So[,2],marker=risk.score_cox,
                     cause=1,weighting="marginal",times=So[,1])
-case00 <- ROC.td[["AUC"]]
-
-ROC.td00 <- timeROC(T=So[,1],delta=So[,2],marker=risk.score_00,
-                    cause=1,weighting="marginal",times=So[,1])
-case01 <- ROC.td00[["AUC"]]
+case00 <- ROC.00[["AUC"]]
 
 ROC.td01 <- timeROC(T=So[,1],delta=So[,2],marker=risk.score_01,
                     cause=1,weighting="marginal",times=So[,1])
-case02 <- ROC.td01[["AUC"]]
+case01 <- ROC.td01[["AUC"]]
 
 ROC.td02 <- timeROC(T=So[,1],delta=So[,2],marker=risk.score_02,
                     cause=1,weighting="marginal",times=So[,1])
-case03 <- ROC.td02[["AUC"]]
+case02 <- ROC.td02[["AUC"]]
 
 ROC.td03 <- timeROC(T=So[,1],delta=So[,2],marker=risk.score_03,
                     cause=1,weighting="marginal",times=So[,1])
-case04 <- ROC.td03[["AUC"]]
+case03 <- ROC.td03[["AUC"]]
 
 ROC.td04 <- timeROC(T=So[,1],delta=So[,2],marker=risk.score_04,
                     cause=1,weighting="marginal",times=So[,1])
-case05 <- ROC.td04[["AUC"]]
+case04 <- ROC.td04[["AUC"]]
 
 ROC.td05 <- timeROC(T=So[,1],delta=So[,2],marker=risk.score_05,
                     cause=1,weighting="marginal",times=So[,1])
-case06 <- ROC.td05[["AUC"]]
+case05 <- ROC.td05[["AUC"]]
 
 ROC.td06 <- timeROC(T=So[,1],delta=So[,2],marker=risk.score_06,
                     cause=1,weighting="marginal",times=So[,1])
-case07 <- ROC.td06[["AUC"]]
+case06 <- ROC.td06[["AUC"]]
 
 ROC.td07 <- timeROC(T=So[,1],delta=So[,2],marker=risk.score_07,
                     cause=1,weighting="marginal",times=So[,1])
-case08 <- ROC.td07[["AUC"]]
+case07 <- ROC.td07[["AUC"]]
 
 ROC.td08 <- timeROC(T=So[,1],delta=So[,2],marker=risk.score_08,
                     cause=1,weighting="marginal",times=So[,1])
-case09 <- ROC.td08[["AUC"]]
+case08 <- ROC.td08[["AUC"]]
 
 ROC.td09 <- timeROC(T=So[,1],delta=So[,2],marker=risk.score_09,
                     cause=1,weighting="marginal",times=So[,1])
-case10 <- ROC.td09[["AUC"]]
+case09 <- ROC.td09[["AUC"]]
 
 ROC.td10 <- timeROC(T=So[,1],delta=So[,2],marker=risk.score_10,
                     cause=1,weighting="marginal",times=So[,1])
-case11 <- ROC.td10[["AUC"]]
+case10 <- ROC.td10[["AUC"]]
 
-dt <- data.frame(time=ROC.td00[["times"]], case00=case00,
+ROC.td11 <- timeROC(T=So[,1],delta=So[,2],marker=risk.score_11,
+                    cause=1,weighting="marginal",times=So[,1])
+case11 <- ROC.td11[["AUC"]]
+
+ROC.td12 <- timeROC(T=So[,1],delta=So[,2],marker=risk.score_12,
+                    cause=1,weighting="marginal",times=So[,1])
+case12 <- ROC.td12[["AUC"]]
+
+dt <- data.frame(time=ROC.00[["times"]], case00=case00,
                  case01=case01, case02=case02, case03=case03, case04=case04,
                  case05=case05, case06=case06, case07=case07, case08=case08,
-                 case09=case09, case10=case10, case11=case11)
-dt1 <- data.frame(time=rep(ROC.td00[["times"]],12),
+                 case09=case09, case10=case10, case11=case11, case12=case12)
+dt1 <- data.frame(time=rep(ROC.00[["times"]],13),
                   case=c(rep("case00",137), rep("case01",137), rep("case02",137),
                          rep("case03",137), rep("case04",137),
                          rep("case05",137), rep("case06",137),
                          rep("case07",137), rep("case08",137),
                          rep("case09",137), rep("case10",137),
-                         rep("case11",137)),
+                         rep("case11",137), rep("case12",137)),
                   AUC=c(case00, case01, case02, case03, case04, case05, case06,
-                        case07, case08, case09, case10, case11))
+                        case07, case08, case09, case10, case11, case12))
 
 dt2 <- na.omit(dt1)
 
@@ -691,68 +705,72 @@ ggplot(dt1, aes(x=time, y=AUC, group=case, color=case)) +
 
 # gradient descent
 
-ROC.td <- timeROC(T=So[,1],delta=So[,2],marker=risk.score_cox,
+ROC.td00_1 <- timeROC(T=So[,1],delta=So[,2],marker=risk.score_cox,
                   cause=1,weighting="marginal",times=So[,1])
-case00 <- ROC.td[["AUC"]]
-
-ROC.td00_1 <- timeROC(T=So[,1],delta=So[,2],marker=risk.score_00_1,
-                    cause=1,weighting="marginal",times=So[,1])
-case01_1 <- ROC.td00_1[["AUC"]]
+case00_1 <- ROC.td00_1[["AUC"]]
 
 ROC.td01_1 <- timeROC(T=So[,1],delta=So[,2],marker=risk.score_01_1,
                     cause=1,weighting="marginal",times=So[,1])
-case02_1 <- ROC.td01_1[["AUC"]]
+case01_1 <- ROC.td01_1[["AUC"]]
 
 ROC.td02_1 <- timeROC(T=So[,1],delta=So[,2],marker=risk.score_02_1,
                     cause=1,weighting="marginal",times=So[,1])
-case03_1 <- ROC.td02_1[["AUC"]]
+case02_1 <- ROC.td02_1[["AUC"]]
 
 ROC.td03_1 <- timeROC(T=So[,1],delta=So[,2],marker=risk.score_03_1,
                     cause=1,weighting="marginal",times=So[,1])
-case04_1 <- ROC.td03_1[["AUC"]]
+case03_1 <- ROC.td03_1[["AUC"]]
 
 ROC.td04_1 <- timeROC(T=So[,1],delta=So[,2],marker=risk.score_04_1,
                     cause=1,weighting="marginal",times=So[,1])
-case05_1 <- ROC.td04_1[["AUC"]]
+case04_1 <- ROC.td04_1[["AUC"]]
 
 ROC.td05_1 <- timeROC(T=So[,1],delta=So[,2],marker=risk.score_05_1,
                     cause=1,weighting="marginal",times=So[,1])
-case06_1 <- ROC.td05_1[["AUC"]]
+case05_1 <- ROC.td05_1[["AUC"]]
 
 ROC.td06_1 <- timeROC(T=So[,1],delta=So[,2],marker=risk.score_06_1,
                     cause=1,weighting="marginal",times=So[,1])
-case07_1 <- ROC.td06_1[["AUC"]]
+case06_1 <- ROC.td06_1[["AUC"]]
 
 ROC.td07_1 <- timeROC(T=So[,1],delta=So[,2],marker=risk.score_07_1,
                     cause=1,weighting="marginal",times=So[,1])
-case08_1 <- ROC.td07_1[["AUC"]]
+case07_1 <- ROC.td07_1[["AUC"]]
 
 ROC.td08_1 <- timeROC(T=So[,1],delta=So[,2],marker=risk.score_08_1,
                     cause=1,weighting="marginal",times=So[,1])
-case09_1 <- ROC.td08_1[["AUC"]]
+case08_1 <- ROC.td08_1[["AUC"]]
 
 ROC.td09_1 <- timeROC(T=So[,1],delta=So[,2],marker=risk.score_09_1,
                     cause=1,weighting="marginal",times=So[,1])
-case10_1 <- ROC.td09_1[["AUC"]]
+case09_1 <- ROC.td09_1[["AUC"]]
 
 ROC.td10_1 <- timeROC(T=So[,1],delta=So[,2],marker=risk.score_10_1,
                     cause=1,weighting="marginal",times=So[,1])
-case11_1 <- ROC.td10_1[["AUC"]]
+case10_1 <- ROC.td10_1[["AUC"]]
 
-dt_1 <- data.frame(time=ROC.td00_1[["times"]], case00=case00,
+ROC.td11_1 <- timeROC(T=So[,1],delta=So[,2],marker=risk.score_11_1,
+                    cause=1,weighting="marginal",times=So[,1])
+case11_1 <- ROC.td11_1[["AUC"]]
+
+ROC.td12_1 <- timeROC(T=So[,1],delta=So[,2],marker=risk.score_12_1,
+                      cause=1,weighting="marginal",times=So[,1])
+case12_1 <- ROC.td12_1[["AUC"]]
+
+dt_1 <- data.frame(time=ROC.td00_1[["times"]], case00_1=case00_1,
                  case01=case01_1, case02=case02_1, case03=case03_1, case04=case04_1,
                  case05=case05_1, case06=case06_1, case07=case07_1, case08=case08_1,
-                 case09=case09_1, case10=case10_1, case11=case11_1)
-dt1_1 <- data.frame(time=rep(ROC.td00_1[["times"]],12),
-                  case=c(rep("case00",137), rep("case01_1",137), rep("case02_1",137),
+                 case09=case09_1, case10=case10_1, case11=case11_1, case12=case12_1)
+dt1_1 <- data.frame(time=rep(ROC.td00_1[["times"]],13),
+                  case=c(rep("case00_1",137), rep("case01_1",137), rep("case02_1",137),
                          rep("case03_1",137), rep("case04_1",137),
                          rep("case05_1",137), rep("case06_1",137),
                          rep("case07_1",137), rep("case08_1",137),
                          rep("case09_1",137), rep("case10_1",137),
-                         rep("case11_1",137)),
-                  AUC=c(case00, case01_1, case02_1, case03_1, 
+                         rep("case11_1",137), rep("case12_1",137)),
+                  AUC=c(case00_1, case01_1, case02_1, case03_1, 
                         case04_1, case05_1, case06_1, case07_1, 
-                        case08_1, case09_1, case10_1, case11_1))
+                        case08_1, case09_1, case10_1, case11_1, case12_1))
 
 dt2_1 <- na.omit(dt1_1)
 
