@@ -382,8 +382,8 @@ my.gradient.descent.U <- function(So, X, alpha, lambda, time.sort) {
   # alpha : learning rate
   # lambda : penalty parameter
   
-  if(lambda < 0) 
-    stop("Lambda is negative value. Please insert non-negative value of lambda.")
+  # if(lambda < 0) 
+    # stop("Lambda is negative value. Please insert non-negative value of lambda.")
   
   X <-as.matrix(X)
   
@@ -434,8 +434,8 @@ my.mini.gradient.U <- function(So, X, alpha, lambda, k, time.sort) {
   # lambda : penalty parameter
   # k : number of batch
   
-  if(lambda < 0) 
-    stop("Lambda is negative value. Please insert non-negative value of lambda.")
+  # if(lambda < 0) 
+    # stop("Lambda is negative value. Please insert non-negative value of lambda.")
   
   X <-as.matrix(X)
   
@@ -516,25 +516,25 @@ time.sort <- sort(So[,1]) # sorting survival time
 lambda <- seq(0,1,0.01) # parameter for k-fold crossvalidation
 
 
-# alpha=0.01, lambda=0.001, k=5, number of sorting time=2 (case01)
+# alpha=0.01, lambda=0, k=5, number of sorting time=2 (case01)
 time.sort_01 <- seq(from=min(So[,1]), to=max(So[,1]), length.out=2)
-res01 <- my.mini.gradient.U(So, X, alpha=0.01, lambda=0.001, k=5, time.sort_01)
+res01 <- my.mini.gradient.U(So, X, alpha=0.01, lambda=0, k=5, time.sort_01)
 risk.score_01 <- exp(X%*%res01$beta.new)
-res01_1 <- my.gradient.descent.U(So, X, alpha=0.01, lambda=0.001, time.sort_01)
+res01_1 <- my.gradient.descent.U(So, X, alpha=0.01, lambda=0, time.sort_01)
 risk.score_01_1 <- exp(X%*%res01_1$beta.new)
 
-# alpha=0.01, lambda=0.001, k=5, number of sorting time=10 (case02)
+# alpha=0.01, lambda=0, k=5, number of sorting time=10 (case02)
 time.sort_02 <- seq(from=min(So[,1]), to=max(So[,1]), length.out=10)
-res02 <- my.mini.gradient.U(So, X, alpha=0.01, lambda=0.001, k=5, time.sort_02)
+res02 <- my.mini.gradient.U(So, X, alpha=0.01, lambda=0, k=5, time.sort_02)
 risk.score_02 <- exp(X%*%res02$beta.new)
-res02_1 <- my.gradient.descent.U(So, X, alpha=0.01, lambda=0.001, time.sort_02)
+res02_1 <- my.gradient.descent.U(So, X, alpha=0.01, lambda=0, time.sort_02)
 risk.score_02_1 <- exp(X%*%res02_1$beta.new)
 
-# alpha=0.01, lambda=0.001, k=5, number of sorting time=100 (case03)
+# alpha=0.01, lambda=0, k=5, number of sorting time=100 (case03)
 time.sort_03 <- seq(from=min(So[,1]), to=max(So[,1]), length.out=100)
-res03 <- my.mini.gradient.U(So, X, alpha=0.01, lambda=0.001, k=5, time.sort_03)
+res03 <- my.mini.gradient.U(So, X, alpha=0.01, lambda=0, k=5, time.sort_03)
 risk.score_03 <- exp(X%*%res03$beta.new)
-res03_1 <- my.gradient.descent.U(So, X, alpha=0.01, lambda=0.001, time.sort_03)
+res03_1 <- my.gradient.descent.U(So, X, alpha=0.01, lambda=0, time.sort_03)
 risk.score_03_1 <- exp(X%*%res03_1$beta.new)
 
 
