@@ -400,12 +400,13 @@ res3$beta.new
 risk.score_03 <- exp(X%*%res3$beta.new)
 
 library(ggplot2)
-dat <- data.frame(iteration=res2$iteration, difference=res2$difference)
-ggplot(data=dat, aes(x=iteration, y=difference, group=1)) +
+dat <- data.frame(iteration=res3$iteration, difference=res3$difference,
+                  c_index=res3$c_index, sum_C_tilde_t=res3$sum_C_tilde_t)
+ggplot(data=dat, aes(x=iteration, y=sum_C_tilde_t, group=1)) +
   geom_line() +
   geom_point() +
   ggtitle('gradient descent algorithm') +
-  theme(plot.title = element_text(hjust = 0.5,size=12,face='bold'))
+  theme(plot.title = element_text(hjust = 0.5, size=12, face='bold'))
 
 # result of beta estimate 
 # Cox PH model : (0.193053118, -0.034084486, 0.001723026, -0.003882848, -0.077640942) 
