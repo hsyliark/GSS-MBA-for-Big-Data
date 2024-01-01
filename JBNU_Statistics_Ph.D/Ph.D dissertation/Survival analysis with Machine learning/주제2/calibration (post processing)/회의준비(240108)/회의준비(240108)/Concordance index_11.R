@@ -105,7 +105,7 @@ lambda <- seq(0,1,0.01) # parameter for k-fold crossvalidation
 # Simulation data generation (Assuming Cox PH model)
 # Assume parametric basis distribution is Exponential distribution... 
 lambda1 <- 0.005 # parameter for generate Y   
-lambda2 <- 1.5/lambda1 # parameter for generate C 
+lambda2 <- 0.5/lambda1 # parameter for generate C 
 beta0 <- 1:5
 beta0 <- beta0/sqrt(sum(beta0^2)) # true coefficients
 Y <- c() # real survival time
