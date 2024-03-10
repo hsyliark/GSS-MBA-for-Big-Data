@@ -309,7 +309,7 @@ my.gradient.descent.U <- function(So, X, alpha, lambda, time.sort) {
   c_tilde <- c()
   sum_C_tilde_t <- c()
   
-  for (i in 1:1000) {
+  for (i in 1:5000) {
     
     beta.new <- as.vector(beta.old - alpha*der_U_beta(So, beta.old, X, lambda, time.sort))
     diff <- sqrt(sum((beta.new - beta.old)^2))
@@ -368,7 +368,7 @@ my.mini.gradient.U <- function(So, X, alpha, lambda, k, time.sort) {
   c_tilde <- c()
   sum_C_tilde_t <- c()
   
-  for (i in 1:1000) {
+  for (i in 1:10000) {
     
     idx <- sample(1:nrow(X), nrow(X), replace=F)
     grad <- rep(0,ncol(X))
@@ -673,7 +673,7 @@ aggregate(dt2$AUC, list(dt2$case), FUN=mean, na.action = na.omit)
 ggplot(dt2_3, aes(x=time, y=AUC, group=case, color=case)) +
   geom_point(aes(x=time, y=1, color=as.factor(censor))) +
   geom_line(aes(group=case, color=case, linetype=case)) +
-  geom_vline(xintercept=time.sort4, col="tomato", linetype="dashed") +
+  geom_vline(xintercept=time.sort3, col="tomato", linetype="dashed") +
   ggtitle("Time dependent AUC with risk score (gradient descent)") +
   xlab("time") + ylab("AUC") +
   #scale_x_continuous(limits = c(30, 50)) +
