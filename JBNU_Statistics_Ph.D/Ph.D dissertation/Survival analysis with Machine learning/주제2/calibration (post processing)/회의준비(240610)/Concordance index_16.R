@@ -93,9 +93,9 @@ dl_eta <- function(X,eta,So) {
 
 
 # real data (veteran)
-library(survival)
+library(survival) 
 So <- with(veteran, Surv(time,status==1))
-veteran <- veretan[order(So[,1]),] # sorting observed time=min(Y,C)
+veteran <- veteran[order(So[,1]),] # sorting observed time=min(Y,C)
 So <- So[order(So[,1]),] # sorting observed time=min(Y,C)
 X <- model.matrix(~factor(trt)+karno+diagtime+age+factor(prior), data=veteran)[,-1]
 eta <- predict(coxph(So ~ X))
@@ -445,6 +445,19 @@ beta_hat
 C_Index_beta(So, beta_hat, X)
 C_tilde_beta(So, beta_hat, X)
 
+# real data (veteran)
+time.sort0 <- seq(from=20, to=500, length.out=5)
+risk.score_cox <- predict(object=coxph(So ~ X), newdata=veteran, type="risk")
+res1 <- my.gradient.descent.U(So, X, alpha=0.005, lambda=0, time.sort0)
+res1$beta.new
+risk.score_01 <- exp(X%*%res1$beta.new)
+res2 <- my.gradient.descent.U(So, X, alpha=0.0001, lambda=50, time.sort0)
+res2$beta.new
+risk.score_02 <- exp(X%*%res2$beta.new)
+res3 <- my.gradient.descent.U(So, X, alpha=0.0001, lambda=100, time.sort0)
+res3$beta.new
+risk.score_03 <- exp(X%*%res3$beta.new)
+
 # change lambda
 risk.score_cox <- predict(object=coxph(So ~ X), newdata=dt5, type="risk")
 res1 <- my.gradient.descent.U(So, X, alpha=0.01, lambda=0, time.sort3)
@@ -485,9 +498,9 @@ res3$beta.new
 risk.score_03 <- exp(X%*%res3$beta.new)
 
 library(ggplot2)
-dat <- data.frame(iteration=res1$iteration, difference=res1$difference,
-                  c_index=res1$c_index, c_tilde=res1$c_tilde, 
-                  sum_C_tilde_t=res1$sum_C_tilde_t)
+dat <- data.frame(iteration=res3$iteration, difference=res3$difference,
+                  c_index=res3$c_index, c_tilde=res3$c_tilde, 
+                  sum_C_tilde_t=res3$sum_C_tilde_t)
 ggplot(data=dat, aes(x=iteration, y=sum_C_tilde_t)) +
   geom_line() +
   geom_point() +
@@ -496,15 +509,15 @@ ggplot(data=dat, aes(x=iteration, y=sum_C_tilde_t)) +
 
 diff_c_index_t <- c()
 diff_c_tilde_t <- c()
-for (i in 2:length(res1$time)) {
-  diff_c_index_t[i] <- res1$c_index_t[i] - res1$c_index_t[i-1]
-  diff_c_tilde_t[i] <- res1$c_tilde_t[i] - res1$c_tilde_t[i-1]
+for (i in 2:length(res3$time)) {
+  diff_c_index_t[i] <- res3$c_index_t[i] - res3$c_index_t[i-1]
+  diff_c_tilde_t[i] <- res3$c_tilde_t[i] - res3$c_tilde_t[i-1]
 }
 diff_c_index_t_2 <- diff_c_index_t^2
 diff_c_tilde_t_2 <- diff_c_tilde_t^2
 
-dat1 <- data.frame(time=res1$time, c_index_t=res1$c_index_t,
-                  c_tilde_t=res1$c_tilde_t)
+dat1 <- data.frame(time=res3$time, c_index_t=res3$c_index_t,
+                  c_tilde_t=res3$c_tilde_t)
 ggplot(data=dat1, aes(x=c_index_t, y=c_tilde_t)) +
   geom_line() +
   geom_point() +
@@ -515,7 +528,7 @@ dat2 <- data.frame(diff_c_index_t=diff_c_index_t,
                    diff_c_tilde_t=diff_c_tilde_t,
                    diff_c_index_t_2=diff_c_index_t_2,
                    diff_c_tilde_t_2=diff_c_tilde_t_2,
-                   time=res3$time)
+                   time=res2$time)
 
 ggplot(data=dat2, aes(x=diff_c_index_t, y=diff_c_tilde_t)) +
   geom_line() +
@@ -670,19 +683,19 @@ library(mgcv)
 # mini-batch gradient descent
 
 ROC.00 <- timeROC(T=So[,1],delta=So[,2],marker=risk.score_cox,
-                  cause=1,weighting="marginal",times=seq(from=20, to=770, length.out=20))
+                  cause=1,weighting="marginal",times=So[,1])
 case00 <- ROC.00[["AUC"]]
 
 ROC.td01 <- timeROC(T=So[,1],delta=So[,2],marker=risk.score_01,
-                    cause=1,weighting="marginal",times=seq(from=20, to=770, length.out=20))
+                    cause=1,weighting="marginal",times=So[,1])
 case01 <- ROC.td01[["AUC"]]
 
 ROC.td02 <- timeROC(T=So[,1],delta=So[,2],marker=risk.score_02,
-                    cause=1,weighting="marginal",times=seq(from=20, to=770, length.out=20))
+                    cause=1,weighting="marginal",times=So[,1])
 case02 <- ROC.td02[["AUC"]]
 
 ROC.td03 <- timeROC(T=So[,1],delta=So[,2],marker=risk.score_03,
-                    cause=1,weighting="marginal",times=seq(from=20, to=770, length.out=20))
+                    cause=1,weighting="marginal",times=So[,1])
 case03 <- ROC.td03[["AUC"]]
 
 ROC.td04 <- timeROC(T=So[,1],delta=So[,2],marker=risk.score_04,
@@ -722,12 +735,12 @@ ROC.td12 <- timeROC(T=So[,1],delta=So[,2],marker=risk.score_12,
 case12 <- ROC.td12[["AUC"]]
 
 
-dt <- data.frame(time=ROC.00[["times"]], censor=dt5$censor, case00=case00,
+dt <- data.frame(time=ROC.00[["times"]], censor=veteran$status, case00=case00,
                  case01=case01, case02=case02, case03=case03, case04=case04,
                  case05=case05, case06=case06, case07=case07, case08=case08,
                  case09=case09, case10=case10, case11=case11, case12=case12)
 dt1 <- data.frame(time=rep(ROC.00[["times"]],13),
-                  censor=rep(dt5$censor,13),
+                  censor=rep(veteran$status,13),
                   case=c(rep("case00",137), rep("case01",137), rep("case02",137),
                          rep("case03",137), rep("case04",137),
                          rep("case05",137), rep("case06",137),
@@ -744,7 +757,7 @@ aggregate(dt2$AUC, list(dt2$case), FUN=mean, na.action = na.omit)
 ggplot(dt2_3, aes(x=time, y=AUC, group=case, color=case)) +
   geom_point(aes(x=time, y=1, color=as.factor(censor))) +
   geom_line(aes(group=case, color=case, linetype=case)) +
-  geom_vline(xintercept=time.sort3, col="tomato", linetype="dashed") +
+  geom_vline(xintercept=time.sort0, col="tomato", linetype="dashed") +
   ggtitle("Time dependent AUC with risk score (gradient descent)") +
   xlab("time") + ylab("AUC") +
   #scale_x_continuous(limits = c(30, 50)) +
