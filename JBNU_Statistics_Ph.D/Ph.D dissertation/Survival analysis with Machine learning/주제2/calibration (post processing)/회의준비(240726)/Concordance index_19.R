@@ -768,15 +768,15 @@ case00 <- case00[!is.na(case00)]
 case01 <- case01[!is.na(case01)]
 case02 <- case02[!is.na(case02)]
 case03 <- case03[!is.na(case03)]
-case04 <- case00[!is.na(case04)]
-case05 <- case01[!is.na(case05)]
-case06 <- case02[!is.na(case06)]
-case07 <- case03[!is.na(case07)]
-case08 <- case00[!is.na(case08)]
-case09 <- case01[!is.na(case09)]
-case10 <- case02[!is.na(case10)]
-case11 <- case03[!is.na(case11)]
-case12 <- case03[!is.na(case12)]
+case04 <- case04[!is.na(case04)]
+case05 <- case05[!is.na(case05)]
+case06 <- case06[!is.na(case06)]
+case07 <- case07[!is.na(case07)]
+case08 <- case08[!is.na(case08)]
+case09 <- case09[!is.na(case09)]
+case10 <- case10[!is.na(case10)]
+case11 <- case11[!is.na(case11)]
+case12 <- case12[!is.na(case12)]
 
 
 
@@ -848,6 +848,27 @@ dt <- data.frame(time=time.set, case00=case00,
                  case05=case05, case06=case06, case07=case07, case08=case08,
                  case09=case09, case10=case10, case11=case11, case12=case12)
 
+dt <- data.frame(time=1:999, case00=case00,
+                 case01=case01, case02=case02, case03=case03, case04=case04,
+                 case05=case05, case06=case06, case07=case07, case08=case08,
+                 case09=case09, case10=case10, case11=case11, case12=case12)
+dt$censor <- ifelse(dt$time == 25 | dt$time == 83
+                    | dt$time == 87 | dt$time == 97
+                    | dt$time == 100 | dt$time == 103
+                    | dt$time == 123 | dt$ time == 182
+                    | dt$time == 231, 0, 1)
+dt <- na.omit(dt)
+dt1 <- melt(data = dt,
+            id.vars = c("time", "censor"),
+            measure.vars = c("case00", "case01", "case02",
+                             "case03", "case04", "case05",
+                             "case06", "case07", "case08",
+                             "case09", "case10", "case11",
+                             "case12"))
+colnames(dt1) <- c("time", "censor", "case", "AUC")
+dt2 <- na.omit(dt1)
+aggregate(dt2$AUC, list(dt2$case), FUN=mean, na.action = na.omit)
+
 dt1 <- data.frame(time=rep(ROC.00[["times"]],13),
                   censor=rep(dt5$censor,13),
                   case=c(rep("case00",137), rep("case01",137), rep("case02",137),
@@ -884,32 +905,43 @@ dt2 <- na.omit(dt1)
 
 aggregate(dt2$AUC, list(dt2$case), FUN=mean, na.action = na.omit)
 
-ggplot(dt2, aes(x=time, y=AUC, group=case, color=case)) +
+ggplot(dt2_12, aes(x=time, y=AUC, group=case, color=case)) +
   geom_point(aes(x=time, y=1, color=as.factor(censor))) +
   geom_line(aes(group=case, color=case, linetype=case)) +
-  geom_vline(xintercept=time.sort3, col="tomato", linetype="dashed") +
+  geom_vline(xintercept=time.sort3, col="darkgreen", linetype="dashed") +
   ggtitle("Time dependent AUC with risk score (gradient descent)") +
   xlab("time") + ylab("AUC") +
-  #scale_x_continuous(limits = c(30, 50)) +
+  #scale_x_continuous(limits = c(0, 200)) +
   theme(plot.title = element_text(hjust = 0.5))
 
-ggplot(dt2, aes(x=time, y=AUC, group=case, color=case)) +
-  geom_point(aes(x=time, y=1)) +
+ggplot(dt2_12, aes(x=time, y=AUC, group=case, color=case)) +
+  geom_point(aes(x=time, y=1, color="green")) +
   geom_line(aes(group=case, color=case, linetype=case)) +
-  geom_vline(xintercept=time.sort3, col="tomato", linetype="dashed") +
+  geom_vline(xintercept=time.sort3, col="darkgreen", linetype="dashed") +
   ggtitle("Time dependent AUC with risk score (gradient descent)") +
   xlab("time") + ylab("AUC") +
-  #scale_x_continuous(limits = c(30, 50)) +
+  scale_x_continuous(limits = c(0, 200)) +
   theme(plot.title = element_text(hjust = 0.5))
 
+dt2_1 <- dt2[dt2$case=="case00" | dt2$case=="case01" | 
+               dt2$case=="case02" | dt2$case=="case03" |
+               dt2$case=="case04",] 
 dt2_01 <- dt2[dt2$case=="case00" | dt2$case=="case01",]
 dt2_02 <- dt2[dt2$case=="case01" | dt2$case=="case02",]
 dt2_03 <- dt2[dt2$case=="case01" | dt2$case=="case03",]
 dt2_04 <- dt2[dt2$case=="case01" | dt2$case=="case04",]
+
+dt2_2 <- dt2[dt2$case=="case00" | dt2$case=="case05" | 
+               dt2$case=="case06" | dt2$case=="case07" |
+               dt2$case=="case08",]
 dt2_05 <- dt2[dt2$case=="case00" | dt2$case=="case05",]
 dt2_06 <- dt2[dt2$case=="case05" | dt2$case=="case06",]
 dt2_07 <- dt2[dt2$case=="case05" | dt2$case=="case07",]
 dt2_08 <- dt2[dt2$case=="case05" | dt2$case=="case08",]
+
+dt2_3 <- dt2[dt2$case=="case00" | dt2$case=="case09" | 
+               dt2$case=="case10" | dt2$case=="case11" |
+               dt2$case=="case12",]
 dt2_09 <- dt2[dt2$case=="case00" | dt2$case=="case09",]
 dt2_10 <- dt2[dt2$case=="case09" | dt2$case=="case10",]
 dt2_11 <- dt2[dt2$case=="case09" | dt2$case=="case11",]
